@@ -1,0 +1,259 @@
+// Prisma Schema para o Aplicativo de Cashback
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+
+  url = env("DATABASE_URL")
+}
+
+model User {
+  id           String  @id @default(uuid())
+  name         String
+  email        String  @unique
+  passwordHash String  @map("password_hash")
+  phone        String?
+  cpf          String?
+  role         Role    @default(USER)
+  avatar       String?
+
+  street     String?
+  city       String?
+  state      String?
+  postalCode String? @map("postal_code")
+
+  orders              Order[]
+  carts               Cart[]
+  cashbacks           Cashback[]
+  RefreshToken        RefreshToken[]
+  UserLocation        UserLocation[]
+  CashbackTransaction CashbackTransaction[]
+  created_at          DateTime              @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+model Store {
+  id         String  @id @default(uuid())
+  name       String
+  slug       String?
+  latitude   Decimal
+  longitude  Decimal
+  phone      String?
+  cnpj       String?
+  role       Role    @default(USER)
+  avatar     String?
+  street     String?
+  city       String?
+  state      String?
+  postalCode String? @map("postal_code")
+
+  products     Product[]
+  orders       Order[]
+  paymentTypes PaymentType[]
+  created_at   DateTime      @default(now()) @map("created_at")
+
+  @@map("stores")
+}
+
+model UserLocation {
+  id         String   @id @default(uuid())
+  user_id    String
+  latitude   Float
+  longitude  Float
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+}
+
+model Product {
+  id                  String      @id @default(uuid())
+  name                String
+  description         String?
+  price               Decimal
+  quantity            Decimal
+  image               String?
+  status              Boolean     @default(false)
+  cashback_percentage Float       @default(0.0)
+  store_id            String      @map("store_id")
+  store               Store       @relation(fields: [store_id], references: [id])
+  subcategory_id      String      @map("subcategory_id")
+  subcategory         SubCategory @relation(fields: [subcategory_id], references: [id])
+  orderItems          OrderItem[]
+  cartItems           CartItem[]
+  created_at          DateTime    @default(now()) @map("created_at")
+
+  @@map("products")
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @map("user_id")
+  user      User       @relation(fields: [userId], references: [id])
+  items     CartItem[]
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String   @map("cart_id")
+  cart      Cart     @relation(fields: [cartId], references: [id])
+  productId String   @map("product_id")
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("cart_items")
+}
+
+model Order {
+  id                  String                @id @default(uuid())
+  user_id             String                @map("user_id")
+  user                User                  @relation(fields: [user_id], references: [id])
+  store_id            String                @map("store_id")
+  store               Store                 @relation(fields: [store_id], references: [id])
+  totalAmount         Decimal               @map("total_amount")
+  discountApplied     Decimal               @default(0) @map("discount_applied")
+  validated_at        DateTime?             @map("validated_at")
+  qrCodeUrl           String? // Novo campo para armazenar o QR Code do pedido
+  status              OrderStatus           @default(PENDING)
+  orderItems          OrderItem[]
+  created_at          DateTime              @default(now()) @map("created_at")
+  CashbackTransaction CashbackTransaction[]
+  Cashback            Cashback[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String  @id @default(uuid())
+  order_id   String  @map("order_id")
+  order      Order   @relation(fields: [order_id], references: [id])
+  product_id String  @map("product_id")
+  product    Product @relation(fields: [product_id], references: [id])
+  quantity   Decimal
+  subtotal   Decimal
+
+  @@map("order_items")
+}
+
+model Cashback {
+  id          String         @id @default(uuid())
+  user_id     String
+  order_id    String?
+  amount      Decimal
+  validated   Boolean        @default(false)
+  credited_at DateTime
+  status      CashbackStatus @default(PENDING)
+  user        User           @relation(fields: [user_id], references: [id])
+  order       Order?         @relation(fields: [order_id], references: [id])
+
+  @@map("cashbacks")
+}
+
+enum CashbackStatus {
+  PENDING
+  CONFIRMED
+  CANCELED
+}
+
+model CashbackTransaction {
+  id         String                  @id @default(uuid())
+  user_id    String                  @map("user_id")
+  user       User                    @relation(fields: [user_id], references: [id])
+  amount     Decimal
+  type       CashbackTransactionType
+  created_at DateTime                @default(now()) @map("created_at")
+  Order      Order?                  @relation(fields: [orderId], references: [id])
+  orderId    String?
+
+  @@map("cashback_transactions")
+}
+
+enum CashbackTransactionType {
+  RECEIVE
+  USE
+}
+
+model Banner {
+  id         String   @id @default(uuid())
+  title      String
+  image_url  String
+  link       String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("banners")
+}
+
+model Reel {
+  id         String   @id @default(uuid())
+  title      String
+  image_url  String
+  link       String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("reels")
+}
+
+model Category {
+  id          String        @id @default(uuid())
+  name        String
+  image       String?
+  created_at  DateTime      @default(now()) @map("created_at")
+  SubCategory SubCategory[]
+
+  @@map("categories")
+}
+
+model SubCategory {
+  id          String    @id @default(uuid())
+  name        String
+  image       String?
+  products    Product[]
+  category_id String
+  Category    Category  @relation(fields: [category_id], references: [id])
+  created_at  DateTime  @default(now()) @map("created_at")
+
+  @@map("subcategories")
+}
+
+model PaymentType {
+  id         String   @id @default(uuid())
+  type       String // e.g., "Credit Card", "Cash"
+  stores     Store[]
+  created_at DateTime @default(now())
+
+  @@map("payment_types")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  USER
+  ADMIN
+
+  @@map("roles")
+}
+
+enum OrderStatus {
+  PENDING
+  VALIDATED
+  EXPIRED
+
+  @@map("order_status")
+}
