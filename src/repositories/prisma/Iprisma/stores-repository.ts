@@ -14,4 +14,5 @@ export interface StoresRepository {
   searchMany(search: string, page: number): Promise<Store[]>; //buscar por nome
   listMany(): Promise<Store[]>; //listar toda
   listManyActive(): Promise<Store[]>; //listar todass
+  toggleStatus(storeId: string, isActive: boolean): Promise<void>; //alternar loja ativa/inativa
 }

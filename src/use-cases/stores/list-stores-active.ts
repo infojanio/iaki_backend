@@ -1,6 +1,6 @@
 import { StoresRepository } from "@/repositories/prisma/Iprisma/stores-repository";
 
-export class ListStoresUseCase {
+export class ListStoresActiveUseCase {
   constructor(private storesRepository: StoresRepository) {}
 
   async execute() {

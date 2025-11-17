@@ -90,4 +90,12 @@ export class PrismaStoresRepository implements StoresRepository {
     });
     return store;
   }
+  async toggleStatus(storeId: string, isActive: boolean): Promise<void> {
+    await prisma.store.update({
+      where: { id: storeId },
+      data: {
+        isActive,
+      },
+    });
+  }
 }
