@@ -10,13 +10,13 @@ interface RegisterUseCaseRequest {
   slug: string;
   latitude: number;
   longitude: number;
-  phone: string;
   avatar: string;
-  cnpj: string;
-  street: string;
   city: string;
-  state: string;
+  cnpj: string;
+  phone: string;
   postalCode: string;
+  state: string;
+  street: string;
 }
 
 interface RegisterUseCaseResponse {
@@ -32,13 +32,13 @@ export class RegisterUseCase {
     slug,
     latitude,
     longitude,
-    phone,
     avatar,
-    cnpj,
-    street,
     city,
-    state,
+    cnpj,
+    phone,
     postalCode,
+    state,
+    street,
   }: RegisterUseCaseRequest): Promise<RegisterUseCaseResponse> {
     try {
       const storeWithSameCnpj = await this.storesRepository.findByCnpj(cnpj);

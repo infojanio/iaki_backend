@@ -12,5 +12,6 @@ export interface StoresRepository {
   findByCnpj(cnpj: string): Promise<Store | null>;
   create(data: Prisma.StoreCreateInput): Promise<Store>;
   searchMany(search: string, page: number): Promise<Store[]>; //buscar por nome
-  listMany(): Promise<Store[]>; //listar todas
+  listMany(): Promise<Store[]>; //listar toda
+  listManyActive(): Promise<Store[]>; //listar todass
 }

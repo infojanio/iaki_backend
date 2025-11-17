@@ -5,8 +5,24 @@ import {
   StoresRepository,
 } from "./Iprisma/stores-repository";
 export class PrismaStoresRepository implements StoresRepository {
+  //retorna todas as lojas
   async listMany(): Promise<Store[]> {
     const stores = await prisma.store.findMany();
+    return stores;
+  }
+
+  //retorna lojas ativas
+  async listManyActive(): Promise<Store[]> {
+    const stores = await prisma.store.findMany({
+      where: { isActive: true },
+      include: {
+        businessCategories: {
+          include: {
+            category: true,
+          },
+        },
+      },
+    });
     return stores;
   }
 
@@ -19,6 +35,7 @@ export class PrismaStoresRepository implements StoresRepository {
     console.log("Resultado da busca manual:", store);
     return store;
   }
+
   //busca lojas próximas até 15 km
   async findManyNearby({ latitude, longitude }: FindManyNearbyParams) {
     //$queryRaw -> aceita escrever sql no código

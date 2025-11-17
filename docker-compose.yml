@@ -7,8 +7,8 @@ services:
   api-iaki-pg: 
       image: bitnami/postgresql
       ports: 
-        - 5432:5432 
+        - 5433:5432 
       environment:
         - POSTGRESQL_USERNAME=janio
         - POSTGRESQL_PASSWORD=j2240
-        - POSTGRESQL_DATABASE=apiiaki
+        - POSTGRESQL_DATABASE=apiiaki-multitenant

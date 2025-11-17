@@ -1,4 +1,4 @@
-// Prisma Schema para o Aplicativo de Cashback
+// Prisma Schema para o Aplicativo de Cashback IAki (Marketplace)
 
 generator client {
   provider = "prisma-client-js"
@@ -6,9 +6,12 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
+
+///////////////////////////////////////////////////////////////
+// USERS
+///////////////////////////////////////////////////////////////
 
 model User {
   id           String  @id @default(uuid())
@@ -31,15 +34,96 @@ model User {
   RefreshToken        RefreshToken[]
   UserLocation        UserLocation[]
   CashbackTransaction CashbackTransaction[]
-  created_at          DateTime              @default(now()) @map("created_at")
+
+  created_at DateTime @default(now()) @map("created_at")
 
   @@map("users")
 }
 
+///////////////////////////////////////////////////////////////
+// PLANS & SUBSCRIPTIONS (PLANOS POR LOJA)
+///////////////////////////////////////////////////////////////
+
+model Plan {
+  id           String  @id @default(uuid())
+  name         String
+  price        Decimal
+  productLimit Int // limite de produtos
+  storeLimit   Int // se no futuro quiser limitar número de lojas
+  userLimit    Int // se tiver painel para funcionários
+
+  description String?
+  createdAt   DateTime @default(now())
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id String @id @default(uuid())
+
+  storeId String @map("store_id")
+  store   Store  @relation(fields: [storeId], references: [id])
+
+  planId String @map("plan_id")
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  status    SubscriptionStatus @default(ACTIVE)
+  startAt   DateTime           @default(now())
+  endAt     DateTime // quando expira
+  renewedAt DateTime? // última renovação
+
+  createdAt DateTime @default(now())
+
+  @@map("subscriptions")
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+///////////////////////////////////////////////////////////////
+// TIPOS DE LOJA (BusinessCategory) + RELAÇÃO COM LOJA
+///////////////////////////////////////////////////////////////
+
+// Ex.: Farmácias, Mercados, Bebidas, Lanches, Hortifruti...
+model BusinessCategory {
+  id        String   @id @default(uuid())
+  name      String
+  image     String? // ícone / banner
+  createdAt DateTime @default(now()) @map("created_at")
+
+  stores StoreBusinessCategory[]
+
+  @@map("business_categories")
+}
+
+// Relação N:N entre Store e BusinessCategory
+model StoreBusinessCategory {
+  id         String @id @default(uuid())
+  storeId    String @map("store_id")
+  categoryId String @map("category_id")
+
+  store    Store            @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  category BusinessCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, categoryId])
+  @@map("store_business_categories")
+}
+
+///////////////////////////////////////////////////////////////
+// STORES (LOJAS DO MARKETPLACE)
+///////////////////////////////////////////////////////////////
+
 model Store {
-  id         String  @id @default(uuid())
-  name       String
-  slug       String?
+  id   String  @id @default(uuid())
+  name String
+  slug String? @unique
+
+  isActive Boolean @default(true)
+
   latitude   Decimal
   longitude  Decimal
   phone      String?
@@ -51,13 +135,28 @@ model Store {
   state      String?
   postalCode String? @map("postal_code")
 
+  // planos / assinaturas da loja
+  subscriptions Subscription[]
+
+  // tipos de loja (Farmácia, Mercado, etc.)
+  businessCategories StoreBusinessCategory[]
+
   products     Product[]
   orders       Order[]
   paymentTypes PaymentType[]
-  created_at   DateTime      @default(now()) @map("created_at")
+
+  // cashback por loja
+  cashbacks            Cashback[]
+  cashbackTransactions CashbackTransaction[]
+
+  created_at DateTime @default(now()) @map("created_at")
 
   @@map("stores")
 }
+
+///////////////////////////////////////////////////////////////
+// LOCALIZAÇÃO DO USUÁRIO
+///////////////////////////////////////////////////////////////
 
 model UserLocation {
   id         String   @id @default(uuid())
@@ -69,25 +168,35 @@ model UserLocation {
   user User @relation(fields: [user_id], references: [id])
 }
 
+///////////////////////////////////////////////////////////////
+// PRODUTOS
+///////////////////////////////////////////////////////////////
+
 model Product {
-  id                  String      @id @default(uuid())
+  id                  String  @id @default(uuid())
   name                String
   description         String?
   price               Decimal
   quantity            Decimal
   image               String?
-  status              Boolean     @default(false)
-  cashback_percentage Float       @default(0.0)
-  store_id            String      @map("store_id")
-  store               Store       @relation(fields: [store_id], references: [id])
-  subcategory_id      String      @map("subcategory_id")
-  subcategory         SubCategory @relation(fields: [subcategory_id], references: [id])
-  orderItems          OrderItem[]
-  cartItems           CartItem[]
-  created_at          DateTime    @default(now()) @map("created_at")
+  status              Boolean @default(false)
+  cashback_percentage Float   @default(0.0)
+
+  store_id       String      @map("store_id")
+  store          Store       @relation(fields: [store_id], references: [id])
+  subcategory_id String      @map("subcategory_id")
+  subcategory    SubCategory @relation(fields: [subcategory_id], references: [id])
+
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+  created_at DateTime    @default(now()) @map("created_at")
 
   @@map("products")
 }
+
+///////////////////////////////////////////////////////////////
+// CARRINHO
+///////////////////////////////////////////////////////////////
 
 model Cart {
   id        String     @id @default(uuid())
@@ -101,30 +210,41 @@ model Cart {
 }
 
 model CartItem {
-  id        String   @id @default(uuid())
-  cartId    String   @map("cart_id")
-  cart      Cart     @relation(fields: [cartId], references: [id])
-  productId String   @map("product_id")
-  product   Product  @relation(fields: [productId], references: [id])
+  id        String  @id @default(uuid())
+  cartId    String  @map("cart_id")
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id])
+
   quantity  Int
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("cart_items")
 }
 
+///////////////////////////////////////////////////////////////
+// PEDIDOS
+///////////////////////////////////////////////////////////////
+
 model Order {
-  id                  String                @id @default(uuid())
-  user_id             String                @map("user_id")
-  user                User                  @relation(fields: [user_id], references: [id])
-  store_id            String                @map("store_id")
-  store               Store                 @relation(fields: [store_id], references: [id])
-  totalAmount         Decimal               @map("total_amount")
-  discountApplied     Decimal               @default(0) @map("discount_applied")
-  validated_at        DateTime?             @map("validated_at")
-  qrCodeUrl           String? // Novo campo para armazenar o QR Code do pedido
-  status              OrderStatus           @default(PENDING)
-  orderItems          OrderItem[]
-  created_at          DateTime              @default(now()) @map("created_at")
+  id String @id @default(uuid())
+
+  user_id String @map("user_id")
+  user    User   @relation(fields: [user_id], references: [id])
+
+  store_id String @map("store_id")
+  store    Store  @relation(fields: [store_id], references: [id])
+
+  totalAmount     Decimal     @map("total_amount")
+  discountApplied Decimal     @default(0) @map("discount_applied")
+  validated_at    DateTime?   @map("validated_at")
+  qrCodeUrl       String?
+  status          OrderStatus @default(PENDING)
+
+  orderItems OrderItem[]
+
+  created_at DateTime @default(now()) @map("created_at")
+
   CashbackTransaction CashbackTransaction[]
   Cashback            Cashback[]
 
@@ -134,25 +254,37 @@ model Order {
 model OrderItem {
   id         String  @id @default(uuid())
   order_id   String  @map("order_id")
-  order      Order   @relation(fields: [order_id], references: [id])
+  order      Order   @relation(fields: [order_id], references: [id], onDelete: Cascade)
   product_id String  @map("product_id")
   product    Product @relation(fields: [product_id], references: [id])
-  quantity   Decimal
-  subtotal   Decimal
+
+  quantity Decimal
+  subtotal Decimal
 
   @@map("order_items")
 }
 
+///////////////////////////////////////////////////////////////
+// CASHBACK (POR LOJA)
+///////////////////////////////////////////////////////////////
+
 model Cashback {
-  id          String         @id @default(uuid())
-  user_id     String
-  order_id    String?
+  id String @id @default(uuid())
+
+  user_id String
+  user    User   @relation(fields: [user_id], references: [id])
+
+  // cashback sempre vinculado à loja onde foi gerado
+  store_id String @map("store_id")
+  store    Store  @relation(fields: [store_id], references: [id])
+
+  order_id String?
+  order    Order?  @relation(fields: [order_id], references: [id])
+
   amount      Decimal
   validated   Boolean        @default(false)
   credited_at DateTime
   status      CashbackStatus @default(PENDING)
-  user        User           @relation(fields: [user_id], references: [id])
-  order       Order?         @relation(fields: [order_id], references: [id])
 
   @@map("cashbacks")
 }
@@ -164,14 +296,21 @@ enum CashbackStatus {
 }
 
 model CashbackTransaction {
-  id         String                  @id @default(uuid())
-  user_id    String                  @map("user_id")
-  user       User                    @relation(fields: [user_id], references: [id])
+  id String @id @default(uuid())
+
+  user_id String @map("user_id")
+  user    User   @relation(fields: [user_id], references: [id])
+
+  // transação também vinculada à loja
+  store_id String @map("store_id")
+  store    Store  @relation(fields: [store_id], references: [id])
+
   amount     Decimal
   type       CashbackTransactionType
   created_at DateTime                @default(now()) @map("created_at")
-  Order      Order?                  @relation(fields: [orderId], references: [id])
-  orderId    String?
+
+  orderId String?
+  Order   Order?  @relation(fields: [orderId], references: [id])
 
   @@map("cashback_transactions")
 }
@@ -180,6 +319,10 @@ enum CashbackTransactionType {
   RECEIVE
   USE
 }
+
+///////////////////////////////////////////////////////////////
+// BANNERS & REELS (MARKETING GLOBAL)
+///////////////////////////////////////////////////////////////
 
 model Banner {
   id         String   @id @default(uuid())
@@ -203,6 +346,10 @@ model Reel {
   @@map("reels")
 }
 
+///////////////////////////////////////////////////////////////
+// CATEGORIES & SUBCATEGORIES (DENTRO DA LOJA)
+///////////////////////////////////////////////////////////////
+
 model Category {
   id          String        @id @default(uuid())
   name        String
@@ -225,6 +372,10 @@ model SubCategory {
   @@map("subcategories")
 }
 
+///////////////////////////////////////////////////////////////
+// PAYMENT TYPES
+///////////////////////////////////////////////////////////////
+
 model PaymentType {
   id         String   @id @default(uuid())
   type       String // e.g., "Credit Card", "Cash"
@@ -234,6 +385,10 @@ model PaymentType {
   @@map("payment_types")
 }
 
+///////////////////////////////////////////////////////////////
+// AUTH
+///////////////////////////////////////////////////////////////
+
 model RefreshToken {
   id        String   @id @default(uuid())
   token     String   @unique
@@ -242,6 +397,10 @@ model RefreshToken {
   expiresAt DateTime
   createdAt DateTime @default(now())
 }
+
+///////////////////////////////////////////////////////////////
+// ENUMS
+///////////////////////////////////////////////////////////////
 
 enum Role {
   USER
