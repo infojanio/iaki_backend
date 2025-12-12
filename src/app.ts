@@ -16,6 +16,8 @@ import { cashbacksRoutes } from "./http/controllers/cashbacks/routes";
 import { dashboardRoutes } from "./http/controllers/dashboard/routes";
 import { bannersRoutes } from "./http/controllers/banners/routes";
 import { reelsRoutes } from "./http/controllers/reels/routes";
+import { citiesRoutes } from "./http/controllers/cities/routes";
+import { storeBusinessCategoryRoutes } from "./http/controllers/store-business-category/routes";
 
 export const app = fastify({
   // logger: true,
@@ -37,7 +39,9 @@ app.register(fastifyCors, {
 
 app.register(usersRoutes);
 app.register(cartsRoutes);
+app.register(citiesRoutes);
 app.register(storesRoutes);
+app.register(storeBusinessCategoryRoutes);
 app.register(categoriesRoutes);
 app.register(bannersRoutes);
 app.register(reelsRoutes);

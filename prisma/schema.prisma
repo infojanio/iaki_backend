@@ -1,4 +1,6 @@
-// Prisma Schema para o Aplicativo de Cashback IAki (Marketplace)
+///////////////////////////////////////////////////////////////
+// GENERATOR & DATASOURCE
+///////////////////////////////////////////////////////////////
 
 generator client {
   provider = "prisma-client-js"
@@ -7,6 +9,22 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+///////////////////////////////////////////////////////////////
+// CITY (CIDADE DO MARKETPLACE)
+///////////////////////////////////////////////////////////////
+
+model City {
+  id        String   @id @default(uuid())
+  name      String
+  state     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  stores Store[]
+
+  @@unique([name, state])
+  @@map("cities")
 }
 
 ///////////////////////////////////////////////////////////////
@@ -34,6 +52,9 @@ model User {
   RefreshToken        RefreshToken[]
   UserLocation        UserLocation[]
   CashbackTransaction CashbackTransaction[]
+  checkIns            CheckIn[]
+  missionProgresses   MissionProgress[]
+  couponRedemptions   CouponRedemption[]
 
   created_at DateTime @default(now()) @map("created_at")
 
@@ -41,19 +62,19 @@ model User {
 }
 
 ///////////////////////////////////////////////////////////////
-// PLANS & SUBSCRIPTIONS (PLANOS POR LOJA)
+// PLANS & SUBSCRIPTIONS
 ///////////////////////////////////////////////////////////////
 
 model Plan {
   id           String  @id @default(uuid())
   name         String
   price        Decimal
-  productLimit Int // limite de produtos
-  storeLimit   Int // se no futuro quiser limitar número de lojas
-  userLimit    Int // se tiver painel para funcionários
+  productLimit Int
+  storeLimit   Int
+  userLimit    Int
 
   description String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime @default(now()) @map("created_at")
 
   subscriptions Subscription[]
 }
@@ -68,11 +89,11 @@ model Subscription {
   plan   Plan   @relation(fields: [planId], references: [id])
 
   status    SubscriptionStatus @default(ACTIVE)
-  startAt   DateTime           @default(now())
-  endAt     DateTime // quando expira
-  renewedAt DateTime? // última renovação
+  startAt   DateTime           @default(now()) @map("start_at")
+  endAt     DateTime           @map("end_at")
+  renewedAt DateTime?          @map("renewed_at")
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@map("subscriptions")
 }
@@ -85,14 +106,13 @@ enum SubscriptionStatus {
 }
 
 ///////////////////////////////////////////////////////////////
-// TIPOS DE LOJA (BusinessCategory) + RELAÇÃO COM LOJA
+// BUSINESS CATEGORY
 ///////////////////////////////////////////////////////////////
 
-// Ex.: Farmácias, Mercados, Bebidas, Lanches, Hortifruti...
 model BusinessCategory {
   id        String   @id @default(uuid())
   name      String
-  image     String? // ícone / banner
+  image     String?
   createdAt DateTime @default(now()) @map("created_at")
 
   stores StoreBusinessCategory[]
@@ -100,7 +120,6 @@ model BusinessCategory {
   @@map("business_categories")
 }
 
-// Relação N:N entre Store e BusinessCategory
 model StoreBusinessCategory {
   id         String @id @default(uuid())
   storeId    String @map("store_id")
@@ -114,7 +133,7 @@ model StoreBusinessCategory {
 }
 
 ///////////////////////////////////////////////////////////////
-// STORES (LOJAS DO MARKETPLACE)
+// STORES
 ///////////////////////////////////////////////////////////////
 
 model Store {
@@ -128,26 +147,26 @@ model Store {
   longitude  Decimal
   phone      String?
   cnpj       String?
-  role       Role    @default(USER)
   avatar     String?
   street     String?
-  city       String?
-  state      String?
   postalCode String? @map("postal_code")
 
-  // planos / assinaturas da loja
-  subscriptions Subscription[]
+  // Relação com a cidade escolhida pelo usuário
+  cityId String @map("city_id")
+  city   City   @relation(fields: [cityId], references: [id])
 
-  // tipos de loja (Farmácia, Mercado, etc.)
+  subscriptions      Subscription[]
   businessCategories StoreBusinessCategory[]
 
   products     Product[]
   orders       Order[]
   paymentTypes PaymentType[]
 
-  // cashback por loja
   cashbacks            Cashback[]
   cashbackTransactions CashbackTransaction[]
+  checkIns             CheckIn[]
+  coupons              Coupon[]
+  storeDiscounts       StoreDiscount[]
 
   created_at DateTime @default(now()) @map("created_at")
 
@@ -155,7 +174,7 @@ model Store {
 }
 
 ///////////////////////////////////////////////////////////////
-// LOCALIZAÇÃO DO USUÁRIO
+// USER LOCATION
 ///////////////////////////////////////////////////////////////
 
 model UserLocation {
@@ -166,10 +185,12 @@ model UserLocation {
   created_at DateTime @default(now())
 
   user User @relation(fields: [user_id], references: [id])
+
+  @@map("user_locations")
 }
 
 ///////////////////////////////////////////////////////////////
-// PRODUTOS
+// PRODUCTS
 ///////////////////////////////////////////////////////////////
 
 model Product {
@@ -195,7 +216,7 @@ model Product {
 }
 
 ///////////////////////////////////////////////////////////////
-// CARRINHO
+// CART
 ///////////////////////////////////////////////////////////////
 
 model Cart {
@@ -223,7 +244,7 @@ model CartItem {
 }
 
 ///////////////////////////////////////////////////////////////
-// PEDIDOS
+// ORDERS
 ///////////////////////////////////////////////////////////////
 
 model Order {
@@ -247,6 +268,7 @@ model Order {
 
   CashbackTransaction CashbackTransaction[]
   Cashback            Cashback[]
+  couponRedemptions   CouponRedemption[]
 
   @@map("orders")
 }
@@ -265,7 +287,7 @@ model OrderItem {
 }
 
 ///////////////////////////////////////////////////////////////
-// CASHBACK (POR LOJA)
+// CASHBACK (AINDA MANTIDO)
 ///////////////////////////////////////////////////////////////
 
 model Cashback {
@@ -274,7 +296,6 @@ model Cashback {
   user_id String
   user    User   @relation(fields: [user_id], references: [id])
 
-  // cashback sempre vinculado à loja onde foi gerado
   store_id String @map("store_id")
   store    Store  @relation(fields: [store_id], references: [id])
 
@@ -301,7 +322,6 @@ model CashbackTransaction {
   user_id String @map("user_id")
   user    User   @relation(fields: [user_id], references: [id])
 
-  // transação também vinculada à loja
   store_id String @map("store_id")
   store    Store  @relation(fields: [store_id], references: [id])
 
@@ -321,7 +341,7 @@ enum CashbackTransactionType {
 }
 
 ///////////////////////////////////////////////////////////////
-// BANNERS & REELS (MARKETING GLOBAL)
+// BANNERS & REELS
 ///////////////////////////////////////////////////////////////
 
 model Banner {
@@ -347,7 +367,7 @@ model Reel {
 }
 
 ///////////////////////////////////////////////////////////////
-// CATEGORIES & SUBCATEGORIES (DENTRO DA LOJA)
+// CATEGORY & SUBCATEGORY
 ///////////////////////////////////////////////////////////////
 
 model Category {
@@ -373,12 +393,167 @@ model SubCategory {
 }
 
 ///////////////////////////////////////////////////////////////
-// PAYMENT TYPES
+// STORE DISCOUNTS
+///////////////////////////////////////////////////////////////
+
+enum DiscountType {
+  FIXED
+  DAILY
+  WEEKLY
+}
+
+model StoreDiscount {
+  id      String @id @default(uuid())
+  storeId String @map("store_id")
+  store   Store  @relation(fields: [storeId], references: [id])
+
+  type        DiscountType
+  value       Decimal
+  title       String?
+  description String?
+  validFrom   DateTime?
+  validTo     DateTime?
+  isActive    Boolean      @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("store_discounts")
+}
+
+///////////////////////////////////////////////////////////////
+// COUPONS
+///////////////////////////////////////////////////////////////
+
+enum CouponType {
+  PERCENT
+  FIXED
+  CONDITIONAL
+}
+
+model Coupon {
+  id   String @id @default(uuid())
+  code String @unique
+
+  storeId String @map("store_id")
+  store   Store  @relation(fields: [storeId], references: [id])
+
+  type     CouponType
+  value    Decimal
+  minValue Decimal?
+
+  usageLimit Int?
+  usedCount  Int  @default(0)
+
+  validFrom DateTime
+  validTo   DateTime
+  isActive  Boolean  @default(true)
+
+  redemptions CouponRedemption[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id       String  @id @default(uuid())
+  couponId String  @map("coupon_id")
+  userId   String  @map("user_id")
+  orderId  String? @map("order_id")
+
+  coupon Coupon @relation(fields: [couponId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+  order  Order? @relation(fields: [orderId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("coupon_redemptions")
+}
+
+///////////////////////////////////////////////////////////////
+// CHECK-IN
+///////////////////////////////////////////////////////////////
+
+model CheckIn {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  storeId String @map("store_id")
+  store   Store  @relation(fields: [storeId], references: [id])
+
+  latitude  Float?
+  longitude Float?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("checkins")
+}
+
+///////////////////////////////////////////////////////////////
+// MISSIONS
+///////////////////////////////////////////////////////////////
+
+enum MissionType {
+  CHECKIN
+  ORDERS_COUNT
+  ORDERS_VALUE
+  COUPONS_USED
+}
+
+enum RewardType {
+  COUPON
+  DISCOUNT
+}
+
+model Mission {
+  id          String  @id @default(uuid())
+  title       String
+  description String?
+
+  type   MissionType
+  target Int
+
+  rewardType  RewardType
+  rewardValue Decimal?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  progresses MissionProgress[]
+
+  @@map("missions")
+}
+
+model MissionProgress {
+  id        String  @id @default(uuid())
+  missionId String  @map("mission_id")
+  mission   Mission @relation(fields: [missionId], references: [id])
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  progress    Int       @default(0)
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([missionId, userId])
+  @@map("mission_progresses")
+}
+
+///////////////////////////////////////////////////////////////
+// PAYMENT TYPES (FUTURO PAGAMENTO DIGITAL)
 ///////////////////////////////////////////////////////////////
 
 model PaymentType {
   id         String   @id @default(uuid())
-  type       String // e.g., "Credit Card", "Cash"
+  type       String
   stores     Store[]
   created_at DateTime @default(now())
 
@@ -392,10 +567,12 @@ model PaymentType {
 model RefreshToken {
   id        String   @id @default(uuid())
   token     String   @unique
+  userId    String   @map("user_id")
   user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("refresh_tokens")
 }
 
 ///////////////////////////////////////////////////////////////
@@ -405,14 +582,10 @@ model RefreshToken {
 enum Role {
   USER
   ADMIN
-
-  @@map("roles")
 }
 
 enum OrderStatus {
   PENDING
   VALIDATED
   EXPIRED
-
-  @@map("order_status")
 }
