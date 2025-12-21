@@ -15,7 +15,7 @@ const userProfileSelect = Prisma.validator<Prisma.UserSelect>()({
   role: true,
   avatar: true,
   street: true,
-  city: true,
+  cityId: true,
   state: true,
   postalCode: true,
   created_at: true,
@@ -28,7 +28,7 @@ export class PrismaUsersRepository implements UsersRepository {
    * @param data - Dados do usuário e do endereço.
    * @returns O usuário criado com os dados do endereço.
    */
-  async create(data: Prisma.UserCreateInput) {
+  async create(data: Prisma.UserUncheckedCreateInput) {
     const user = await prisma.user.create({
       data: {
         ...data, // Inclui os dados pessoais
@@ -61,7 +61,7 @@ export class PrismaUsersRepository implements UsersRepository {
         passwordHash: true,
         // NÃO selecionar passwordHash
         street: true,
-        city: true,
+        cityId: true,
         state: true,
         postalCode: true,
         created_at: true,
@@ -92,9 +92,16 @@ export class PrismaUsersRepository implements UsersRepository {
       .toNumber();
   }
 
+  async updateCity(userId: string, cityId: string) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { cityId },
+    });
+  }
+
   async update(
     userId: string,
-    data: Prisma.UserUncheckedUpdateInput
+    data: Prisma.UserUncheckedUpdateInput,
   ): Promise<User> {
     try {
       return await prisma.user.update({

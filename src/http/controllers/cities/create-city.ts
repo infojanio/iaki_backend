@@ -5,7 +5,7 @@ import { z } from "zod";
 export async function createCity(request: FastifyRequest, reply: FastifyReply) {
   const createCityBodySchema = z.object({
     name: z.string().min(2, "O nome da cidade é obrigatório"),
-    state: z.string().min(2, "O estado é obrigatório"),
+    stateId: z.string(),
   });
 
   try {

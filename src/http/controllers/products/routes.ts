@@ -11,6 +11,8 @@ import { getStock, updateStock } from "./get-stock";
 import { getProduct } from "./get-product";
 import { searchProducts } from "./search-products";
 import { listProductsActive } from "./listProductsActive";
+import { listProductsByStoreController } from "./list-products-by-store";
+import { listProductsByStoreWithDiscountController } from "./list-products-by-store-with-discount";
 
 export async function productsRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
@@ -22,15 +24,23 @@ export async function productsRoutes(app: FastifyInstance) {
   app.get("/products/subcategory", fetchProductsBySubCategory);
   app.get("/products", listProducts);
 
-  // Rota para detalhes do produto
+  // Listar produtos da loja
+  app.get("/stores/:storeId/products", listProductsByStoreController);
 
+  // Produtos da loja (COM desconto aplicado)
+  app.get(
+    "/stores/:storeId/products/with-discount",
+    listProductsByStoreWithDiscountController,
+  );
+
+  // Rota para detalhes do produto
   app.get("/products/:productId", getProduct);
 
   // Rotas de estoque (separadas logicamente)
   app.patch(
     "/products/:productId",
     { onRequest: [verifyJWT, verifyUserRole("ADMIN")] },
-    updateProduct
+    updateProduct,
   );
 
   app.get("/products/:productId/stock", getStock);
@@ -38,12 +48,12 @@ export async function productsRoutes(app: FastifyInstance) {
   app.patch(
     "/products/:productId/stock",
     { onRequest: [verifyUserRole("ADMIN")] },
-    updateStock
+    updateStock,
   );
   // Rota de criação
   app.post(
     "/products",
     { onRequest: [verifyJWT, verifyUserRole("ADMIN")] },
-    create
+    create,
   );
 }

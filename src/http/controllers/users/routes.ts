@@ -13,13 +13,16 @@ import { createUserLocation } from "./create-user-location";
 import { getUserAddress } from "../addresses/get-address";
 import { GetUserProfileEdit } from "@/use-cases/users/get-user-profile-edit";
 import { profileEdit } from "./get-profile";
+import { updateUserCity } from "./update-user-city";
 
 export async function usersRoutes(app: FastifyInstance) {
   /* Rotas acessíveis para usuário não autenticado */
   app.post("/users", register);
   app.post("/sessions", authenticate);
 
-  // app.put('/users/update', update)
+  app.patch("/users/city", { onRequest: [verifyJWT] }, updateUserCity);
+  //app.get("/users/:userId/city", getUserLocation);
+
   app.patch("/users/:userId", { onRequest: [verifyJWT] }, update);
   app.get("/users/:userId/address", getUserAddress);
   app.get("/users/:userId/location", getUserLocation);
@@ -34,7 +37,7 @@ export async function usersRoutes(app: FastifyInstance) {
     {
       onRequest: [verifyJWT],
     },
-    balance
+    balance,
   );
 
   /* Rotas exclusivas para usuário autenticado */

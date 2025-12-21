@@ -3,7 +3,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 
 export async function getUserLocation(
   request: FastifyRequest<{ Params: { userId: string } }>,
-  reply: FastifyReply
+  reply: FastifyReply,
 ) {
   const userId = request.params.userId;
   try {
@@ -11,7 +11,7 @@ export async function getUserLocation(
     const result = await getUserLocationUseCase.execute({ userId });
 
     if (!result) {
-      return reply.status(404).send({ message: "Adicione sua localização." });
+      return reply.status(404).send({ message: "Escolha a cidade." });
     }
 
     return reply.status(200).send(result);

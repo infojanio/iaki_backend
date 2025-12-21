@@ -19,18 +19,21 @@ export interface ProductWithNames {
 export interface ProductsRepository {
   findByIdProduct(id: string): Promise<Product | null>;
   findProductById(id: string): Promise<Product | null>;
+  findByStoreId(store_id: string): Promise<Product[] | null>;
+  findByStoreIdActive(store_id: string): Promise<Product[]>;
+
   findById(
     id: string,
-    options?: { select?: Prisma.ProductSelect } // Adicione esta opção
+    options?: { select?: Prisma.ProductSelect }, // Adicione esta opção
   ): Promise<Product | Partial<Product> | null>;
   findByIds(ids: string[]): Promise<Product[]>;
   getProductStock(productId: string): Promise<number | Decimal>;
   getProductStockDetails(
-    productId: string
+    productId: string,
   ): Promise<{ quantity: number; name: string } | null>;
   updateQuantity(
     id: string,
-    data: { quantity: number; status: boolean }
+    data: { quantity: number; status: boolean },
   ): Promise<Product>;
   updateStock(id: string, quantity: number): Promise<Product>;
   findByStoreId(store_id: string): Promise<Product[] | null>;
@@ -43,7 +46,7 @@ export interface ProductsRepository {
   searchByName(
     query: string,
     page: number,
-    pageSize?: number
+    pageSize?: number,
   ): Promise<[Product[], number]>;
 
   findByQuantity(quantity: number): Promise<Product[]>; // buscar  por quantidade
@@ -66,7 +69,7 @@ export interface ProductsRepository {
       cashback_percentage?: number;
       store_id?: string;
       subcategory_id?: string;
-    }
+    },
   ): Promise<Product>;
   delete(where: Prisma.ProductWhereUniqueInput): Promise<Product>;
 }

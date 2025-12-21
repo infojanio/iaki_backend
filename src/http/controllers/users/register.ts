@@ -24,8 +24,8 @@ export async function register(request: FastifyRequest, reply: FastifyReply) {
       message: "CPF inválido",
     }),
     street: z.string(),
-    city: z.string(),
-    state: z.string(),
+    cityId: z.string().optional(),
+    state: z.string().optional(),
     postalCode: z.string(),
   });
 
@@ -37,7 +37,7 @@ export async function register(request: FastifyRequest, reply: FastifyReply) {
     phone,
     role,
     avatar,
-    city,
+    cityId,
     cpf,
     postalCode,
     state,
@@ -56,7 +56,7 @@ export async function register(request: FastifyRequest, reply: FastifyReply) {
       cpf,
       role,
       avatar,
-      city,
+      cityId,
       postalCode,
       state,
       street,

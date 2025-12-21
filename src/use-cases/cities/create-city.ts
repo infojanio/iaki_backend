@@ -4,7 +4,7 @@ import { CitiesRepository } from "@/repositories/prisma/Iprisma/cities-repositor
 interface CreateCityUseCaseRequest {
   id?: string;
   name: string;
-  state: string;
+  stateId: string;
 }
 
 interface CreateCityUseCaseResponse {
@@ -17,22 +17,19 @@ export class CreateCityUseCase {
   async execute({
     id,
     name,
-    state,
+    stateId,
   }: CreateCityUseCaseRequest): Promise<CreateCityUseCaseResponse> {
     // Verificar se cidade já existe
-    const cityAlreadyExists = await this.citiesRepository.findByNameAndState(
-      name,
-      state,
-    );
+    const cityAlreadyExists = await this.citiesRepository.findByName(name);
 
     if (cityAlreadyExists) {
       throw new Error("Esta cidade já está cadastrada!");
     }
 
     const city = await this.citiesRepository.create({
-      id,
+      //id,
       name,
-      state,
+      stateId,
       createdAt: new Date(),
     });
 

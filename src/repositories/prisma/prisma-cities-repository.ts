@@ -9,15 +9,11 @@ export class PrismaCitiesRepository implements CitiesRepository {
     });
   }
 
-  async findByNameAndState(name: string, state: string): Promise<City | null> {
+  async findByName(name: string): Promise<City | null> {
     return prisma.city.findFirst({
       where: {
         name: {
           equals: name,
-          mode: "insensitive",
-        },
-        state: {
-          equals: state,
           mode: "insensitive",
         },
       },
@@ -48,13 +44,17 @@ export class PrismaCitiesRepository implements CitiesRepository {
     });
   }
 
+  async findByStateId(stateId: string): Promise<City[]> {
+    return prisma.city.findMany({
+      where: { stateId },
+      orderBy: { name: "asc" },
+    });
+  }
+
   async search(query: string): Promise<City[]> {
     return prisma.city.findMany({
       where: {
-        OR: [
-          { name: { contains: query, mode: "insensitive" } },
-          { state: { contains: query, mode: "insensitive" } },
-        ],
+        OR: [{ name: { contains: query, mode: "insensitive" } }],
       },
       orderBy: { name: "asc" },
     });
@@ -70,7 +70,7 @@ export class PrismaCitiesRepository implements CitiesRepository {
     id: string,
     data: {
       name?: string;
-      state?: string;
+      stateId?: string;
     },
   ): Promise<City> {
     return prisma.city.update({

@@ -26,6 +26,26 @@ export class PrismaStoresRepository implements StoresRepository {
     return stores;
   }
 
+  async findManyByCityAndCategory(
+    cityId: string,
+    categoryId: string,
+  ): Promise<Store[]> {
+    return prisma.store.findMany({
+      where: {
+        cityId,
+        isActive: true,
+        businessCategories: {
+          some: {
+            categoryId,
+          },
+        },
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+  }
+
   async findById(id: string): Promise<Store | null> {
     const store = await prisma.store.findUnique({
       where: {

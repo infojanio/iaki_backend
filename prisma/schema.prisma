@@ -16,15 +16,30 @@ datasource db {
 ///////////////////////////////////////////////////////////////
 
 model City {
-  id        String   @id @default(uuid())
-  name      String
-  state     String
-  createdAt DateTime @default(now()) @map("created_at")
+  id   String @id @default(uuid())
+  name String
+
+  stateId String @map("state_id")
+  state   State  @relation(fields: [stateId], references: [id])
 
   stores Store[]
 
-  @@unique([name, state])
+  createdAt DateTime @default(now())
+  users     User[]
+
+  @@unique([name, stateId])
   @@map("cities")
+}
+
+model State {
+  id        String   @id @default(uuid())
+  name      String
+  uf        String   @unique
+  createdAt DateTime @default(now())
+
+  cities City[]
+
+  @@map("states")
 }
 
 ///////////////////////////////////////////////////////////////
@@ -42,7 +57,8 @@ model User {
   avatar       String?
 
   street     String?
-  city       String?
+  cityId     String?
+  city       City?   @relation(fields: [cityId], references: [id])
   state      String?
   postalCode String? @map("postal_code")
 

@@ -3,6 +3,7 @@ import { BusinessCategory, Prisma } from "@prisma/client";
 export interface BusinessCategoriesRepository {
   findById(id: string): Promise<BusinessCategory | null>;
   findByName(name: string): Promise<BusinessCategory | null>;
+  findManyByCityId(cityId: string): Promise<BusinessCategory[]>;
 
   findMany(): Promise<BusinessCategory[]>;
 

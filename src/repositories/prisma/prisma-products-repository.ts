@@ -29,7 +29,7 @@ export class PrismaProductsRepository implements ProductsRepository {
 
   async findById(
     id: string,
-    options?: { select?: Prisma.ProductSelect }
+    options?: { select?: Prisma.ProductSelect },
   ): Promise<Product | Partial<Product> | null> {
     return prisma.product.findUnique({
       where: { id },
@@ -55,6 +55,22 @@ export class PrismaProductsRepository implements ProductsRepository {
     const product = await prisma.product.findMany({
       where: {
         store_id,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+    return product;
+  }
+
+  async findByStoreIdActive(store_id: string): Promise<Product[]> {
+    const product = await prisma.product.findMany({
+      where: {
+        store_id,
+        status: true,
+      },
+      orderBy: {
+        name: "asc",
       },
     });
     return product;
@@ -83,7 +99,7 @@ export class PrismaProductsRepository implements ProductsRepository {
   }
 
   async getProductStockDetails(
-    productId: string
+    productId: string,
   ): Promise<{ quantity: number; name: string }> {
     const product = await prisma.product.findUnique({
       where: { id: productId },
@@ -103,7 +119,7 @@ export class PrismaProductsRepository implements ProductsRepository {
   async updateStock(
     id: string,
     quantity: number,
-    action: "increment" | "decrement" = "decrement"
+    action: "increment" | "decrement" = "decrement",
   ): Promise<Product> {
     return await prisma.product.update({
       where: { id },
@@ -192,7 +208,7 @@ export class PrismaProductsRepository implements ProductsRepository {
 
   async updateQuantity(
     id: string,
-    data: { quantity: number; status: boolean }
+    data: { quantity: number; status: boolean },
   ) {
     return prisma.product.update({
       where: { id },
@@ -216,7 +232,7 @@ export class PrismaProductsRepository implements ProductsRepository {
       cashback_percentage?: number;
       store_id?: string;
       subcategory_id?: string;
-    }
+    },
   ): Promise<Product> {
     return prisma.product.update({
       where: { id },
@@ -243,7 +259,7 @@ export class PrismaProductsRepository implements ProductsRepository {
   async searchByName(
     query: string,
     page: number,
-    pageSize = 5
+    pageSize = 5,
   ): Promise<[Product[], number]> {
     const [products, total] = await prisma.$transaction([
       prisma.product.findMany({

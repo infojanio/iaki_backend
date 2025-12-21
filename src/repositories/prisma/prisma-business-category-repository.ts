@@ -22,6 +22,23 @@ export class PrismaBusinessCategoriesRepository
     });
   }
 
+  async findManyByCityId(cityId: string): Promise<BusinessCategory[]> {
+    return prisma.businessCategory.findMany({
+      where: {
+        stores: {
+          some: {
+            store: {
+              cityId,
+              isActive: true,
+            },
+          },
+        },
+      },
+      distinct: ["id"],
+      orderBy: { name: "asc" },
+    });
+  }
+
   async findMany(): Promise<BusinessCategory[]> {
     return prisma.businessCategory.findMany({
       orderBy: { name: "asc" },

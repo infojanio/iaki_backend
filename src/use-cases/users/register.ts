@@ -14,8 +14,8 @@ interface RegisterUseCaseRequest {
   role: Role;
   cpf?: string;
   street: string;
-  city: string;
-  state: string;
+  cityId: string | undefined;
+  state: string | undefined;
   postalCode: string;
 }
 
@@ -26,7 +26,7 @@ interface RegisterUseCaseResponse {
 export class RegisterUseCase {
   constructor(
     private usersRepository: UsersRepository,
-    private addressesRepository: AddressesRepository
+    private addressesRepository: AddressesRepository,
   ) {}
 
   async execute({
@@ -38,7 +38,7 @@ export class RegisterUseCase {
     cpf,
     avatar,
     role,
-    city,
+    cityId,
     postalCode,
     state,
     street,
@@ -59,9 +59,9 @@ export class RegisterUseCase {
         email,
         passwordHash,
         phone,
-        city,
         cpf,
         state,
+        cityId,
         postalCode,
         street,
         avatar,

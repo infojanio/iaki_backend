@@ -10,6 +10,9 @@ import { getCity } from "./get-city";
 import { searchCity } from "./search-city";
 import { updateCity } from "./update-city";
 import { deleteCity } from "./delete-city";
+import { listCitiesByStateController } from "./list-cities-by-state";
+import { listBusinessCategoriesByCityController } from "./list-business-categories-by-city";
+import { listStoresByCityAndCategoryController } from "./list-stores-by-city-and-category";
 
 export async function citiesRoutes(app: FastifyInstance) {
   // Toda rota exige JWT, como no padrão das categorias
@@ -24,8 +27,20 @@ export async function citiesRoutes(app: FastifyInstance) {
   // BUSCAR POR NOME / ESTADO
   app.get("/cities/search", searchCity);
 
+  // Listar cidades por estado
+  app.get("/states/:stateId/cities", listCitiesByStateController);
+
+  // Home: categorias por cidade
+  app.get("/cities/:cityId/categories", listBusinessCategoriesByCityController);
+
   // OBTER UMA CIDADE ESPECÍFICA
   app.get("/cities/:cityId", getCity);
+
+  // Home → Lojas
+  app.get(
+    "/cities/:cityId/categories/:categoryId/stores",
+    listStoresByCityAndCategoryController,
+  );
 
   // ATUALIZAR CIDADE (ADMIN)
   app.patch(
