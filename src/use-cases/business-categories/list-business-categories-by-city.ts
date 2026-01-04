@@ -1,5 +1,5 @@
-import { BusinessCategory } from "@prisma/client";
 import { BusinessCategoriesRepository } from "@/repositories/prisma/Iprisma/business-category-repository ";
+import { BusinessCategory } from "@prisma/client";
 
 interface ListBusinessCategoriesByCityUseCaseRequest {
   cityId: string;
@@ -17,6 +17,9 @@ export class ListBusinessCategoriesByCityUseCase {
   async execute({
     cityId,
   }: ListBusinessCategoriesByCityUseCaseRequest): Promise<ListBusinessCategoriesByCityUseCaseResponse> {
+    if (!cityId) {
+      throw new Error("CityId is required");
+    }
     const categories =
       await this.businessCategoriesRepository.findManyByCityId(cityId);
 

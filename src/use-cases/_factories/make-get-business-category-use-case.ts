@@ -1,5 +1,5 @@
 import { PrismaBusinessCategoriesRepository } from "@/repositories/prisma/prisma-business-category-repository";
-import { GetBusinessCategoryUseCase } from "../business-category/get-business-category";
+import { GetBusinessCategoryUseCase } from "../business-categories/get-business-category";
 
 export function makeGetBusinessCategoryUseCase() {
   const businessCategoriesRepository = new PrismaBusinessCategoriesRepository();

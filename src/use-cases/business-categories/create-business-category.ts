@@ -4,6 +4,7 @@ import { BusinessCategory } from "@prisma/client";
 interface CreateBusinessCategoryUseCaseRequest {
   id?: string;
   name: string;
+  cityId: string;
   image?: string | null;
 }
 
@@ -19,6 +20,7 @@ export class CreateBusinessCategoryUseCase {
   async execute({
     id,
     name,
+    cityId,
     image,
   }: CreateBusinessCategoryUseCaseRequest): Promise<CreateBusinessCategoryUseCaseResponse> {
     const categoryExists =
@@ -32,6 +34,7 @@ export class CreateBusinessCategoryUseCase {
       id,
       name,
       image,
+      cityId,
       createdAt: new Date(),
     });
 

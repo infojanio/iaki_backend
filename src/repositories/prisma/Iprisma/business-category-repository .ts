@@ -6,6 +6,7 @@ export interface BusinessCategoriesRepository {
   findManyByCityId(cityId: string): Promise<BusinessCategory[]>;
 
   findMany(): Promise<BusinessCategory[]>;
+  findAll(): Promise<BusinessCategory[]>;
 
   search(query: string): Promise<BusinessCategory[]>;
 

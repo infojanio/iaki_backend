@@ -15,7 +15,7 @@ const userProfileSelect = Prisma.validator<Prisma.UserSelect>()({
   role: true,
   avatar: true,
   street: true,
-  cityId: true,
+  city: true,
   state: true,
   postalCode: true,
   created_at: true,
@@ -47,9 +47,7 @@ export class PrismaUsersRepository implements UsersRepository {
 
   async findById(id: string): Promise<User | null> {
     const user = await prisma.user.findUnique({
-      where: {
-        id,
-      },
+      where: { id },
       select: {
         id: true,
         name: true,
@@ -59,12 +57,19 @@ export class PrismaUsersRepository implements UsersRepository {
         avatar: true,
         role: true,
         passwordHash: true,
-        // NÃO selecionar passwordHash
-        street: true,
         cityId: true,
+        street: true,
         state: true,
         postalCode: true,
         created_at: true,
+
+        // 👇 RELAÇÃO
+        city: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 

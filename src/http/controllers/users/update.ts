@@ -24,7 +24,7 @@ export async function update(request: FastifyRequest, reply: FastifyReply) {
       message: "CPF inválido",
     }),
     street: z.string().optional(),
-    city: z.string().optional(),
+    cityId: z.string().optional(),
     state: z.string().optional(),
     postalCode: z.string().optional(),
   });

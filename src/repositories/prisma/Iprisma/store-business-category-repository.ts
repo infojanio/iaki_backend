@@ -1,4 +1,4 @@
-import { StoreBusinessCategory, Prisma } from "@prisma/client";
+import { StoreBusinessCategory, Prisma, Store } from "@prisma/client";
 
 export interface StoreBusinessCategoryRepository {
   // Buscar por ID da relação
@@ -10,16 +10,28 @@ export interface StoreBusinessCategoryRepository {
   // Buscar todas as lojas de uma categoria
   findByCategoryId(categoryId: string): Promise<StoreBusinessCategory[]>;
 
+  findManyStoresByCategoryId(categoryId: string): Promise<Store[]>;
+
   // Verificar se a relação já existe
   findByStoreAndCategory(
-    storeId: string,
     categoryId: string,
+    storeId: string,
   ): Promise<StoreBusinessCategory | null>;
+
+  findByCityAndCategory(params: {
+    cityId: string;
+    businessCategoryId: string;
+  }): Promise<any[]>;
+
+  findManyStoresByCategoryAndCity(
+    categoryId: string,
+    cityId: string,
+  ): Promise<Store[]>;
 
   // Listar todas as relações
   findMany(): Promise<StoreBusinessCategory[]>;
 
-  // Criar relação loja ↔ categoria
+  // Criar relação loja ↔ businnessCategory
   create(
     data: Prisma.StoreBusinessCategoryUncheckedCreateInput,
   ): Promise<StoreBusinessCategory>;

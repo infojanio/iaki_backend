@@ -1,10 +1,51 @@
 import { prisma } from "@/lib/prisma";
-import { Store, Prisma } from "@prisma/client";
+import { Store, Prisma, BusinessCategory } from "@prisma/client";
 import {
   FindManyNearbyParams,
   StoresRepository,
 } from "./Iprisma/stores-repository";
 export class PrismaStoresRepository implements StoresRepository {
+  async findManyByBusinessCategoryId(categoryId: string): Promise<Store[]> {
+    console.log(
+      "🟡 [Repository] Filtrando stores por businessCategoryId:",
+      categoryId,
+    );
+
+    const relations = await prisma.storeBusinessCategory.findMany({
+      where: {
+        categoryId,
+      },
+      include: {
+        store: true,
+      },
+    });
+
+    const stores = relations.map((rel) => rel.store);
+
+    console.log("🟢 [Repository] Lojas encontradas:", stores);
+
+    return stores;
+  }
+
+  async findManyByCityId(cityId: string): Promise<BusinessCategory[]> {
+    console.log("🟡 [Repository] Filtrando categorias por cityId:", cityId);
+
+    const categories = await prisma.businessCategory.findMany({
+      where: {
+        cities: {
+          some: {
+            cityId,
+          },
+        },
+      },
+      orderBy: { name: "asc" },
+    });
+
+    console.log("🟢 [Repository] Categorias encontradas:", categories);
+
+    return categories;
+  }
+
   //retorna todas as lojas
   async listMany(): Promise<Store[]> {
     const stores = await prisma.store.findMany();
@@ -26,24 +67,23 @@ export class PrismaStoresRepository implements StoresRepository {
     return stores;
   }
 
-  async findManyByCityAndCategory(
-    cityId: string,
+  async findByCityAndCategory(
     categoryId: string,
+    cityId: string,
   ): Promise<Store[]> {
-    return prisma.store.findMany({
+    const relations = await prisma.storeBusinessCategory.findMany({
       where: {
-        cityId,
-        isActive: true,
-        businessCategories: {
-          some: {
-            categoryId,
-          },
+        categoryId,
+        store: {
+          cityId,
         },
       },
-      orderBy: {
-        name: "asc",
+      include: {
+        store: true,
       },
     });
+
+    return relations.map((r) => r.store);
   }
 
   async findById(id: string): Promise<Store | null> {
@@ -104,7 +144,7 @@ export class PrismaStoresRepository implements StoresRepository {
     return store;
   }
 
-  async create(data: Prisma.StoreCreateInput) {
+  async create(data: Prisma.StoreUncheckedCreateInput) {
     const store = await prisma.store.create({
       data,
     });

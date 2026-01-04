@@ -22,10 +22,12 @@ model City {
   stateId String @map("state_id")
   state   State  @relation(fields: [stateId], references: [id])
 
-  stores Store[]
+  users User[]
+
+  businessCategories BusinessCategoryCity[]
+  stores             Store[]
 
   createdAt DateTime @default(now())
-  users     User[]
 
   @@unique([name, stateId])
   @@map("cities")
@@ -131,9 +133,28 @@ model BusinessCategory {
   image     String?
   createdAt DateTime @default(now()) @map("created_at")
 
-  stores StoreBusinessCategory[]
+  // Relação N:N com cidades
+  cities BusinessCategoryCity[]
 
+  // Relação com lojas
+  stores  StoreBusinessCategory[]
+  store   Store?                  @relation(fields: [storeId], references: [id])
+  storeId String?
+
+  @@unique([name])
   @@map("business_categories")
+}
+
+model BusinessCategoryCity {
+  id                 String @id @default(uuid())
+  businessCategoryId String @map("business_category_id")
+  cityId             String @map("city_id")
+
+  businessCategory BusinessCategory @relation(fields: [businessCategoryId], references: [id], onDelete: Cascade)
+  city             City             @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@unique([businessCategoryId, cityId])
+  @@map("business_category_cities")
 }
 
 model StoreBusinessCategory {
@@ -151,7 +172,6 @@ model StoreBusinessCategory {
 ///////////////////////////////////////////////////////////////
 // STORES
 ///////////////////////////////////////////////////////////////
-
 model Store {
   id   String  @id @default(uuid())
   name String
@@ -167,16 +187,15 @@ model Store {
   street     String?
   postalCode String? @map("postal_code")
 
-  // Relação com a cidade escolhida pelo usuário
   cityId String @map("city_id")
   city   City   @relation(fields: [cityId], references: [id])
 
-  subscriptions      Subscription[]
-  businessCategories StoreBusinessCategory[]
-
-  products     Product[]
-  orders       Order[]
-  paymentTypes PaymentType[]
+  storeBusinessCategories StoreBusinessCategory[]
+  businessCategories      BusinessCategory[]
+  subscriptions           Subscription[]
+  products                Product[]
+  orders                  Order[]
+  paymentTypes            PaymentType[]
 
   cashbacks            Cashback[]
   cashbackTransactions CashbackTransaction[]

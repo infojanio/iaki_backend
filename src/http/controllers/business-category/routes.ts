@@ -7,6 +7,8 @@ import { getBusinessCategoryController } from "./get-business-category";
 import { listBusinessCategoriesController } from "./list-business-categories";
 import { searchBusinessCategoryController } from "./search-business-category";
 import { updateBusinessCategoryController } from "./update-business-category";
+import { listBusinessCategoriesByCity } from "./list-business-categories-by-city";
+import { linkBusinessCategoryToCityController } from "./link-to-city";
 
 export async function businessCategoriesRoutes(app: FastifyInstance) {
   // Todas exigem usuário autenticado
@@ -14,6 +16,9 @@ export async function businessCategoriesRoutes(app: FastifyInstance) {
 
   // Listar todas as categorias (usado na Home e Admin)
   app.get("/business-categories", listBusinessCategoriesController);
+
+  // Listar todas as categorias de negócio (usado na Home)
+  app.get("/business-categories/city/:cityId", listBusinessCategoriesByCity);
 
   // Buscar categorias por nome (?q=farm)
   app.get("/business-categories/search", searchBusinessCategoryController);
@@ -26,6 +31,13 @@ export async function businessCategoriesRoutes(app: FastifyInstance) {
     "/business-categories",
     { onRequest: [verifyUserRole("ADMIN")] },
     createBusinessCategoryController,
+  );
+
+  // Vincular BusinessCategory a City (ADMIN)
+  app.post(
+    "/business-categories/link-city",
+    { onRequest: [verifyUserRole("ADMIN")] },
+    linkBusinessCategoryToCityController,
   );
 
   // Atualizar categoria (ADMIN)

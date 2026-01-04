@@ -6,13 +6,12 @@ export async function listBusinessCategoriesController(
   reply: FastifyReply,
 ) {
   try {
-    const useCase = makeListBusinessCategoriesUseCase();
-    const { categories } = await useCase.execute();
+    const listBusinessCategoriesUseCase = makeListBusinessCategoriesUseCase();
+    const { categories } = await listBusinessCategoriesUseCase.execute();
 
     return reply.status(200).send(categories);
   } catch (error) {
-    return reply.status(500).send({
-      message: "Erro ao listar categorias",
-    });
+    console.error("Erro ao listar cidades:", error);
+    return reply.status(500).send({ message: "Erro interno no servidor" });
   }
 }

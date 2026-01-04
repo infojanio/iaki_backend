@@ -22,21 +22,29 @@ export class PrismaBusinessCategoriesRepository
     });
   }
 
-  async findManyByCityId(cityId: string): Promise<BusinessCategory[]> {
+  async findAll(): Promise<BusinessCategory[]> {
     return prisma.businessCategory.findMany({
+      orderBy: { name: "asc" },
+    });
+  }
+
+  async findManyByCityId(cityId: string): Promise<BusinessCategory[]> {
+    console.log("🟡 [Repository] Filtrando categorias por cityId:", cityId);
+
+    const categories = await prisma.businessCategory.findMany({
       where: {
-        stores: {
+        cities: {
           some: {
-            store: {
-              cityId,
-              isActive: true,
-            },
+            cityId,
           },
         },
       },
-      distinct: ["id"],
       orderBy: { name: "asc" },
     });
+
+    console.log("🟢 [Repository] Categorias encontradas:", categories);
+
+    return categories;
   }
 
   async findMany(): Promise<BusinessCategory[]> {
@@ -57,11 +65,17 @@ export class PrismaBusinessCategoriesRepository
     });
   }
 
-  async create(
-    data: Prisma.BusinessCategoryUncheckedCreateInput,
-  ): Promise<BusinessCategory> {
+  async create(data: { name: string; image?: string; cityId: string }) {
     return prisma.businessCategory.create({
-      data,
+      data: {
+        name: data.name,
+        image: data.image,
+        cities: {
+          connect: {
+            id: data.cityId,
+          },
+        },
+      },
     });
   }
 

@@ -1,5 +1,5 @@
-import { BusinessCategory } from "@prisma/client";
 import { BusinessCategoriesRepository } from "@/repositories/prisma/Iprisma/business-category-repository ";
+import { BusinessCategory } from "@prisma/client";
 
 interface ListBusinessCategoriesUseCaseResponse {
   categories: BusinessCategory[];
@@ -11,7 +11,7 @@ export class ListBusinessCategoriesUseCase {
   ) {}
 
   async execute(): Promise<ListBusinessCategoriesUseCaseResponse> {
-    const categories = await this.businessCategoriesRepository.findMany();
+    const categories = await this.businessCategoriesRepository.findAll();
     return { categories };
   }
 }

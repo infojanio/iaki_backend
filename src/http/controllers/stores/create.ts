@@ -1,56 +1,55 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { makeCreateStoreUseCase } from "@/use-cases/_factories/make-create-store-use-case";
-import { makeAddressUseCase } from "@/use-cases/_factories/make-create-address-use-case";
 import { StoreAlreadyExistsError } from "@/utils/messages/errors/store-already-exists-error";
 
 export async function create(request: FastifyRequest, reply: FastifyReply) {
   const createStoreBodySchema = z.object({
-    // id: z.string(),
+    //id: z.string().uuid(),
     name: z.string(),
+    phone: z.string(),
     slug: z.string(),
+    isActive: z.boolean().default(true),
     latitude: z.number(),
     longitude: z.number(),
-    phone: z.string(),
-    avatar: z.string(),
     cnpj: z.string(),
+    avatar: z.string(),
     street: z.string(),
-    city: z.string(),
-    state: z.string(),
     postalCode: z.string(),
+    cityId: z.string().uuid(),
   });
 
   const {
-    // id,
+    //  id,
     name,
+    phone,
     slug,
+    isActive,
     latitude,
     longitude,
-    phone,
-    avatar,
     cnpj,
+    avatar,
     street,
-    city,
-    state,
     postalCode,
+    cityId,
   } = createStoreBodySchema.parse(request.body);
 
   try {
     const storeUseCase = makeCreateStoreUseCase();
 
     const { store } = await storeUseCase.execute({
-      // id,
+      //  id,
       name,
+      phone,
       slug,
+      isActive,
       latitude,
       longitude,
-      phone,
-      avatar,
       cnpj,
+      avatar,
       street,
-      city,
-      state,
       postalCode,
+      cityId,
     });
 
     // Retorna status 201, mensagem de sucesso e os dados do usuário criado

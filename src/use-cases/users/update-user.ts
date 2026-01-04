@@ -13,7 +13,7 @@ interface UpdateUserUseCaseRequest {
   role?: Role;
   cpf?: string;
   street?: string;
-  city?: string;
+  cityId?: string;
   state?: string;
   postalCode?: string;
 }

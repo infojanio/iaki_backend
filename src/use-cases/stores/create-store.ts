@@ -8,15 +8,15 @@ interface RegisterUseCaseRequest {
   id?: string;
   name: string;
   slug: string;
+  isActive: boolean;
   latitude: number;
   longitude: number;
-  avatar: string;
-  city: string;
-  cnpj: string;
   phone: string;
-  postalCode: string;
-  state: string;
+  cnpj: string;
+  avatar: string;
   street: string;
+  postalCode: string;
+  cityId: string;
 }
 
 interface RegisterUseCaseResponse {
@@ -30,15 +30,15 @@ export class RegisterUseCase {
     id,
     name,
     slug,
+    isActive,
     latitude,
     longitude,
-    avatar,
-    city,
-    cnpj,
     phone,
-    postalCode,
-    state,
+    cnpj,
+    avatar,
     street,
+    postalCode,
+    cityId,
   }: RegisterUseCaseRequest): Promise<RegisterUseCaseResponse> {
     try {
       const storeWithSameCnpj = await this.storesRepository.findByCnpj(cnpj);
@@ -52,15 +52,15 @@ export class RegisterUseCase {
         id,
         name,
         phone,
-        city,
-        longitude,
-        latitude,
         slug,
+        isActive,
+        latitude,
+        longitude,
         cnpj,
-        state,
-        postalCode,
-        street,
         avatar,
+        street,
+        postalCode,
+        cityId,
       });
 
       return { store };

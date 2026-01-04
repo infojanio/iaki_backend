@@ -1,10 +1,11 @@
 import { FastifyInstance } from "fastify";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
 import { verifyUserRole } from "@/http/middlewares/verify-user-role";
-import { listStoreBusinessCategoriesController } from "./list-store-business-categories";
+import { listStoreByBusinessCategoriesController } from "./list-store-by-business-categories";
 import { getStoreBusinessCategoryController } from "./get-store-business-category";
 import { createStoreBusinessCategoryController } from "./create-store-business-category";
 import { deleteStoreBusinessCategoryController } from "./delete-store-business-category";
+import { LinkStoreToBusinessCategoryController } from "./link-store-to-business-category";
 
 export async function storeBusinessCategoryRoutes(app: FastifyInstance) {
   // Todas as rotas exigem usuário autenticado
@@ -14,14 +15,27 @@ export async function storeBusinessCategoryRoutes(app: FastifyInstance) {
   app.get(
     "/store-business-categories",
     { onRequest: [verifyUserRole("ADMIN")] },
-    listStoreBusinessCategoriesController,
+    listStoreByBusinessCategoriesController,
+  );
+
+  // Listar todas as lojas por categorias de negócio (usado na Home)
+  app.get(
+    "/stores-business-categories/category/:categoryId",
+    listStoreByBusinessCategoriesController,
   );
 
   // (ADMIN) – obter uma relação específica
   app.get(
-    "/store-business-categories/:id",
+    "/store-business-categories/:categoryId",
     { onRequest: [verifyUserRole("ADMIN")] },
     getStoreBusinessCategoryController,
+  );
+
+  // Vincular BusinessCategory a City (ADMIN)
+  app.post(
+    "/store-business-categories/link-category",
+    { onRequest: [verifyUserRole("ADMIN")] },
+    LinkStoreToBusinessCategoryController,
   );
 
   // (ADMIN) – criar vínculo loja ↔ categoria

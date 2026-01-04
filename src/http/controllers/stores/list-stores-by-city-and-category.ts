@@ -2,7 +2,7 @@ import { makeListStoresByCityAndCategoryUseCase } from "@/use-cases/_factories/m
 import { FastifyRequest, FastifyReply } from "fastify";
 import { z } from "zod";
 
-export async function listStoresByCityAndCategoryController(
+export async function listStoresByCityAndCategory(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
@@ -12,10 +12,13 @@ export async function listStoresByCityAndCategoryController(
   });
 
   try {
+    console.log("🟣 [Controller] params recebidos:", request.params);
     const { cityId, categoryId } = paramsSchema.parse(request.params);
 
     const useCase = makeListStoresByCityAndCategoryUseCase();
     const { stores } = await useCase.execute({ cityId, categoryId });
+
+    console.log("🟣 [Controller] lojas retornadas:", stores.length);
 
     return reply.status(200).send(stores);
   } catch {
