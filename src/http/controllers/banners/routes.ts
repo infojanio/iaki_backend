@@ -6,28 +6,32 @@ import { listBanners } from "./listBanners";
 import { getBanner } from "./get-banner";
 import { updateBanner } from "./update-banner";
 import { deleteBanner } from "./delete-banner";
+import { getBannersByStoreController } from "./get-banners-by-store";
 
 export async function bannersRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
 
   app.get("/banners", listBanners);
   app.get("/banners/:bannerId", getBanner);
+
+  app.get("/banners/store/:storeId", getBannersByStoreController);
+
   app.patch(
     "/banners/:bannerId",
     { onRequest: [verifyJWT, verifyUserRole("ADMIN")] },
-    updateBanner
+    updateBanner,
   );
   app.delete(
     "/banners/:bannerId",
     { onRequest: [verifyJWT, verifyUserRole("ADMIN")] },
-    deleteBanner
+    deleteBanner,
   );
 
   app.post(
     //    '/stores/${storeId}/subcategories/${subcategoryId}/products',
     "/banners",
     { onRequest: [verifyUserRole("ADMIN")] },
-    create
+    create,
   );
 
   //app.post('/stores/:storeId/orders', { onRequest: [verifyJWT] }, create)

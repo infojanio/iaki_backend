@@ -21,9 +21,8 @@ export class UpdateCategoryUseCase {
     ...data
   }: UpdateCategoryUseCaseRequest): Promise<UpdateCategoryUseCaseResponse> {
     // Verifica se o category existe
-    const existingCategory = await this.categoriesRepository.findById(
-      categoryId
-    );
+    const existingCategory =
+      await this.categoriesRepository.findById(categoryId);
 
     if (!existingCategory) {
       throw new ResourceNotFoundError();
@@ -37,7 +36,7 @@ export class UpdateCategoryUseCase {
     // Atualiza o produto
     const updatedCategory = await this.categoriesRepository.update(
       categoryId,
-      updateData
+      updateData,
     );
 
     return { updatedCategory };

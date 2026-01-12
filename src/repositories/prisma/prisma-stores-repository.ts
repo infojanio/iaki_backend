@@ -3,7 +3,9 @@ import { Store, Prisma, BusinessCategory } from "@prisma/client";
 import {
   FindManyNearbyParams,
   StoresRepository,
+  StoreWithCategoriesDTO,
 } from "./Iprisma/stores-repository";
+
 export class PrismaStoresRepository implements StoresRepository {
   async findManyByBusinessCategoryId(categoryId: string): Promise<Store[]> {
     console.log(
@@ -27,6 +29,24 @@ export class PrismaStoresRepository implements StoresRepository {
     return stores;
   }
 
+  async findByCity(cityId: string) {
+    const stores = await prisma.store.findMany({
+      where: { cityId },
+      include: {
+        storeCategories: {
+          include: {
+            category: true,
+          },
+        },
+      },
+    });
+
+    return stores.map((store) => ({
+      ...store,
+      categories: store.storeCategories.map((sc) => sc.category),
+    }));
+  }
+
   async findManyByCityId(cityId: string): Promise<BusinessCategory[]> {
     console.log("🟡 [Repository] Filtrando categorias por cityId:", cityId);
 
@@ -47,24 +67,60 @@ export class PrismaStoresRepository implements StoresRepository {
   }
 
   //retorna todas as lojas
-  async listMany(): Promise<Store[]> {
-    const stores = await prisma.store.findMany();
-    return stores;
-  }
-
-  //retorna lojas ativas
-  async listManyActive(): Promise<Store[]> {
+  async listMany(): Promise<StoreWithCategoriesDTO[]> {
     const stores = await prisma.store.findMany({
-      where: { isActive: true },
       include: {
-        businessCategories: {
+        storeCategories: {
           include: {
             category: true,
           },
         },
       },
     });
-    return stores;
+
+    return stores.map((store) => ({
+      id: store.id,
+      name: store.name,
+      slug: store.slug,
+      avatar: store.avatar,
+      phone: store.phone,
+      isActive: store.isActive,
+      latitude: store.latitude,
+      longitude: store.longitude,
+      cnpj: store.cnpj,
+      street: store.street,
+      postalCode: store.postalCode,
+      cityId: store.cityId,
+      rating: store.rating,
+      ratingCount: store.ratingCount,
+
+      // 🔑 ESSENCIAL
+      categories: store.storeCategories.map((sc) => sc.category),
+    }));
+  }
+  //retorna lojas ativas
+  async listManyActive(): Promise<StoreWithCategoriesDTO[]> {
+    const stores = await prisma.store.findMany({
+      where: { isActive: true },
+      include: {
+        storeCategories: {
+          include: {
+            category: true,
+          },
+        },
+      },
+    });
+
+    return stores.map((store) => ({
+      id: store.id,
+      name: store.name,
+      avatar: store.avatar,
+      phone: store.phone,
+      rating: store.rating,
+      ratingCount: store.ratingCount,
+      cityId: store.cityId,
+      categories: store.storeCategories.map((sc) => sc.category),
+    }));
   }
 
   async findByCityAndCategory(
@@ -86,10 +142,12 @@ export class PrismaStoresRepository implements StoresRepository {
     return relations.map((r) => r.store);
   }
 
-  async findById(id: string): Promise<Store | null> {
+  async findById(storeId: string): Promise<Store | null> {
     const store = await prisma.store.findUnique({
-      where: {
-        id,
+      where: { id: storeId },
+      include: {
+        city: true,
+        storeCategories: true,
       },
     });
     console.log("Resultado da busca manual:", store);

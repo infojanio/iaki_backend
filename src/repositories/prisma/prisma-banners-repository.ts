@@ -12,8 +12,29 @@ export class PrismaBannersRepository implements BannersRepository {
     return banner;
   }
 
+  async create(data: Prisma.BannerUncheckedCreateInput) {
+    const banner = await prisma.banner.create({
+      data,
+    });
+    return banner;
+  }
+
   async listMany(): Promise<Banner[]> {
     const banners = await prisma.banner.findMany();
+    return banners;
+  }
+
+  async findManyByStoreId(storeId: string): Promise<Banner[]> {
+    const banners = await prisma.banner.findMany({
+      where: {
+        storeId,
+        isActive: true,
+      },
+      orderBy: {
+        position: "asc",
+      },
+    });
+
     return banners;
   }
 
@@ -32,7 +53,7 @@ export class PrismaBannersRepository implements BannersRepository {
       title?: string;
       image_url?: string;
       link?: string;
-    }
+    },
   ): Promise<Banner> {
     return prisma.banner.update({
       where: { id },
@@ -62,13 +83,6 @@ export class PrismaBannersRepository implements BannersRepository {
       skip: (page - 1) * 20,
       take: 20,
     });
-  }
-
-  async create(data: Prisma.BannerUncheckedCreateInput) {
-    const banner = await prisma.banner.create({
-      data,
-    });
-    return banner;
   }
 
   async delete(id: string): Promise<void> {

@@ -3,6 +3,7 @@ export interface CategoriesRepository {
   findById(id: string): Promise<Category | null>;
   findByIdCategory(id: string): Promise<Category | null>;
   create(data: Prisma.CategoryCreateInput): Promise<Category>;
+  findManyByStoreId(store_id: string): Promise<Category[]>;
   listMany(): Promise<Category[]>; //listar todas
   searchMany(search: string, page: number): Promise<Category[]>; //buscar por nome
   update(
@@ -10,6 +11,6 @@ export interface CategoriesRepository {
     data: {
       name?: string;
       image?: string;
-    }
+    },
   ): Promise<Category>;
 }

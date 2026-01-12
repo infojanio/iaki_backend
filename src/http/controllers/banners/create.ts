@@ -5,18 +5,21 @@ import { makeCreateBannerUseCase } from "@/use-cases/_factories/make-create-bann
 export async function create(request: FastifyRequest, reply: FastifyReply) {
   const createBannerBodySchema = z.object({
     title: z.string(),
-    image_url: z.string(),
+    imageUrl: z.string(),
     link: z.string(),
+    position: z.number(),
+    storeId: z.string(),
     created_at: z.date().optional(),
   });
-  const { title, image_url, link, created_at } = createBannerBodySchema.parse(
-    request.body
-  );
+  const { title, imageUrl, link, position, storeId, created_at } =
+    createBannerBodySchema.parse(request.body);
   const createBannerUseCase = makeCreateBannerUseCase();
   await createBannerUseCase.execute({
     title,
-    image_url,
+    imageUrl,
     link,
+    position,
+    storeId,
     created_at: new Date(),
   });
 

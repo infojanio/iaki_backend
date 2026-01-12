@@ -15,7 +15,7 @@ const updateCategoryBodySchema = z.object({
 
 export async function updateCategory(
   request: FastifyRequest,
-  reply: FastifyReply
+  reply: FastifyReply,
 ) {
   try {
     const { categoryId } = updateCategoryParamsSchema.parse(request.params);

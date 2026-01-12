@@ -73,7 +73,7 @@ export class PrismaStoreBusinessCategoryRepository
 
     const businessCategories = await prisma.store.findMany({
       where: {
-        businessCategories: {
+        storeBusinessCategories: {
           some: {
             categoryId,
           },

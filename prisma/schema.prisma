@@ -179,13 +179,15 @@ model Store {
 
   isActive Boolean @default(true)
 
-  latitude   Decimal
-  longitude  Decimal
-  phone      String?
-  cnpj       String?
-  avatar     String?
-  street     String?
-  postalCode String? @map("postal_code")
+  rating      Float   @default(0)
+  ratingCount Int     @default(0)
+  latitude    Decimal
+  longitude   Decimal
+  phone       String?
+  cnpj        String?
+  avatar      String?
+  street      String?
+  postalCode  String? @map("postal_code")
 
   cityId String @map("city_id")
   city   City   @relation(fields: [cityId], references: [id])
@@ -203,9 +205,23 @@ model Store {
   coupons              Coupon[]
   storeDiscounts       StoreDiscount[]
 
-  created_at DateTime @default(now()) @map("created_at")
+  created_at      DateTime        @default(now()) @map("created_at")
+  storeCategories StoreCategory[]
+  banners         Banner[]
 
   @@map("stores")
+}
+
+model StoreCategory {
+  id         String @id @default(uuid())
+  storeId    String @map("store_id")
+  categoryId String @map("category_id")
+
+  store    Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, categoryId])
+  @@map("store_categories")
 }
 
 ///////////////////////////////////////////////////////////////
@@ -380,10 +396,16 @@ enum CashbackTransactionType {
 ///////////////////////////////////////////////////////////////
 
 model Banner {
-  id         String   @id @default(uuid())
-  title      String
-  image_url  String
-  link       String?
+  id       String  @id @default(uuid())
+  title    String
+  imageUrl String
+  link     String?
+  isActive Boolean @default(true)
+  position Int? // ordem do banner na loja
+
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
@@ -412,6 +434,9 @@ model Category {
   created_at  DateTime      @default(now()) @map("created_at")
   SubCategory SubCategory[]
 
+  stores StoreCategory[]
+
+  @@unique([name])
   @@map("categories")
 }
 

@@ -9,6 +9,9 @@ import { listStoresActive } from "./listStoresActive";
 import { toggleStatus } from "./toggleStore";
 import { listStoresByCityAndCategory } from "./list-stores-by-city-and-category";
 import { listStoreByBusinessCategoriesController } from "../store-business-category/list-store-by-business-categories";
+import { listStoresByCity } from "./list-stores-by-city";
+import { FetchStoreById } from "./fetch-store-by-id";
+import { getStoreCategoriesController } from "./get-store-categories";
 
 export async function storesRoutes(app: FastifyInstance) {
   // 🔓 Permite acesso público às rotas de busca e lojas próximas
@@ -26,6 +29,12 @@ export async function storesRoutes(app: FastifyInstance) {
     "/stores/city/:cityId/category/:categoryId",
     listStoresByCityAndCategory,
   );
+
+  app.get("/stores/city/:cityId", listStoresByCity);
+
+  app.get("/stores/:storeId", FetchStoreById);
+
+  app.get("/stores/:storeId/categories", getStoreCategoriesController);
 
   app.get("/stores/active", listStoresActive);
   //app.post('/stores', create)

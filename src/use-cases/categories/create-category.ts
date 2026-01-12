@@ -1,14 +1,14 @@
-import { CategoriesRepository } from '@/repositories/prisma/Iprisma/categories-repository'
-import { Category } from '@prisma/client'
+import { CategoriesRepository } from "@/repositories/prisma/Iprisma/categories-repository";
+import { Category } from "@prisma/client";
 interface CreateCategoryUseCaseRequest {
-  id?: string
-  name: string
-  image: string | null
-  created_at: Date
+  id?: string;
+  name: string;
+  image: string | null;
+  created_at: Date;
   // subcategory: string
 }
 interface CreateCategoryUseCaseResponse {
-  category: Category
+  category: Category;
 }
 export class CreateCategoryUseCase {
   constructor(private categoriesRepository: CategoriesRepository) {}
@@ -25,9 +25,9 @@ export class CreateCategoryUseCase {
       image,
       created_at,
       // SubCategory: subcategory,
-    })
+    });
     return {
       category,
-    }
+    };
   }
 }

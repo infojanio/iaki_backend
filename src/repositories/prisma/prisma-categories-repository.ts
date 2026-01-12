@@ -30,7 +30,7 @@ export class PrismaCategoriesRepository implements CategoriesRepository {
     data: {
       name?: string;
       image?: string;
-    }
+    },
   ): Promise<Category> {
     return prisma.category.update({
       where: { id },
@@ -59,6 +59,26 @@ export class PrismaCategoriesRepository implements CategoriesRepository {
       },
       skip: (page - 1) * 20,
       take: 20,
+    });
+  }
+
+  async findManyByStoreId(store_id: string) {
+    return prisma.category.findMany({
+      where: {
+        SubCategory: {
+          some: {
+            products: {
+              some: {
+                store_id,
+              },
+            },
+          },
+        },
+      },
+      distinct: ["id"],
+      orderBy: {
+        name: "asc",
+      },
     });
   }
 

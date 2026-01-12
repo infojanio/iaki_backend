@@ -11,7 +11,7 @@ export interface StoreBusinessCategoryRepository {
   findByCategoryId(categoryId: string): Promise<StoreBusinessCategory[]>;
 
   findManyStoresByCategoryId(categoryId: string): Promise<Store[]>;
-
+  findManyByBusinessCategoryId(categoryId: string): Promise<Store[]>;
   // Verificar se a relação já existe
   findByStoreAndCategory(
     categoryId: string,

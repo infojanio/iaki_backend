@@ -3,8 +3,10 @@ import { Banner, Prisma } from "@prisma/client";
 interface CreateBannerUseCaseRequest {
   id?: string;
   title: string;
-  image_url: string;
+  imageUrl: string;
   link?: string;
+  position: number;
+  storeId: string;
   created_at: Date;
 }
 
@@ -13,15 +15,19 @@ export class CreateBannerUseCase {
   async execute({
     id,
     title,
-    image_url,
+    imageUrl,
     link,
+    position,
+    storeId,
     created_at,
   }: CreateBannerUseCaseRequest) {
     const banner = await this.bannersRepository.create({
       id,
       title,
-      image_url,
+      imageUrl,
       link,
+      position,
+      storeId,
       created_at,
     });
     return {
