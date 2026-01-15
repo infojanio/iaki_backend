@@ -1,9 +1,10 @@
-import '@fastify/jwt'
-declare module '@fastify/jwt' {
+import "@fastify/jwt";
+declare module "@fastify/jwt" {
   export interface FastifyJWT {
     user: {
-      role: 'ADMIN' | 'USER'
-      sub: string // userId
-    }
+      sub: string; // userId
+      role: "ADMIN" | "USER" | "STORE_ADMIN";
+      storeId?: string;
+    };
   }
 }

@@ -1,9 +1,11 @@
-import { PrismaCartsRepository } from '@/repositories/prisma/prisma-carts-repository'
-import { AddToCartUseCase } from '@/use-cases/carts/add-to-cart'
+import { prisma } from "@/lib/prisma";
+import { PrismaCartsRepository } from "@/repositories/prisma/prisma-carts-repository";
+import { PrismaProductsRepository } from "@/repositories/prisma/prisma-products-repository";
+import { AddToCartUseCase } from "../carts/add-to-cart";
 
 export function makeAddToCartUseCase() {
-  const cartsRepository = new PrismaCartsRepository()
-  const useCase = new AddToCartUseCase(cartsRepository)
+  const cartsRepository = new PrismaCartsRepository(prisma);
+  const productsRepository = new PrismaProductsRepository();
 
-  return useCase
+  return new AddToCartUseCase(cartsRepository, productsRepository);
 }

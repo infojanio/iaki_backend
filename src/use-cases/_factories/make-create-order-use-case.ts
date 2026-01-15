@@ -1,20 +1,17 @@
+import { CreateOrderUseCase } from "../orders/create-order";
 import { PrismaOrdersRepository } from "@/repositories/prisma/prisma-orders-repository";
-import { OrderUseCase } from "../orders/create-order";
-import { PrismaUserLocationsRepository } from "@/repositories/prisma/prisma-user-locations-repository";
-import { PrismaProductsRepository } from "@/repositories/prisma/prisma-products-repository";
+import { PrismaCartsRepository } from "@/repositories/prisma/prisma-carts-repository";
+import { PrismaCashbacksRepository } from "@/repositories/prisma/prisma-cashbacks-repository";
+import { prisma } from "@/lib/prisma";
 
-export function makeOrderUseCase() {
-  const ordersRepository = new PrismaOrdersRepository();
+export function makeCreateOrderUseCase() {
+  const ordersRepository = new PrismaOrdersRepository(prisma);
+  const cartsRepository = new PrismaCartsRepository(prisma);
+  const cashbacksRepository = new PrismaCashbacksRepository();
 
-  const userLocationsRepository = new PrismaUserLocationsRepository();
-
-  const productsRepository = new PrismaProductsRepository();
-
-  const useCase = new OrderUseCase(
+  return new CreateOrderUseCase(
     ordersRepository,
-    userLocationsRepository,
-    productsRepository
+    cartsRepository,
+    cashbacksRepository,
   );
-
-  return useCase;
 }

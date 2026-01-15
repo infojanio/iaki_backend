@@ -1,130 +1,178 @@
-import { Prisma, Cart, CartItem } from '@prisma/client'
-import { prisma } from '@/lib/prisma'
-import { CartsRepository } from '@/repositories/prisma/Iprisma/carts-repository'
+import { PrismaClient, Cart, CartItem } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
+import { CartsRepository } from "./Iprisma/carts-repository";
+import { CartWithItems } from "@/@types/cart-with-items";
 
 export class PrismaCartsRepository implements CartsRepository {
-  async findByUserId(userId: string): Promise<Cart | null> {
-    return await prisma.cart.findFirst({
-      where: { userId },
+  constructor(private prisma: PrismaClient) {}
+
+  async findOpenByUserAndStoreWithItems(
+    userId: string,
+    storeId: string,
+  ): Promise<CartWithItems | null> {
+    return this.prisma.cart.findFirst({
+      where: {
+        userId,
+        storeId,
+        status: "OPEN",
+      },
       include: {
+        store: true, // 🔥 OBRIGATÓRIO
         items: {
           include: {
-            product: {
-              include: {
-                store: true,
-              },
-            },
+            product: true,
           },
         },
       },
-    })
+    });
   }
 
-  async create(userId: string): Promise<Cart> {
-    return await prisma.cart.create({
-      data: { userId },
-    })
-  }
-
-  // src/repositories/prisma/prisma-carts-repository.ts
-
-  async addItem(cartId: string, productId: string, quantity: number) {
-    const existingItem = await prisma.cartItem.findFirst({
+  // 🔹 Buscar carrinho OPEN por usuário + loja
+  async findOpenByUserAndStore(
+    userId: string,
+    storeId: string,
+  ): Promise<CartWithItems | null> {
+    return this.prisma.cart.findFirst({
       where: {
+        userId,
+        storeId,
+        status: "OPEN",
+      },
+      include: {
+        store: true,
+        items: {
+          include: {
+            product: true, // ✅ ESSENCIAL
+          },
+        },
+      },
+    });
+  }
+
+  // 🔹 Criar carrinho OPEN para loja
+  async create(data: { userId: string; storeId: string }): Promise<Cart> {
+    return this.prisma.cart.create({
+      data: {
+        userId: data.userId,
+        storeId: data.storeId,
+        status: "OPEN",
+      },
+    });
+  }
+
+  // 🔹 Adiciona item ou soma quantidade (snapshot garantido)
+  async addOrUpdateItem({
+    cartId,
+    productId,
+    quantity,
+    priceSnapshot,
+    cashbackSnapshot,
+  }: {
+    cartId: string;
+    productId: string;
+    quantity: number;
+    priceSnapshot: Decimal;
+    cashbackSnapshot: Decimal;
+  }): Promise<CartItem> {
+    const existing = await this.prisma.cartItem.findFirst({
+      where: { cartId, productId },
+    });
+
+    if (existing) {
+      return this.prisma.cartItem.update({
+        where: { id: existing.id },
+        data: {
+          quantity: existing.quantity + quantity,
+        },
+      });
+    }
+
+    return this.prisma.cartItem.create({
+      data: {
         cartId,
         productId,
+        quantity,
+        priceSnapshot,
+        cashbackSnapshot,
       },
-    })
-
-    if (existingItem) {
-      // Atualiza a quantidade (substitui)
-      return prisma.cartItem.update({
-        where: { id: existingItem.id },
-        data: { quantity },
-      })
-    } else {
-      // Cria novo item
-      return prisma.cartItem.create({
-        data: {
-          cartId,
-          productId,
-          quantity,
-        },
-      })
-    }
+    });
   }
 
+  // 🔹 Atualiza quantidade diretamente (ex: + / - no carrinho)
   async updateItemQuantity(
     cartId: string,
     productId: string,
     quantity: number,
   ): Promise<CartItem> {
-    const item = await prisma.cartItem.findFirst({
-      where: {
-        cartId,
-        productId,
-      },
-    })
-
-    if (!item) {
-      throw new Error('Item do carrinho não encontrado.')
-    }
-
-    return prisma.cartItem.update({
-      where: {
-        id: item.id,
-      },
-      data: {
-        quantity,
-      },
-    })
+    return this.prisma.cartItem
+      .updateMany({
+        where: { cartId, productId },
+        data: { quantity },
+      })
+      .then(() =>
+        this.prisma.cartItem.findFirstOrThrow({
+          where: { cartId, productId },
+        }),
+      );
   }
 
+  // 🔹 Remove item do carrinho
   async removeItemByUserAndProduct(
     userId: string,
     productId: string,
   ): Promise<void> {
-    const cart = await prisma.cart.findFirst({
-      where: { userId },
-      include: { items: true },
-    })
-
-    if (!cart) return
-
-    const item = cart.items.find((i) => i.productId === productId)
-    if (!item) return
-
-    await prisma.cartItem.delete({
-      where: { id: item.id },
-    })
+    await this.prisma.cartItem.deleteMany({
+      where: {
+        productId,
+        cart: { userId },
+      },
+    });
   }
 
-  async clearCartByUserId(userId: string): Promise<void> {
-    const cart = await prisma.cart.findFirst({
-      where: { userId },
-    })
-
-    if (cart) {
-      await prisma.cartItem.deleteMany({
-        where: { cartId: cart.id },
-      })
-    }
-  }
-
-  async getItemsByUserId(userId: string): Promise<CartItem[]> {
-    return await prisma.cartItem.findMany({
+  async clearCartByUserAndStore(
+    userId: string,
+    storeId: string,
+  ): Promise<void> {
+    await this.prisma.cartItem.deleteMany({
       where: {
         cart: {
           userId,
+          storeId,
         },
       },
+    });
+  }
+
+  async removeItemByCartAndProduct(
+    cartId: string,
+    productId: string,
+  ): Promise<void> {
+    await this.prisma.cartItem.delete({
+      where: {
+        cartId_productId: {
+          cartId,
+          productId,
+        },
+      },
+    });
+  }
+
+  // 🔹 Buscar carrinho da loja atual (com itens)
+  async getCartByStore(userId: string, storeId: string) {
+    return this.prisma.cart.findFirst({
+      where: {
+        userId,
+        storeId,
+        status: "OPEN",
+      },
       include: {
-        product: {
+        store: true,
+        items: {
           include: {
-            store: true,
+            product: true,
           },
         },
       },
-    })
+    });
   }
 }

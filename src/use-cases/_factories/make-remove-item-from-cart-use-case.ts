@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { PrismaCartsRepository } from "@/repositories/prisma/prisma-carts-repository";
-import { GetCartByStoreUseCase } from "../carts/get-cart-by-store";
+import { RemoveItemFromCartUseCase } from "../carts/remove-itemFromCart";
 
-export function makeGetCartByStoreUseCase() {
+export function makeRemoveItemFromCartUseCase() {
   const cartsRepository = new PrismaCartsRepository(prisma);
 
-  return new GetCartByStoreUseCase(cartsRepository);
+  return new RemoveItemFromCartUseCase(cartsRepository);
 }

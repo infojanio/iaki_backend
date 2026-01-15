@@ -1,24 +1,64 @@
-import { CartsRepository } from '@/repositories/prisma/Iprisma/carts-repository'
+import { CartsRepository } from "@/repositories/prisma/Iprisma/carts-repository";
+import { ProductsRepository } from "@/repositories/prisma/Iprisma/products-repository";
+import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-found-error";
 
 interface AddToCartUseCaseRequest {
-  userId: string
-  productId: string
-  quantity: number
+  userId: string;
+  storeId: string;
+  productId: string;
+  quantity: number;
 }
 
 export class AddToCartUseCase {
-  constructor(private cartsRepository: CartsRepository) {}
+  constructor(
+    private cartsRepository: CartsRepository,
+    private productsRepository: ProductsRepository,
+  ) {}
 
-  async execute({ userId, productId, quantity }: AddToCartUseCaseRequest) {
-    // Verifica se o carrinho já existe
-    let cart = await this.cartsRepository.findByUserId(userId)
+  async execute({
+    userId,
+    storeId,
+    productId,
+    quantity,
+  }: AddToCartUseCaseRequest) {
+    // 🔹 valida produto
+    const product = await this.productsRepository.findById(productId);
 
-    // Se não existir, cria um novo carrinho
-    if (!cart) {
-      cart = await this.cartsRepository.create(userId)
+    if (!product) {
+      throw new ResourceNotFoundError();
     }
 
-    // Adiciona o item ao carrinho usando o ID correto
-    return this.cartsRepository.addItem(cart.id, productId, quantity)
+    // 🔹 segurança: produto deve pertencer à loja
+    if (product.store_id !== storeId) {
+      throw new Error("Produto não pertence à loja selecionada");
+    }
+
+    // 🔹 busca carrinho OPEN da loja
+    let cart = await this.cartsRepository.findOpenByUserAndStore(
+      userId,
+      storeId,
+    );
+
+    // 🔹 cria carrinho se não existir
+    if (!cart) {
+      cart = await this.cartsRepository.create({
+        userId,
+        storeId,
+      });
+    }
+
+    // 🔹 adiciona ou atualiza item com snapshot
+    const cartItem = await this.cartsRepository.addOrUpdateItem({
+      cartId: cart.id,
+      productId,
+      quantity,
+      priceSnapshot: product.price,
+      cashbackSnapshot: product.cashback_percentage,
+    });
+
+    return {
+      cartId: cart.id,
+      item: cartItem,
+    };
   }
 }

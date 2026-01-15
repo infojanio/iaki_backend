@@ -1,19 +1,29 @@
-import { FastifyRequest, FastifyReply } from 'fastify'
-import { z } from 'zod'
-import { makeAddToCartUseCase } from '@/use-cases/_factories/make-add-to-cart-use-case'
+import { makeAddToCartUseCase } from "@/use-cases/_factories/make-add-to-cart-use-case";
+import { FastifyRequest, FastifyReply } from "fastify";
+import { z } from "zod";
 
-export async function addToCart(request: FastifyRequest, reply: FastifyReply) {
-  const userId = request.user.sub
+export async function addToCartController(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const bodySchema = z.object({
+    storeId: z.string().uuid(),
+    productId: z.string().uuid(),
+    quantity: z.number().int().min(1),
+  });
 
-  const schema = z.object({
-    productId: z.string(),
-    quantity: z.number().min(1),
-  })
+  const { storeId, productId, quantity } = bodySchema.parse(request.body);
 
-  const { productId, quantity } = schema.parse(request.body)
+  const userId = request.user.sub;
 
-  const addToCartUseCase = makeAddToCartUseCase()
-  await addToCartUseCase.execute({ userId, productId, quantity })
+  const addToCartUseCase = makeAddToCartUseCase();
 
-  return reply.status(201).send()
+  const result = await addToCartUseCase.execute({
+    userId,
+    storeId,
+    productId,
+    quantity,
+  });
+
+  return reply.status(201).send(result);
 }

@@ -1,11 +1,13 @@
-import { FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyReply, FastifyRequest } from "fastify";
 
-export function verifyUserRole(roleToVerify: 'ADMIN' | 'USER') {
+export function verifyUserRole(roleToVerify: "ADMIN" | "USER" | "STORE_ADMIN") {
   return async (request: FastifyRequest, reply: FastifyReply) => {
-    const { role } = request.user
+    const { role } = request.user;
 
     if (role !== roleToVerify) {
-      return reply.status(401).send({ message: 'Usuário não autorizado!.' })
+      return reply.status(401).send({
+        message: "Usuário não autorizado.",
+      });
     }
-  }
+  };
 }

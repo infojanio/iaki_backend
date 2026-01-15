@@ -1,4 +1,4 @@
-import { Cashback, CashbackTransaction } from "@prisma/client";
+import { Cashback, CashbackTransaction, Prisma } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
 export interface CashbacksRepository {
@@ -8,12 +8,9 @@ export interface CashbacksRepository {
   findById(cashbackId: string): Promise<Cashback | null>;
   getBalance(user_id: string): Promise<number>;
   getTransactionsByUserId(userId: string): Promise<CashbackTransaction[]>;
-
-  createCashback(data: {
-    userId: string;
-    orderId: string;
-    amount: number;
-  }): Promise<Cashback>;
+  create(data: Prisma.CashbackUncheckedCreateInput): Promise<Cashback>;
+  findByOrderId(orderId: string): Promise<Cashback | null>;
+  confirmCashback(cashbackId: string): Promise<void>;
 
   redeemCashback(data: {
     user_id: string;
@@ -26,13 +23,4 @@ export interface CashbacksRepository {
     amount: number | Decimal;
     type: "RECEIVE" | "USE";
   }): Promise<CashbackTransaction>;
-
-  validateCashback(cashbackId: string): Promise<void>;
-
-  applyCashback(
-    order_id: string,
-    user_id: string,
-    valorTotal: number,
-    percentualCashback: number
-  ): Promise<void>;
 }

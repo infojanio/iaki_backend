@@ -1,26 +1,21 @@
 import { CartsRepository } from "@/repositories/prisma/Iprisma/carts-repository";
 import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-found-error";
 
-interface UpdateCartItemQuantityUseCaseRequest {
+interface RemoveItemFromCartUseCaseRequest {
   userId: string;
   storeId: string;
   cartItemId: string;
-  quantity: number;
 }
 
-export class UpdateCartItemQuantityUseCase {
+export class RemoveItemFromCartUseCase {
   constructor(private cartsRepository: CartsRepository) {}
 
   async execute({
     userId,
     storeId,
     cartItemId,
-    quantity,
-  }: UpdateCartItemQuantityUseCaseRequest) {
-    if (quantity < 1) {
-      throw new Error("Quantidade inválida");
-    }
-
+  }: RemoveItemFromCartUseCaseRequest) {
+    // 🔎 busca carrinho OPEN da loja com itens
     const cart = await this.cartsRepository.findOpenByUserAndStoreWithItems(
       userId,
       storeId,
@@ -30,15 +25,19 @@ export class UpdateCartItemQuantityUseCase {
       throw new ResourceNotFoundError();
     }
 
+    // 🔐 valida se o item pertence ao carrinho
     const itemExists = cart.items.some((item) => item.id === cartItemId);
 
     if (!itemExists) {
       throw new ResourceNotFoundError();
     }
 
-    return this.cartsRepository.updateItemQuantity({
-      cartItemId,
-      quantity,
-    });
+    // 🗑 remove item
+    await this.cartsRepository.removeItem(cartItemId);
+
+    // 🧹 opcional: se carrinho ficar vazio, pode limpar
+    if (cart.items.length === 1) {
+      await this.cartsRepository.clearCart(cart.id);
+    }
   }
 }

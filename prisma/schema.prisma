@@ -208,6 +208,7 @@ model Store {
   created_at      DateTime        @default(now()) @map("created_at")
   storeCategories StoreCategory[]
   banners         Banner[]
+  carts           Cart[]
 
   @@map("stores")
 }
@@ -271,26 +272,48 @@ model Product {
 ///////////////////////////////////////////////////////////////
 
 model Cart {
-  id        String     @id @default(uuid())
-  userId    String     @map("user_id")
-  user      User       @relation(fields: [userId], references: [id])
-  items     CartItem[]
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
+  id String @id @default(uuid())
 
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  storeId String @map("store_id")
+  store   Store  @relation(fields: [storeId], references: [id])
+
+  status CartStatus @default(OPEN)
+
+  items CartItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, storeId, status])
   @@map("carts")
 }
 
+enum CartStatus {
+  OPEN
+  CHECKED_OUT
+  ABANDONED
+}
+
 model CartItem {
-  id        String  @id @default(uuid())
-  cartId    String  @map("cart_id")
-  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  id String @id @default(uuid())
+
+  cartId String @map("cart_id")
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
   productId String  @map("product_id")
   product   Product @relation(fields: [productId], references: [id])
 
-  quantity  Int
+  quantity Int
+
+  priceSnapshot    Decimal @map("price_snapshot")
+  cashbackSnapshot Decimal @map("cashback_snapshot")
+
   createdAt DateTime @default(now()) @map("created_at")
 
+  @@unique([cartId, productId])
   @@map("cart_items")
 }
 
