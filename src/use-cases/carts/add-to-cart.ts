@@ -1,6 +1,8 @@
 import { CartsRepository } from "@/repositories/prisma/Iprisma/carts-repository";
 import { ProductsRepository } from "@/repositories/prisma/Iprisma/products-repository";
 import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-found-error";
+import { StoreNotAvailableInCityError } from "@/utils/messages/errors/store-not-available-in-city-error";
+import { Decimal } from "@prisma/client/runtime/library";
 
 interface AddToCartUseCaseRequest {
   userId: string;
@@ -21,6 +23,10 @@ export class AddToCartUseCase {
     productId,
     quantity,
   }: AddToCartUseCaseRequest) {
+    if (quantity <= 0) {
+      throw new StoreNotAvailableInCityError();
+    }
+
     // 🔹 valida produto
     const product = await this.productsRepository.findById(productId);
 
@@ -41,19 +47,34 @@ export class AddToCartUseCase {
 
     // 🔹 cria carrinho se não existir
     if (!cart) {
-      cart = await this.cartsRepository.create({
+      await this.cartsRepository.create({
         userId,
         storeId,
       });
+
+      cart = await this.cartsRepository.findOpenByUserAndStore(userId, storeId);
     }
 
-    // 🔹 adiciona ou atualiza item com snapshot
+    if (!cart) {
+      throw new Error("Erro ao criar carrinho");
+    }
+
+    const priceSnapshot = product.price
+      ? new Decimal(product.price)
+      : undefined;
+
+    const cashbackSnapshot =
+      product.cashback_percentage !== undefined
+        ? new Decimal(product.cashback_percentage)
+        : undefined;
+
+    // 🔹 adiciona ou soma item
     const cartItem = await this.cartsRepository.addOrUpdateItem({
       cartId: cart.id,
       productId,
       quantity,
-      priceSnapshot: product.price,
-      cashbackSnapshot: product.cashback_percentage,
+      priceSnapshot,
+      cashbackSnapshot,
     });
 
     return {

@@ -4,7 +4,7 @@ import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-foun
 interface RemoveItemFromCartUseCaseRequest {
   userId: string;
   storeId: string;
-  cartItemId: string;
+  productId: string;
 }
 
 export class RemoveItemFromCartUseCase {
@@ -13,9 +13,8 @@ export class RemoveItemFromCartUseCase {
   async execute({
     userId,
     storeId,
-    cartItemId,
+    productId,
   }: RemoveItemFromCartUseCaseRequest) {
-    // 🔎 busca carrinho OPEN da loja com itens
     const cart = await this.cartsRepository.findOpenByUserAndStoreWithItems(
       userId,
       storeId,
@@ -25,19 +24,17 @@ export class RemoveItemFromCartUseCase {
       throw new ResourceNotFoundError();
     }
 
-    // 🔐 valida se o item pertence ao carrinho
-    const itemExists = cart.items.some((item) => item.id === cartItemId);
+    const itemExists = cart.items.some((item) => item.productId === productId);
 
     if (!itemExists) {
       throw new ResourceNotFoundError();
     }
 
-    // 🗑 remove item
-    await this.cartsRepository.removeItem(cartItemId);
+    await this.cartsRepository.removeItemByCartAndProduct(cart.id, productId);
 
-    // 🧹 opcional: se carrinho ficar vazio, pode limpar
+    // 🧹 se ficar vazio, limpa carrinho
     if (cart.items.length === 1) {
-      await this.cartsRepository.clearCart(cart.id);
+      await this.cartsRepository.clearCartByUserAndStore(userId, storeId);
     }
   }
 }

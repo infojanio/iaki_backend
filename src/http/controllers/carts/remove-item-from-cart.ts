@@ -6,12 +6,18 @@ export async function removeItemFromCart(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const bodySchema = z.object({
-    storeId: z.string().uuid(),
-    cartItemId: z.string().uuid(),
+  // 🔹 productId vem da URL
+  const paramsSchema = z.object({
+    productId: z.string().uuid(),
   });
 
-  const { storeId, cartItemId } = bodySchema.parse(request.body);
+  // 🔹 storeId vem do body
+  const bodySchema = z.object({
+    storeId: z.string().uuid(),
+  });
+
+  const { productId } = paramsSchema.parse(request.params);
+  const { storeId } = bodySchema.parse(request.body);
 
   const userId = request.user.sub;
 
@@ -20,7 +26,7 @@ export async function removeItemFromCart(
   await removeItemFromCartUseCase.execute({
     userId,
     storeId,
-    cartItemId,
+    productId,
   });
 
   return reply.status(204).send();

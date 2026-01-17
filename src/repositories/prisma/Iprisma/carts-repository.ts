@@ -12,6 +12,8 @@ export interface CartsRepository {
   // 🔹 Criar carrinho OPEN para loja
   create(data: { userId: string; storeId: string }): Promise<Cart>;
 
+  removeItemByCartAndProduct(cartId: string, productId: string): Promise<void>;
+
   // 🔹 Adicionar ou somar item (com snapshot)
   addOrUpdateItem(data: {
     cartId: string;
@@ -20,8 +22,6 @@ export interface CartsRepository {
     priceSnapshot: Decimal | undefined;
     cashbackSnapshot: Decimal | undefined;
   }): Promise<CartItem>;
-
-  removeItemByCartAndProduct(cartId: string, productId: string): Promise<void>;
 
   // 🔹 usado quando precisamos acessar items
   findOpenByUserAndStoreWithItems(

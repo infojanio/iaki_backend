@@ -1,4 +1,5 @@
 import { CartsRepository } from "@/repositories/prisma/Iprisma/carts-repository";
+import { Decimal } from "@prisma/client/runtime/library";
 
 interface GetCartByStoreUseCaseRequest {
   userId: string;
@@ -25,7 +26,7 @@ export class GetCartByStoreUseCase {
     const items = cart.items.map((item) => {
       const subtotal = item.priceSnapshot.mul(item.quantity);
 
-      const cashback = subtotal.mul(item.cashbackSnapshot).div(100);
+      const cashbackEstimated = subtotal.mul(item.cashbackSnapshot).div(100);
 
       return {
         id: item.id,
@@ -34,18 +35,18 @@ export class GetCartByStoreUseCase {
         priceSnapshot: item.priceSnapshot,
         cashbackSnapshot: item.cashbackSnapshot,
         subtotal,
-        cashbackEstimated: cashback,
+        cashbackEstimated,
       };
     });
 
     const subtotal = items.reduce(
       (acc, item) => acc.plus(item.subtotal),
-      items[0]?.subtotal.constructor(0) ?? 0,
+      new Decimal(0),
     );
 
     const cashbackEstimated = items.reduce(
       (acc, item) => acc.plus(item.cashbackEstimated),
-      items[0]?.cashbackEstimated.constructor(0) ?? 0,
+      new Decimal(0),
     );
 
     return {
@@ -53,8 +54,8 @@ export class GetCartByStoreUseCase {
       storeId,
       items,
       totals: {
-        subtotal,
-        cashbackEstimated,
+        subtotal, // Decimal
+        cashbackEstimated, // Decimal
       },
     };
   }

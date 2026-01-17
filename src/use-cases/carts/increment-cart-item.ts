@@ -1,4 +1,5 @@
 import { CartsRepository } from "@/repositories/prisma/Iprisma/carts-repository";
+import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-found-error";
 
 interface IncrementCartItemUseCaseRequest {
   userId: string;
@@ -14,25 +15,25 @@ export class IncrementCartItemUseCase {
     storeId,
     productId,
   }: IncrementCartItemUseCaseRequest) {
-    const cart = await this.cartsRepository.findOpenByUserAndStore(
+    const cart = await this.cartsRepository.findOpenByUserAndStoreWithItems(
       userId,
       storeId,
     );
 
     if (!cart) {
-      throw new Error("Carrinho não encontrado.");
+      throw new ResourceNotFoundError();
     }
 
-    const item = cart.items.find((item) => item.productId === productId);
+    const cartItem = cart.items.find((item) => item.productId === productId);
 
-    if (!item) {
-      throw new Error("Item não encontrado no carrinho.");
+    if (!cartItem) {
+      throw new ResourceNotFoundError();
     }
 
-    return this.cartsRepository.updateItemQuantity(
+    await this.cartsRepository.updateItemQuantity(
       cart.id,
       productId,
-      item.quantity + 1,
+      cartItem.quantity + 1,
     );
   }
 }
