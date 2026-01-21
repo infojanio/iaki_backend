@@ -9,11 +9,13 @@ import { checkoutController } from "./checkout";
 import { decrementCartItem } from "./decrement-cart-item";
 import { incrementCartItem } from "./increment-cart-item";
 import { getCartSummaryByStore } from "./get-cart-summary-by-store";
+import { getOpenCartController } from "./get-open-cart";
 
 export async function cartsRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
 
-  // Buscar carrinho do usuário autenticado
+  // Buscar carrinho aberto do usuário autenticado
+  app.get("/cart/open", getOpenCartController);
 
   app.get("/cart/store/:storeId", getCartByStoreController);
 

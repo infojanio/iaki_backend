@@ -1,4 +1,4 @@
-import { PrismaClient, Cart, CartItem } from "@prisma/client";
+import { PrismaClient, Cart, CartItem, CartStatus } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 import { CartsRepository } from "./Iprisma/carts-repository";
 import { CartWithItems } from "@/@types/cart-with-items";
@@ -6,61 +6,38 @@ import { CartWithItems } from "@/@types/cart-with-items";
 export class PrismaCartsRepository implements CartsRepository {
   constructor(private prisma: PrismaClient) {}
 
-  async findOpenByUserAndStoreWithItems(
-    userId: string,
-    storeId: string,
-  ): Promise<CartWithItems | null> {
-    return this.prisma.cart.findFirst({
-      where: {
-        userId,
-        storeId,
-        status: "OPEN",
-      },
-      include: {
-        store: true, // 🔥 OBRIGATÓRIO
-        items: {
-          include: {
-            product: true,
-          },
-        },
-      },
-    });
-  }
+  // ===== NOVOS =====
 
-  // 🔹 Buscar carrinho OPEN por usuário + loja
   async findOpenByUserAndStore(
     userId: string,
     storeId: string,
   ): Promise<CartWithItems | null> {
     return this.prisma.cart.findFirst({
-      where: {
-        userId,
-        storeId,
-        status: "OPEN",
-      },
+      where: { userId, storeId, status: CartStatus.OPEN },
       include: {
         store: true,
-        items: {
-          include: {
-            product: true, // ✅ ESSENCIAL
-          },
-        },
+        items: { include: { product: true } },
       },
     });
   }
 
-  // 🔹 Criar carrinho OPEN para loja
+  async findOpenByUserAndStoreWithItems(
+    userId: string,
+    storeId: string,
+  ): Promise<CartWithItems | null> {
+    return this.findOpenByUserAndStore(userId, storeId);
+  }
+
   async create(data: { userId: string; storeId: string }): Promise<Cart> {
     return this.prisma.cart.create({
       data: {
         userId: data.userId,
         storeId: data.storeId,
-        status: "OPEN",
+        status: CartStatus.OPEN,
       },
     });
   }
 
-  // 🔹 Adiciona item ou soma quantidade (snapshot garantido)
   async addOrUpdateItem({
     cartId,
     productId,
@@ -72,7 +49,7 @@ export class PrismaCartsRepository implements CartsRepository {
     productId: string;
     quantity: number;
     priceSnapshot: Decimal;
-    cashbackSnapshot: Decimal;
+    cashbackSnapshot: number;
   }): Promise<CartItem> {
     const existing = await this.prisma.cartItem.findFirst({
       where: { cartId, productId },
@@ -81,9 +58,7 @@ export class PrismaCartsRepository implements CartsRepository {
     if (existing) {
       return this.prisma.cartItem.update({
         where: { id: existing.id },
-        data: {
-          quantity: existing.quantity + quantity,
-        },
+        data: { quantity: existing.quantity + quantity },
       });
     }
 
@@ -93,39 +68,33 @@ export class PrismaCartsRepository implements CartsRepository {
         productId,
         quantity,
         priceSnapshot,
-        cashbackSnapshot,
+        cashbackSnapshot: new Decimal(cashbackSnapshot),
       },
     });
   }
 
-  // 🔹 Atualiza quantidade diretamente (ex: + / - no carrinho)
-  async updateItemQuantity(
-    cartId: string,
-    productId: string,
-    quantity: number,
-  ): Promise<CartItem> {
-    return this.prisma.cartItem
-      .updateMany({
-        where: { cartId, productId },
-        data: { quantity },
-      })
-      .then(() =>
-        this.prisma.cartItem.findFirstOrThrow({
-          where: { cartId, productId },
-        }),
-      );
+  async updateItemQuantity({
+    cartItemId,
+    quantity,
+  }: {
+    cartItemId: string;
+    quantity: number;
+  }): Promise<CartItem> {
+    return this.prisma.cartItem.update({
+      where: { id: cartItemId },
+      data: { quantity },
+    });
   }
 
-  // 🔹 Remove item do carrinho
-  async removeItemByUserAndProduct(
-    userId: string,
-    productId: string,
-  ): Promise<void> {
+  async removeItem(cartItemId: string): Promise<void> {
+    await this.prisma.cartItem.delete({
+      where: { id: cartItemId },
+    });
+  }
+
+  async clearCart(cartId: string): Promise<void> {
     await this.prisma.cartItem.deleteMany({
-      where: {
-        productId,
-        cart: { userId },
-      },
+      where: { cartId },
     });
   }
 
@@ -134,45 +103,43 @@ export class PrismaCartsRepository implements CartsRepository {
     storeId: string,
   ): Promise<void> {
     await this.prisma.cartItem.deleteMany({
+      where: { cart: { userId, storeId } },
+    });
+  }
+
+  async getCartByStore(
+    userId: string,
+    storeId: string,
+  ): Promise<CartWithItems | null> {
+    return this.findOpenByUserAndStore(userId, storeId);
+  }
+
+  // ===== ALIASES (MÉTODOS ANTIGOS) =====
+
+  /** 🔁 Usado por get-open-cart.ts */
+  async findLatestOpenCartByUser(
+    userId: string,
+  ): Promise<CartWithItems | null> {
+    return this.prisma.cart.findFirst({
       where: {
-        cart: {
-          userId,
-          storeId,
-        },
+        userId,
+        status: CartStatus.OPEN,
+      },
+      orderBy: { updatedAt: "desc" },
+      include: {
+        store: true,
+        items: { include: { product: true } },
       },
     });
   }
 
+  /** 🔁 Usado por remove-item use-case antigo */
   async removeItemByCartAndProduct(
     cartId: string,
     productId: string,
   ): Promise<void> {
-    await this.prisma.cartItem.delete({
-      where: {
-        cartId_productId: {
-          cartId,
-          productId,
-        },
-      },
-    });
-  }
-
-  // 🔹 Buscar carrinho da loja atual (com itens)
-  async getCartByStore(userId: string, storeId: string) {
-    return this.prisma.cart.findFirst({
-      where: {
-        userId,
-        storeId,
-        status: "OPEN",
-      },
-      include: {
-        store: true,
-        items: {
-          include: {
-            product: true,
-          },
-        },
-      },
+    await this.prisma.cartItem.deleteMany({
+      where: { cartId, productId },
     });
   }
 }

@@ -16,14 +16,20 @@ export async function addToCartController(
 
   const userId = request.user.sub;
 
-  const addToCartUseCase = makeAddToCartUseCase();
+  try {
+    const addToCartUseCase = makeAddToCartUseCase();
 
-  const result = await addToCartUseCase.execute({
-    userId,
-    storeId,
-    productId,
-    quantity,
-  });
+    const result = await addToCartUseCase.execute({
+      userId,
+      storeId,
+      productId,
+      quantity,
+    });
 
-  return reply.status(201).send(result);
+    return reply.status(201).send(result);
+  } catch (error: any) {
+    return reply.status(409).send({
+      message: error.message,
+    });
+  }
 }

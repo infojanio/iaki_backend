@@ -38,6 +38,22 @@ export class PrismaBannersRepository implements BannersRepository {
     return banners;
   }
 
+  async findManyByCityId(cityId: string): Promise<Banner[]> {
+    const banners = await prisma.banner.findMany({
+      where: {
+        store: {
+          cityId,
+        },
+        isActive: true,
+      },
+      orderBy: {
+        position: "asc",
+      },
+    });
+
+    return banners;
+  }
+
   async findByIdBanner(id: string): Promise<Banner | null> {
     const banner = await prisma.banner.findUnique({
       where: {

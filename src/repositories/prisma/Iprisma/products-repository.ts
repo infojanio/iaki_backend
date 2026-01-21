@@ -42,6 +42,7 @@ export interface ProductsRepository {
 
   listMany(): Promise<Product[]>; // listar todos
   listManyProductActive(): Promise<Product[]>;
+  listManyProductActiveByCity(cityId: string): Promise<Product[]>;
 
   searchByName(
     query: string,

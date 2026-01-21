@@ -7,6 +7,7 @@ import { getBanner } from "./get-banner";
 import { updateBanner } from "./update-banner";
 import { deleteBanner } from "./delete-banner";
 import { getBannersByStoreController } from "./get-banners-by-store";
+import { getBannersByCityController } from "./get-banners-by-city";
 
 export async function bannersRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
@@ -15,6 +16,7 @@ export async function bannersRoutes(app: FastifyInstance) {
   app.get("/banners/:bannerId", getBanner);
 
   app.get("/banners/store/:storeId", getBannersByStoreController);
+  app.get("/banners/city/:cityId", getBannersByCityController);
 
   app.patch(
     "/banners/:bannerId",

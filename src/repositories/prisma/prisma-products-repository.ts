@@ -64,7 +64,7 @@ export class PrismaProductsRepository implements ProductsRepository {
   }
 
   async findByStoreIdActive(store_id: string): Promise<Product[]> {
-    const product = await prisma.product.findMany({
+    const products = await prisma.product.findMany({
       where: {
         store_id,
         status: true,
@@ -72,8 +72,18 @@ export class PrismaProductsRepository implements ProductsRepository {
       orderBy: {
         name: "asc",
       },
+      include: {
+        store: {
+          select: {
+            id: true,
+            name: true,
+            cityId: true,
+          },
+        },
+      },
     });
-    return product;
+
+    return products;
   }
 
   async findBySubcategoryId(subcategory_id: string): Promise<Product[] | null> {
@@ -148,36 +158,85 @@ export class PrismaProductsRepository implements ProductsRepository {
   async listManyProductActive(): Promise<Product[]> {
     const products = await prisma.product.findMany({
       where: {
-        status: true, // ⬅️ Mostra apenas produtos ativos
+        status: true,
+      },
+      include: {
+        store: {
+          select: {
+            id: true,
+            name: true,
+            cityId: true,
+          },
+        },
       },
     });
 
     return products;
   }
 
-  async findByCashback(): Promise<Product[]> {
+  async listManyProductActiveByCity(cityId: string): Promise<Product[]> {
     const products = await prisma.product.findMany({
       where: {
-        status: true, // Mostra apenas produtos ativos
+        status: true,
+        store: {
+          cityId,
+        },
       },
-      orderBy: {
-        cashback_percentage: "desc", // Ordena pelo maior cashback primeiro
+      include: {
+        store: {
+          select: {
+            id: true,
+            name: true,
+            cityId: true,
+          },
+        },
       },
-      take: 4, // Limita a 4 produtos
     });
 
     return products;
   }
 
-  async findByQuantity(): Promise<Product[]> {
+  async findByCashback() {
     const products = await prisma.product.findMany({
       where: {
-        status: true, // Mostra apenas produtos ativos
+        status: true,
       },
       orderBy: {
-        quantity: "asc", // Ordena pela menor quantidade primeiro
+        cashback_percentage: "desc",
       },
-      take: 4, // Limita a 4 produtos
+      take: 4,
+      include: {
+        store: {
+          select: {
+            id: true,
+            name: true,
+            cityId: true,
+          },
+        },
+      },
+    });
+
+    return products;
+  }
+
+  async findByQuantity() {
+    const products = await prisma.product.findMany({
+      where: {
+        status: true,
+      },
+      orderBy: {
+        quantity: "asc",
+      },
+      take: 4,
+      include: {
+        store: {
+          select: {
+            id: true,
+            name: true,
+            cityId: true,
+          },
+        },
+      },
     });
 
     return products;
@@ -186,23 +245,45 @@ export class PrismaProductsRepository implements ProductsRepository {
   async findBySubCategory(subcategoryId: string): Promise<Product[]> {
     const products = await prisma.product.findMany({
       where: {
-        status: true, // ⬅️ Mostra apenas produtos ativos
+        status: true,
         subcategory_id: subcategoryId,
       },
+      include: {
+        store: {
+          select: {
+            id: true,
+            name: true,
+            cityId: true,
+          },
+        },
+      },
     });
+
     return products;
   }
 
   async searchMany(search: string, page: number): Promise<Product[]> {
     const products = await prisma.product.findMany({
       where: {
+        status: true,
         name: {
-          contains: search, //verifica se contem a palavra
+          contains: search,
+          mode: "insensitive",
         },
       },
       take: 20,
       skip: (page - 1) * 20,
+      include: {
+        store: {
+          select: {
+            id: true,
+            name: true,
+            cityId: true,
+          },
+        },
+      },
     });
+
     return products;
   }
 
