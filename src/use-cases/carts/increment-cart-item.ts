@@ -30,10 +30,10 @@ export class IncrementCartItemUseCase {
       throw new ResourceNotFoundError();
     }
 
-    await this.cartsRepository.updateItemQuantity(
-      cart.id,
-      productId,
-      cartItem.quantity + 1,
-    );
+    // ✅ chamada correta (objeto)
+    await this.cartsRepository.updateItemQuantity({
+      cartItemId: cartItem.id,
+      quantity: cartItem.quantity + 1,
+    });
   }
 }

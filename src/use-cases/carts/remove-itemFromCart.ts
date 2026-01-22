@@ -24,17 +24,13 @@ export class RemoveItemFromCartUseCase {
       throw new ResourceNotFoundError();
     }
 
-    const itemExists = cart.items.some((item) => item.productId === productId);
+    const cartItem = cart.items.find((item) => item.productId === productId);
 
-    if (!itemExists) {
+    if (!cartItem) {
       throw new ResourceNotFoundError();
     }
 
-    await this.cartsRepository.removeItemByCartAndProduct(cart.id, productId);
-
-    // 🧹 se ficar vazio, limpa carrinho
-    if (cart.items.length === 1) {
-      await this.cartsRepository.clearCartByUserAndStore(userId, storeId);
-    }
+    // ✅ remove pelo cartItemId (forma correta)
+    await this.cartsRepository.removeItem(cartItem.id);
   }
 }

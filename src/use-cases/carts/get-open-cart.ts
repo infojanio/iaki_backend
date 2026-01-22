@@ -23,7 +23,7 @@ export class GetOpenCartUseCase {
     }
 
     const itemsCount = cart.items.reduce(
-      (total, item) => total + item.quantity,
+      (total, item) => total + Number(item.quantity),
       0,
     );
 

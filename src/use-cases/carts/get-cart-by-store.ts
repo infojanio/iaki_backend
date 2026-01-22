@@ -14,17 +14,20 @@ export class GetCartByStoreUseCase {
 
     if (!cart) {
       return {
-        cart: null,
+        cartId: null,
+        storeId,
         items: [],
         totals: {
-          subtotal: 0,
-          cashbackEstimated: 0,
+          subtotal: new Decimal(0),
+          cashbackEstimated: new Decimal(0),
         },
       };
     }
 
     const items = cart.items.map((item) => {
-      const subtotal = item.priceSnapshot.mul(item.quantity);
+      const quantity = new Decimal(item.quantity);
+
+      const subtotal = item.priceSnapshot.mul(quantity);
 
       const cashbackEstimated = subtotal.mul(item.cashbackSnapshot).div(100);
 

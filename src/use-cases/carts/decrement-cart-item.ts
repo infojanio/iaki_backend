@@ -32,14 +32,14 @@ export class DecrementCartItemUseCase {
 
     // 🔥 REGRA DE NEGÓCIO
     if (cartItem.quantity <= 1) {
-      await this.cartsRepository.removeItemByCartAndProduct(cart.id, productId);
+      await this.cartsRepository.removeItem(cartItem.id);
       return;
     }
 
-    await this.cartsRepository.updateItemQuantity(
-      cart.id,
-      productId,
-      cartItem.quantity - 1,
-    );
+    // ✅ chamada correta (objeto)
+    await this.cartsRepository.updateItemQuantity({
+      cartItemId: cartItem.id,
+      quantity: cartItem.quantity - 1,
+    });
   }
 }
