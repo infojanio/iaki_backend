@@ -38,6 +38,19 @@ export class PrismaCartsRepository implements CartsRepository {
     });
   }
 
+  // 🔥 FECHA TODOS OS CARRINHOS OPEN DO USUÁRIO
+  async closeAllOpenCartsByUser(userId: string): Promise<void> {
+    await this.prisma.cart.updateMany({
+      where: {
+        userId,
+        status: CartStatus.OPEN,
+      },
+      data: {
+        status: CartStatus.CLOSED,
+      },
+    });
+  }
+
   async addOrUpdateItem({
     cartId,
     productId,

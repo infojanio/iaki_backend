@@ -8,8 +8,10 @@ export async function create(request: FastifyRequest, reply: FastifyReply) {
     image: z.string().nullable(),
     created_at: z.date().optional(),
   });
+
   const { name, image } = createCategoryBodySchema.parse(request.body);
   const createCategoryUseCase = makeCreateCategoryUseCase();
+
   await createCategoryUseCase.execute({
     name,
     image,

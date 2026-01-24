@@ -9,14 +9,14 @@ export async function createBusinessCategoryController(
   const bodySchema = z.object({
     name: z.string().min(2),
     image: z.string().nullable().optional(),
-    cityId: z.string(),
+    // cityId: z.string(),
   });
 
   try {
-    const { name, image, cityId } = bodySchema.parse(request.body);
+    const { name, image } = bodySchema.parse(request.body);
 
     const useCase = makeCreateBusinessCategoryUseCase();
-    const { category } = await useCase.execute({ name, image, cityId });
+    const { category } = await useCase.execute({ name, image });
 
     return reply.status(201).send(category);
   } catch (error: any) {

@@ -15,6 +15,7 @@ export async function getOpenCartController(
       return reply.status(204).send();
     }
 
+    console.log("Carrinho aberto", cart);
     return reply.status(200).send(cart);
   } catch (error) {
     return reply.status(500).send({

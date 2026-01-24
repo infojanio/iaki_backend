@@ -65,16 +65,11 @@ export class PrismaBusinessCategoriesRepository
     });
   }
 
-  async create(data: { name: string; image?: string; cityId: string }) {
+  async create(data: { name: string; image?: string }) {
     return prisma.businessCategory.create({
       data: {
         name: data.name,
         image: data.image,
-        cities: {
-          connect: {
-            id: data.cityId,
-          },
-        },
       },
     });
   }

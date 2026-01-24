@@ -64,11 +64,14 @@ export class RegisterUseCase {
       });
 
       return { store };
-    } catch (error) {
+    } catch (error: any) {
+      console.error("[RegisterUseCase]", error);
+
       if (error instanceof StoreAlreadyExistsError) {
         throw error;
       }
-      throw new Error("Erro inesperado ao registrar loja");
+
+      throw error;
     }
   }
 }

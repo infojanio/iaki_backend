@@ -1,7 +1,9 @@
 import { Prisma, Product } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
-// src/repositories/prisma/Iprisma/products-repository.ts
+/* ==============================
+   🧱 MODELOS AUXILIARES
+============================== */
 
 export interface ProductWithNames {
   id: string;
@@ -16,33 +18,45 @@ export interface ProductWithNames {
   categoryName: string | null;
 }
 
+/* ==============================
+   📦 REPOSITORY
+============================== */
+
 export interface ProductsRepository {
+  /* ========= CREATE ========= */
+  create(data: Prisma.ProductUncheckedCreateInput): Promise<Product>;
+
+  /* ========= FINDS BÁSICOS ========= */
   findByIdProduct(id: string): Promise<Product | null>;
   findProductById(id: string): Promise<Product | null>;
-  findByStoreId(store_id: string): Promise<Product[] | null>;
-  findByStoreIdActive(store_id: string): Promise<Product[]>;
 
   findById(
     id: string,
-    options?: { select?: Prisma.ProductSelect }, // Adicione esta opção
+    options?: { select?: Prisma.ProductSelect },
   ): Promise<Product | Partial<Product> | null>;
+
   findByIds(ids: string[]): Promise<Product[]>;
-  getProductStock(productId: string): Promise<number | Decimal>;
-  getProductStockDetails(
-    productId: string,
-  ): Promise<{ quantity: number; name: string } | null>;
-  updateQuantity(
-    id: string,
-    data: { quantity: number; status: boolean },
-  ): Promise<Product>;
-  updateStock(id: string, quantity: number): Promise<Product>;
-  findByStoreId(store_id: string): Promise<Product[] | null>;
-  findBySubcategoryId(subcategory_id: string): Promise<Product[] | null>;
-  create(data: Prisma.ProductUncheckedCreateInput): Promise<Product>;
+
+  /* ========= POR LOJA ========= */
+  findByStoreId(store_id: string): Promise<Product[]>;
+  findByStoreIdActive(store_id: string): Promise<Product[]>;
+
+  /* ========= SUBCATEGORIA + LOJA (OBRIGATÓRIO) ========= */
+  findBySubCategoryAndStore(
+    subcategory_id: string,
+    store_id: string,
+  ): Promise<Product[]>;
 
   listMany(): Promise<Product[]>; // listar todos
+  /* ========= HOME / DESTAQUES ========= */
   listManyProductActive(): Promise<Product[]>;
   listManyProductActiveByCity(cityId: string): Promise<Product[]>;
+
+  findByCashback(): Promise<Product[]>; // destaque (Home)
+  findByQuantity(): Promise<Product[]>; // baixo estoque (Home)
+
+  /* ========= BUSCA ========= */
+  searchMany(search: string, page: number): Promise<Product[]>;
 
   searchByName(
     query: string,
@@ -50,10 +64,25 @@ export interface ProductsRepository {
     pageSize?: number,
   ): Promise<[Product[], number]>;
 
-  findByQuantity(quantity: number): Promise<Product[]>; // buscar  por quantidade
-  findByCashback(cashback_percentage: number): Promise<Product[]>; // buscar  % cashback
-  findBySubCategory(subcategory_id: string): Promise<Product[]>; // buscar por subcategoria
-  searchMany(search: string, page: number): Promise<Product[]>; // buscar por nome
+  /* ========= ESTOQUE ========= */
+  getProductStock(productId: string): Promise<number | Decimal>;
+
+  getProductStockDetails(
+    productId: string,
+  ): Promise<{ quantity: number; name: string }>;
+
+  updateStock(
+    id: string,
+    quantity: number,
+    action?: "increment" | "decrement",
+  ): Promise<Product>;
+
+  updateQuantity(
+    id: string,
+    data: { quantity: number; status: boolean },
+  ): Promise<Product>;
+
+  /* ========= UPDATE / DELETE ========= */
   update(
     id: string,
     data: {
@@ -72,5 +101,6 @@ export interface ProductsRepository {
       subcategory_id?: string;
     },
   ): Promise<Product>;
+
   delete(where: Prisma.ProductWhereUniqueInput): Promise<Product>;
 }

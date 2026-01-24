@@ -10,9 +10,7 @@ export interface BusinessCategoriesRepository {
 
   search(query: string): Promise<BusinessCategory[]>;
 
-  create(
-    data: Prisma.BusinessCategoryUncheckedCreateInput,
-  ): Promise<BusinessCategory>;
+  create(data: Prisma.BusinessCategoryCreateInput): Promise<BusinessCategory>;
 
   update(
     id: string,

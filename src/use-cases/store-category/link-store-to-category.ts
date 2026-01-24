@@ -1,4 +1,5 @@
 import { StoreCategoryRepository } from "@/repositories/prisma/Iprisma/store-category-repository";
+import { StoreCategoryAlreadyLinkedError } from "@/utils/messages/errors/store-category-already-linked-error";
 
 interface LinkStoreCategoryUseCaseRequest {
   storeId: string;
@@ -20,7 +21,7 @@ export class LinkStoreCategoryUseCase {
       });
 
     if (alreadyLinked) {
-      throw new Error("Category already linked to this store");
+      throw new StoreCategoryAlreadyLinkedError();
     }
 
     return this.storeCategoryRepository.create({

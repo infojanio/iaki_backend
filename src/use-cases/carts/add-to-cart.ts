@@ -39,13 +39,22 @@ export class AddToCartUseCase {
       throw new Error("Produto não pertence à loja selecionada");
     }
 
-    // 🔹 busca carrinho OPEN do usuário para a loja
+    // 🔥 PASSO 1: buscar último carrinho OPEN do usuário (qualquer loja)
+    const latestOpenCart =
+      await this.cartsRepository.findLatestOpenCartByUser(userId);
+
+    // 🔥 PASSO 2: se existir e for de OUTRA loja → fechar
+    if (latestOpenCart && latestOpenCart.storeId !== storeId) {
+      await this.cartsRepository.closeAllOpenCartsByUser(userId);
+    }
+
+    // 🔹 PASSO 3: buscar carrinho OPEN da loja atual
     let cart = await this.cartsRepository.findOpenByUserAndStore(
       userId,
       storeId,
     );
 
-    // 🔹 cria carrinho se não existir
+    // 🔹 PASSO 4: criar carrinho se não existir
     if (!cart) {
       await this.cartsRepository.create({
         userId,
@@ -67,7 +76,7 @@ export class AddToCartUseCase {
     const priceSnapshot = new Decimal(product.price);
     const cashbackSnapshot = product.cashback_percentage ?? 0;
 
-    // 🔹 adiciona ou soma item
+    // ➕ adiciona ou soma item
     const cartItem = await this.cartsRepository.addOrUpdateItem({
       cartId: cart.id,
       productId,

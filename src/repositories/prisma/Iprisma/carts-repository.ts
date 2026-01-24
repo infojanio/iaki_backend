@@ -11,6 +11,8 @@ export interface CartsRepository {
 
   create(data: { userId: string; storeId: string }): Promise<Cart>;
 
+  closeAllOpenCartsByUser(userId: string): Promise<void>;
+
   addOrUpdateItem(data: {
     cartId: string;
     productId: string;

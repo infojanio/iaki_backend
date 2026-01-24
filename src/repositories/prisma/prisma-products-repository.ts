@@ -5,26 +5,27 @@ import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-foun
 import { Decimal } from "@prisma/client/runtime/library";
 
 export class PrismaProductsRepository implements ProductsRepository {
+  /* ==============================
+     🆕 CREATE
+  ============================== */
   async create(data: Prisma.ProductUncheckedCreateInput): Promise<Product> {
-    //fazer verificação para não cadastrar o mesmo produto
-
-    const product = await prisma.product.create({
-      data,
-    });
-    console.log("📦 Dados recebidos para criar produto:", data); // 🛠️ Log antes de criar
-    return product;
+    return prisma.product.create({ data });
   }
 
+  /* ==============================
+     🔍 FINDS BÁSICOS
+  ============================== */
   async findByIdProduct(id: string): Promise<Product | null> {
-    const product = await prisma.product.findUnique({
-      where: {
-        id,
-      },
-      include: {
-        store: true,
-      },
+    return prisma.product.findUnique({
+      where: { id },
+      include: { store: true },
     });
-    return product;
+  }
+
+  async findProductById(id: string): Promise<Product | null> {
+    return prisma.product.findUnique({
+      where: { id },
+    });
   }
 
   async findById(
@@ -33,79 +34,188 @@ export class PrismaProductsRepository implements ProductsRepository {
   ): Promise<Product | Partial<Product> | null> {
     return prisma.product.findUnique({
       where: { id },
-      select: options?.select, // Passa o select se existir
-    });
-  }
-
-  async findProductById(id: string): Promise<Product | null> {
-    return await prisma.product.findUnique({
-      where: { id },
+      select: options?.select,
     });
   }
 
   async findByIds(ids: string[]): Promise<Product[]> {
     return prisma.product.findMany({
-      where: {
-        id: { in: ids }, // Busca produtos cujos IDs estão na lista
-      },
+      where: { id: { in: ids } },
     });
   }
 
-  async findByStoreId(store_id: string): Promise<Product[] | null> {
-    const product = await prisma.product.findMany({
-      where: {
-        store_id,
-      },
-      orderBy: {
-        name: "asc",
-      },
+  /* ==============================
+     🏪 POR LOJA
+  ============================== */
+  async findByStoreId(store_id: string): Promise<Product[]> {
+    return prisma.product.findMany({
+      where: { store_id },
+      orderBy: { name: "asc" },
     });
-    return product;
   }
 
   async findByStoreIdActive(store_id: string): Promise<Product[]> {
-    const products = await prisma.product.findMany({
+    return prisma.product.findMany({
       where: {
         store_id,
         status: true,
       },
-      orderBy: {
-        name: "asc",
-      },
+      orderBy: { name: "asc" },
       include: {
         store: {
-          select: {
-            id: true,
-            name: true,
-            cityId: true,
-          },
+          select: { id: true, name: true, cityId: true },
         },
       },
     });
+  }
 
+  /* ==============================
+     🔥 SUBCATEGORIA + LOJA
+  ============================== */
+  async findBySubCategoryAndStore(
+    subcategory_id: string,
+    store_id: string,
+  ): Promise<Product[]> {
+    return prisma.product.findMany({
+      where: {
+        status: true,
+        subcategory_id,
+        store_id,
+      },
+      include: {
+        store: {
+          select: { id: true, name: true, cityId: true },
+        },
+      },
+    });
+  }
+
+  /* ==============================
+     🏙️ CIDADE
+  ============================== */
+  async listManyProductActiveByCity(cityId: string): Promise<Product[]> {
+    return prisma.product.findMany({
+      where: {
+        status: true,
+        store: { cityId },
+      },
+      include: {
+        store: {
+          select: { id: true, name: true, cityId: true },
+        },
+      },
+    });
+  }
+
+  async listMany(): Promise<Product[]> {
+    const products = await prisma.product.findMany({
+      include: { subcategory: { include: { Category: true } } },
+    });
     return products;
   }
 
-  async findBySubcategoryId(subcategory_id: string): Promise<Product[] | null> {
-    const product = await prisma.product.findMany({
-      where: {
-        subcategory_id,
+  /* ==============================
+     🏠 HOME / DESTAQUES
+  ============================== */
+  async listManyProductActive(): Promise<Product[]> {
+    return prisma.product.findMany({
+      where: { status: true },
+      include: {
+        store: {
+          select: { id: true, name: true, cityId: true },
+        },
       },
     });
-    return product;
   }
 
+  async findByCashback(): Promise<Product[]> {
+    return prisma.product.findMany({
+      where: { status: true },
+      orderBy: { cashback_percentage: "desc" },
+      take: 4,
+      include: {
+        store: {
+          select: { id: true, name: true, cityId: true },
+        },
+      },
+    });
+  }
+
+  async findByQuantity(): Promise<Product[]> {
+    return prisma.product.findMany({
+      where: { status: true },
+      orderBy: { quantity: "asc" },
+      take: 4,
+      include: {
+        store: {
+          select: { id: true, name: true, cityId: true },
+        },
+      },
+    });
+  }
+
+  /* ==============================
+     🔎 BUSCA
+  ============================== */
+  async searchMany(search: string, page: number): Promise<Product[]> {
+    return prisma.product.findMany({
+      where: {
+        status: true,
+        name: { contains: search, mode: "insensitive" },
+      },
+      take: 20,
+      skip: (page - 1) * 20,
+      include: {
+        store: {
+          select: { id: true, name: true, cityId: true },
+        },
+      },
+    });
+  }
+
+  async searchByName(
+    query: string,
+    page: number,
+    pageSize = 5,
+  ): Promise<[Product[], number]> {
+    const [products, total] = await prisma.$transaction([
+      prisma.product.findMany({
+        where: {
+          status: true,
+          name: { contains: query, mode: "insensitive" },
+        },
+        take: pageSize,
+        skip: (page - 1) * pageSize,
+        include: {
+          subcategory: {
+            include: {
+              Category: true,
+            },
+          },
+        },
+      }),
+      prisma.product.count({
+        where: {
+          status: true,
+          name: { contains: query, mode: "insensitive" },
+        },
+      }),
+    ]);
+
+    return [products, total];
+  }
+
+  /* ==============================
+     📦 ESTOQUE
+  ============================== */
   async getProductStock(productId: string): Promise<number | Decimal> {
     const product = await prisma.product.findUnique({
       where: { id: productId },
       select: { quantity: true },
     });
 
-    if (!product) {
-      throw new ResourceNotFoundError();
-    }
-
-    return Number(product.quantity); // Converte Decimal para número
+    if (!product) throw new ResourceNotFoundError();
+    return Number(product.quantity);
   }
 
   async getProductStockDetails(
@@ -116,9 +226,7 @@ export class PrismaProductsRepository implements ProductsRepository {
       select: { quantity: true, name: true },
     });
 
-    if (!product) {
-      throw new ResourceNotFoundError();
-    }
+    if (!product) throw new ResourceNotFoundError();
 
     return {
       quantity: Number(product.quantity),
@@ -131,196 +239,36 @@ export class PrismaProductsRepository implements ProductsRepository {
     quantity: number,
     action: "increment" | "decrement" = "decrement",
   ): Promise<Product> {
-    return await prisma.product.update({
+    return prisma.product.update({
       where: { id },
       data: {
         quantity: {
-          [action]: Math.abs(quantity), // Garante valor positivo
+          [action]: Math.abs(quantity),
         },
       },
     });
-  }
-
-  async listMany(): Promise<Product[]> {
-    const products = await prisma.product.findMany({
-      include: {
-        subcategory: {
-          include: {
-            Category: true,
-          },
-        },
-      },
-    });
-
-    return products;
-  }
-
-  async listManyProductActive(): Promise<Product[]> {
-    const products = await prisma.product.findMany({
-      where: {
-        status: true,
-      },
-      include: {
-        store: {
-          select: {
-            id: true,
-            name: true,
-            cityId: true,
-          },
-        },
-      },
-    });
-
-    return products;
-  }
-
-  async listManyProductActiveByCity(cityId: string): Promise<Product[]> {
-    const products = await prisma.product.findMany({
-      where: {
-        status: true,
-        store: {
-          cityId,
-        },
-      },
-      include: {
-        store: {
-          select: {
-            id: true,
-            name: true,
-            cityId: true,
-          },
-        },
-      },
-    });
-
-    return products;
-  }
-
-  async findByCashback() {
-    const products = await prisma.product.findMany({
-      where: {
-        status: true,
-      },
-      orderBy: {
-        cashback_percentage: "desc",
-      },
-      take: 4,
-      include: {
-        store: {
-          select: {
-            id: true,
-            name: true,
-            cityId: true,
-          },
-        },
-      },
-    });
-
-    return products;
-  }
-
-  async findByQuantity() {
-    const products = await prisma.product.findMany({
-      where: {
-        status: true,
-      },
-      orderBy: {
-        quantity: "asc",
-      },
-      take: 4,
-      include: {
-        store: {
-          select: {
-            id: true,
-            name: true,
-            cityId: true,
-          },
-        },
-      },
-    });
-
-    return products;
-  }
-
-  async findBySubCategory(subcategoryId: string): Promise<Product[]> {
-    const products = await prisma.product.findMany({
-      where: {
-        status: true,
-        subcategory_id: subcategoryId,
-      },
-      include: {
-        store: {
-          select: {
-            id: true,
-            name: true,
-            cityId: true,
-          },
-        },
-      },
-    });
-
-    return products;
-  }
-
-  async searchMany(search: string, page: number): Promise<Product[]> {
-    const products = await prisma.product.findMany({
-      where: {
-        status: true,
-        name: {
-          contains: search,
-          mode: "insensitive",
-        },
-      },
-      take: 20,
-      skip: (page - 1) * 20,
-      include: {
-        store: {
-          select: {
-            id: true,
-            name: true,
-            cityId: true,
-          },
-        },
-      },
-    });
-
-    return products;
   }
 
   async updateQuantity(
     id: string,
     data: { quantity: number; status: boolean },
-  ) {
+  ): Promise<Product> {
     return prisma.product.update({
       where: { id },
       data,
     });
   }
 
+  /* ==============================
+     🛠️ UPDATE / DELETE
+  ============================== */
   async update(
     id: string,
-    data: {
-      name?: string;
-      description?: string;
-      price?: number;
-      quantity?:
-        | number
-        | { increment: number }
-        | { decrement: number }
-        | { set: number };
-      image?: string;
-      status?: boolean;
-      cashback_percentage?: number;
-      store_id?: string;
-      subcategory_id?: string;
-    },
+    data: Prisma.ProductUncheckedUpdateInput,
   ): Promise<Product> {
     return prisma.product.update({
       where: { id },
-      data: {
-        ...data,
-        quantity: data.quantity, // O Prisma entenderá automaticamente increment/decrement/set
-      },
+      data,
     });
   }
 
@@ -328,45 +276,15 @@ export class PrismaProductsRepository implements ProductsRepository {
     const product = await prisma.product.findUnique({ where });
 
     if (!product) {
-      throw new Error("Product not found");
+      throw new ResourceNotFoundError();
     }
 
     return prisma.product.update({
       where,
-      data: { status: false, quantity: 0 }, // Marca como "deletado"
+      data: {
+        status: false,
+        quantity: 0,
+      },
     });
-  }
-
-  async searchByName(
-    query: string,
-    page: number,
-    pageSize = 5,
-  ): Promise<[Product[], number]> {
-    const [products, total] = await prisma.$transaction([
-      prisma.product.findMany({
-        where: {
-          name: { contains: query, mode: "insensitive" },
-          //status: true,
-        },
-        take: pageSize,
-        skip: (page - 1) * pageSize,
-
-        include: {
-          subcategory: {
-            include: {
-              Category: true,
-            },
-          },
-        },
-      }),
-      prisma.product.count({
-        where: {
-          name: { contains: query, mode: "insensitive" },
-          // status: true,
-        },
-      }),
-    ]);
-
-    return [products, total];
   }
 }
