@@ -73,6 +73,7 @@ model User {
   checkIns            CheckIn[]
   missionProgresses   MissionProgress[]
   couponRedemptions   CouponRedemption[]
+  storeEvaluations    StoreEvaluation[]
 
   created_at DateTime @default(now()) @map("created_at")
 
@@ -198,6 +199,7 @@ model Store {
   products                Product[]
   orders                  Order[]
   paymentTypes            PaymentType[]
+  evaluations             StoreEvaluation[]
 
   cashbacks            Cashback[]
   cashbackTransactions CashbackTransaction[]
@@ -473,6 +475,27 @@ model SubCategory {
   created_at  DateTime  @default(now()) @map("created_at")
 
   @@map("subcategories")
+}
+
+///////////////////////////////////////////////////////////////
+// STORE EVALUATIONS
+///////////////////////////////////////////////////////////////
+
+model StoreEvaluation {
+  id String @id @default(uuid())
+
+  storeId String @map("store_id")
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rating Int
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([storeId, userId])
+  @@map("store_evaluations")
 }
 
 ///////////////////////////////////////////////////////////////

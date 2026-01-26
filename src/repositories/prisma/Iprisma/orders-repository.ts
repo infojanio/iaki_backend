@@ -2,7 +2,7 @@ import { OrderWithItemsAndProducts } from "@/@types/order-with-items";
 import { Order, OrderItem, OrderStatus, Prisma } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
-interface CreateOrderItemInput {
+interface OrderItemInput {
   productId: string;
   quantity: number;
   subtotal: Decimal;
@@ -10,7 +10,15 @@ interface CreateOrderItemInput {
 
 export interface OrdersRepository {
   // 🔹 Checkout (Cart → Order)
-  create(data: Prisma.OrderUncheckedCreateInput): Promise<Order>;
+
+  create(data: {
+    user_id: string;
+    store_id: string;
+    totalAmount: Decimal;
+    discountApplied: Decimal;
+    status: "PENDING" | "VALIDATED" | "EXPIRED";
+    items: OrderItemInput[];
+  }): Promise<any>;
 
   // 🔹 Buscar pedido completo (itens + produtos)
   findById(orderId: string): Promise<OrderWithItemsAndProducts | null>;

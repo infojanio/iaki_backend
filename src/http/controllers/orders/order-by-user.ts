@@ -6,7 +6,7 @@ import { OrderStatus } from "@prisma/client";
 
 export async function getOrderByUser(
   request: FastifyRequest<{ Params: { userId: string } }>,
-  reply: FastifyReply
+  reply: FastifyReply,
 ) {
   // Validação da query para a página e status
   const orderHistoryQuerySchema = z.object({

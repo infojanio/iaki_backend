@@ -34,6 +34,11 @@ export interface CartsRepository {
   removeItem(cartItemId: string): Promise<void>;
   clearCart(cartId: string): Promise<void>;
 
+  updateStatus(
+    cartId: string,
+    status: "OPEN" | "CHECKED_OUT" | "CLOSED",
+  ): Promise<void>;
+
   clearCartByUserAndStore(userId: string, storeId: string): Promise<void>;
 
   getCartByStore(

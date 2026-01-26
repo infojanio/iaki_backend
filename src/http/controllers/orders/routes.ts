@@ -16,8 +16,7 @@ import { validateOrder } from "./validate-order";
 export async function ordersRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
 
-  // Criar carrinho do usuário autenticado
-  app.post("/orders", createOrder);
+  // app.post("/orders", createOrder);
 
   app.get("/orders/history", history); // historico de pedidos por usuário
   app.get("/orders/cart", getCartByStoreController);
@@ -31,7 +30,7 @@ export async function ordersRoutes(app: FastifyInstance) {
     { onRequest: [verifyUserRole("ADMIN")] },
     validateOrderAndCreditCashback,
   );
-  */
+  */ // Criar carrinho do usuário autenticado
   app.post("/orders/checkout", { onRequest: [verifyJWT] }, createOrder);
 
   app.patch(

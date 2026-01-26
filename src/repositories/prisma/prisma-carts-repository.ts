@@ -86,6 +86,13 @@ export class PrismaCartsRepository implements CartsRepository {
     });
   }
 
+  async updateStatus(cartId: string, status: CartStatus): Promise<void> {
+    await this.prisma.cart.update({
+      where: { id: cartId },
+      data: { status },
+    });
+  }
+
   async updateItemQuantity({
     cartItemId,
     quantity,

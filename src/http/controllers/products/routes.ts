@@ -34,6 +34,7 @@ export async function productsRoutes(app: FastifyInstance) {
   );
 
   // Rota para detalhes do produto
+  app.get("/products/search", searchProducts);
   app.get("/products/:productId", getProduct);
 
   // Rotas de estoque (separadas logicamente)
@@ -44,7 +45,6 @@ export async function productsRoutes(app: FastifyInstance) {
   );
 
   app.get("/products/:productId/stock", getStock);
-  app.get("/products/search", searchProducts);
   app.patch(
     "/products/:productId/stock",
     { onRequest: [verifyUserRole("ADMIN")] },

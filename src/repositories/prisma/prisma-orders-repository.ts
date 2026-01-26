@@ -6,9 +6,35 @@ import { prisma } from "@/lib/prisma";
 export class PrismaOrdersRepository implements OrdersRepository {
   constructor(private prisma: PrismaClient) {}
 
-  async create(data: Prisma.OrderUncheckedCreateInput): Promise<Order> {
+  async create(data: {
+    user_id: string;
+    store_id: string;
+    totalAmount: any;
+    discountApplied: any;
+    status: "PENDING" | "VALIDATED" | "EXPIRED";
+    items: {
+      productId: string;
+      quantity: number;
+      subtotal: any;
+    }[];
+  }) {
     return prisma.order.create({
-      data,
+      data: {
+        user_id: data.user_id,
+        store_id: data.store_id,
+        totalAmount: data.totalAmount,
+        discountApplied: data.discountApplied,
+        status: data.status,
+
+        // ✅ NESTED CREATE CORRETO
+        orderItems: {
+          create: data.items.map((item) => ({
+            product_id: item.productId,
+            quantity: item.quantity,
+            subtotal: item.subtotal,
+          })),
+        },
+      },
     });
   }
 
@@ -29,14 +55,19 @@ export class PrismaOrdersRepository implements OrdersRepository {
     return this.prisma.order.findMany({
       where: {
         user_id: userId,
-        status,
+        ...(status ? { status } : {}), // ✅ só inclui se existir
       },
       include: {
+        store: true, // ✅ ESSENCIAL para o frontend
         orderItems: {
-          include: { product: true },
+          include: {
+            product: true,
+          },
         },
       },
-      orderBy: { created_at: "desc" },
+      orderBy: {
+        created_at: "desc",
+      },
       take: 20,
       skip: (page - 1) * 20,
     });
