@@ -12,11 +12,16 @@ export async function getOpenCartController(
     const cart = await useCase.execute({ userId });
 
     if (!cart) {
+      // 🔥 Frontend interpreta corretamente carrinho inexistente
       return reply.status(204).send();
     }
 
-    console.log("Carrinho aberto", cart);
-    return reply.status(200).send(cart);
+    return reply.status(200).send({
+      id: cart.id,
+      storeId: cart.storeId,
+      storeName: cart.storeName, // 🔥 ESSENCIAL
+      itemsCount: cart.itemsCount,
+    });
   } catch (error) {
     return reply.status(500).send({
       message: "Erro ao buscar carrinho aberto",

@@ -17,11 +17,11 @@ export async function ordersRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
 
   // app.post("/orders", createOrder);
+  //app.get("/orders/history/:userId", getOrderByUser);
 
   app.get("/orders/history", history); // historico de pedidos por usuário
   app.get("/orders/cart", getCartByStoreController);
   app.get("/order", getOrder);
-  app.get("/orders/history/:userId", getOrderByUser);
   app.get("/orders/:orderId", getOrderByOrderId);
 
   /*

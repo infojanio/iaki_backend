@@ -7,6 +7,7 @@ interface GetOpenCartUseCaseRequest {
 interface GetOpenCartUseCaseResponse {
   id: string;
   storeId: string;
+  storeName: string;
   itemsCount: number;
 }
 
@@ -22,14 +23,16 @@ export class GetOpenCartUseCase {
       return null;
     }
 
+    // 🔥 quantity já é number no domínio → não precisa Number()
     const itemsCount = cart.items.reduce(
-      (total, item) => total + Number(item.quantity),
+      (total, item) => total + item.quantity,
       0,
     );
 
     return {
       id: cart.id,
       storeId: cart.storeId,
+      storeName: cart.store.name,
       itemsCount,
     };
   }

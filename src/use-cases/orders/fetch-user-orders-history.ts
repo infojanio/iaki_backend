@@ -1,4 +1,3 @@
-// src/use-cases/fetch-user-orders-history.ts
 import { OrdersRepository } from "@/repositories/prisma/Iprisma/orders-repository";
 import { OrderStatus } from "@prisma/client";
 
@@ -11,22 +10,24 @@ interface FetchUserOrdersHistoryUseCaseRequest {
 interface FetchUserOrdersHistoryUseCaseResponse {
   orders: Array<{
     id: string;
-    store_id: string;
+    store: {
+      id: string;
+      name: string;
+    };
     totalAmount: number;
     discountApplied: number;
-    qrCodeUrl?: string; // Agora é string | undefined
-    status: string;
+    qrCodeUrl?: string;
+    status: OrderStatus;
     validated_at: Date | null;
     created_at: Date;
     items: Array<{
+      quantity: number;
       product: {
-        //  id: string
         name: string;
         image: string | null;
         price: number;
         cashback_percentage: number;
       };
-      quantity: number;
     }>;
   }>;
 }
@@ -38,25 +39,33 @@ export class FetchUserOrdersHistoryUseCase {
     userId,
     page,
     status,
-  }: FetchUserOrdersHistoryUseCaseRequest): Promise<
-    FetchUserOrdersHistoryUseCaseResponse
-  > {
-    const orders = await this.ordersRepository.findManyByUserIdWithItems(
+  }: FetchUserOrdersHistoryUseCaseRequest): Promise<FetchUserOrdersHistoryUseCaseResponse> {
+    const orders = await this.ordersRepository.findManyByUserId(
       userId,
       page,
-      status
+      status,
     );
 
     return {
       orders: orders.map((order) => ({
-        ...order,
-        qrCodeUrl: order.qrCodeUrl ?? undefined, // Garantindo que qrCodeUrl seja string | undefined
-        discountApplied: order.discountApplied ?? 0,
-        items: order.items.map((item) => ({
-          ...item,
+        id: order.id,
+        store: {
+          id: order.store.id,
+          name: order.store.name, // 🔥 AQUI ESTÁ O PONTO-CHAVE
+        },
+        totalAmount: Number(order.totalAmount),
+        discountApplied: Number(order.discountApplied ?? 0),
+        qrCodeUrl: order.qrCodeUrl ?? undefined,
+        status: order.status,
+        validated_at: order.validated_at,
+        created_at: order.created_at,
+        items: order.orderItems.map((item) => ({
+          quantity: Number(item.quantity),
           product: {
-            ...item.product,
-            image: item.product.image ?? "",
+            name: item.product.name,
+            image: item.product.image ?? null,
+            price: Number(item.product.price),
+            cashback_percentage: item.product.cashback_percentage,
           },
         })),
       })),

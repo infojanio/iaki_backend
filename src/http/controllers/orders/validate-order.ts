@@ -23,12 +23,21 @@ export async function validateOrder(
 
   const validateOrderUseCase = makeValidateOrderUseCase();
 
-  await validateOrderUseCase.execute({
-    orderId,
-    storeId,
-  });
+  try {
+    const result = await validateOrderUseCase.execute({
+      orderId,
+      storeId,
+    });
 
-  return reply.status(200).send({
-    message: "Pedido validado com sucesso.",
-  });
+    return reply.status(200).send({
+      message: "Pedido validado com sucesso.",
+      orderId: result.orderId,
+      status: result.status,
+      cashbackCredited: result.cashbackCredited,
+    });
+  } catch (err: any) {
+    return reply.status(400).send({
+      message: err.message ?? "Erro ao validar pedido.",
+    });
+  }
 }

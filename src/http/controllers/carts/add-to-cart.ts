@@ -1,4 +1,5 @@
 import { makeAddToCartUseCase } from "@/use-cases/_factories/make-add-to-cart-use-case";
+import { InsufficientStockError } from "@/utils/messages/errors/insufficient-stock-error";
 import { FastifyRequest, FastifyReply } from "fastify";
 import { z } from "zod";
 
@@ -27,9 +28,10 @@ export async function addToCartController(
     });
 
     return reply.status(201).send(result);
-  } catch (error: any) {
-    return reply.status(409).send({
-      message: error.message,
-    });
+  } catch (err) {
+    if (err instanceof InsufficientStockError) {
+      return reply.status(409).send({ message: err.message });
+    }
+    throw err;
   }
 }

@@ -1,9 +1,13 @@
+import { PrismaClient } from "@prisma/client";
 import { PrismaCartsRepository } from "@/repositories/prisma/prisma-carts-repository";
-
-import { prisma } from "@/lib/prisma";
-import { IncrementCartItemUseCase } from "../carts/increment-cart-item";
+import { PrismaProductsRepository } from "@/repositories/prisma/prisma-products-repository";
+import { IncrementCartItemUseCase } from "@/use-cases/carts/increment-cart-item";
 
 export function makeIncrementCartItemUseCase() {
+  const prisma = new PrismaClient();
+
   const cartsRepository = new PrismaCartsRepository(prisma);
-  return new IncrementCartItemUseCase(cartsRepository);
+  const productsRepository = new PrismaProductsRepository();
+
+  return new IncrementCartItemUseCase(cartsRepository, productsRepository);
 }

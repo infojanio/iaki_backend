@@ -1,4 +1,5 @@
 import { OrderWithItemsAndProducts } from "@/@types/order-with-items";
+import { OrderWithItemsProductsAndStore } from "@/@types/order-with-items-products-and-store";
 import { Order, OrderItem, OrderStatus, Prisma } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
@@ -21,14 +22,14 @@ export interface OrdersRepository {
   }): Promise<any>;
 
   // 🔹 Buscar pedido completo (itens + produtos)
-  findById(orderId: string): Promise<OrderWithItemsAndProducts | null>;
+  findById(orderId: string): Promise<OrderWithItemsProductsAndStore | null>;
 
   // 🔹 Buscar pedidos do usuário
   findManyByUserId(
     userId: string,
     page: number,
     status?: OrderStatus,
-  ): Promise<OrderWithItemsAndProducts[]>;
+  ): Promise<OrderWithItemsProductsAndStore[]>;
 
   // 🔹 Buscar pedidos da loja
   findManyByStoreId(

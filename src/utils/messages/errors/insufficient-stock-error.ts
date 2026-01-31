@@ -1,5 +1,6 @@
+// errors/insufficient-stock-error.ts
 export class InsufficientStockError extends Error {
-  constructor() {
-    super('Produto insuficiente em estoque.')
+  constructor(available: number) {
+    super(`Estoque insuficiente. Disponível: ${available}`);
   }
 }

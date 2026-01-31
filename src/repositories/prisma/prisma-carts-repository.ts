@@ -2,6 +2,7 @@ import { PrismaClient, Cart, CartItem, CartStatus } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 import { CartsRepository } from "./Iprisma/carts-repository";
 import { CartWithItems } from "@/@types/cart-with-items";
+import { OpenCartWithItems } from "@/@types/open-cart-with-items";
 
 export class PrismaCartsRepository implements CartsRepository {
   constructor(private prisma: PrismaClient) {}
@@ -139,18 +140,64 @@ export class PrismaCartsRepository implements CartsRepository {
   /** 🔁 Usado por get-open-cart.ts */
   async findLatestOpenCartByUser(
     userId: string,
-  ): Promise<CartWithItems | null> {
-    return this.prisma.cart.findFirst({
+  ): Promise<OpenCartWithItems | null> {
+    const cart = await this.prisma.cart.findFirst({
       where: {
         userId,
-        status: CartStatus.OPEN,
+        status: "OPEN",
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: {
+        updatedAt: "desc",
+      },
       include: {
-        store: true,
-        items: { include: { product: true } },
+        store: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        items: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                price: true,
+                image: true,
+                cashback_percentage: true,
+              },
+            },
+          },
+        },
       },
     });
+
+    if (!cart) return null;
+
+    // 🔥 MAPEAMENTO EXPLÍCITO (a chave da solução)
+    return {
+      id: cart.id,
+      userId: cart.userId,
+      storeId: cart.storeId,
+      status: "OPEN",
+      createdAt: cart.createdAt,
+      updatedAt: cart.updatedAt,
+      store: cart.store,
+      items: cart.items.map((item) => ({
+        id: item.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        priceSnapshot: item.priceSnapshot,
+        cashbackSnapshot: Number(item.cashbackSnapshot), // ✅ Decimal → number
+        product: {
+          id: item.product.id,
+          name: item.product.name,
+          price: item.product.price,
+          image: item.product.image,
+          cashback_percentage: item.product.cashback_percentage,
+        },
+      })),
+    };
   }
 
   /** 🔁 Usado por remove-item use-case antigo */

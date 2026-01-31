@@ -1,74 +1,51 @@
 import { OrdersRepository } from "@/repositories/prisma/Iprisma/orders-repository";
-import { OrderStatus } from "@prisma/client";
+import { OrderNotFoundError } from "@/utils/messages/errors/order-not-found-error";
 
-interface FetchOrderOrdersHistoryUseCaseRequest {
+interface FetchOrderByIdUseCaseRequest {
   orderId: string;
-  page: number;
-  status?: OrderStatus;
 }
 
-interface FetchOrderOrdersHistoryUseCaseResponse {
-  orders: Array<{
-    id: string;
-    store_id: string;
-    totalAmount: number;
-    discountApplied: number;
-    qrCodeUrl?: string;
-    status: string;
-    validated_at: Date | null;
-    created_at: Date;
-    items: Array<{
-      product: {
-        id: string;
-        name: string;
-        image?: string | null;
-        price: number;
-        cashback_percentage: number;
-      } | null;
-      quantity: number;
-    }>;
-  }>;
-}
-
-export class FetchOrderOrdersHistoryUseCase {
+export class FetchOrderByIdUseCase {
   constructor(private ordersRepository: OrdersRepository) {}
 
-  async execute({
-    orderId,
-    page,
-    status,
-  }: FetchOrderOrdersHistoryUseCaseRequest): Promise<
-    FetchOrderOrdersHistoryUseCaseResponse
-  > {
-    const orders = await this.ordersRepository.findManyByOrderIdWithItems(
-      orderId,
-      page,
-      status
-    );
+  async execute({ orderId }: FetchOrderByIdUseCaseRequest) {
+    const order = await this.ordersRepository.findById(orderId);
+
+    if (!order) {
+      throw new OrderNotFoundError();
+    }
 
     return {
-      orders: orders.map((order) => ({
-        id: order.id,
-        store_id: order.store_id,
-        totalAmount: order.totalAmount,
-        discountApplied: order.discountApplied || 0,
-        qrCodeUrl: order.qrCodeUrl ?? undefined,
-        status: order.status,
-        validated_at: order.validated_at,
-        created_at: order.created_at,
-        items: order.items.map((item) => ({
-          product: item.product
-            ? {
-                id: item.product.id,
-                name: item.product.name,
-                image: item.product.image ?? null,
-                price: item.product.price,
-                cashback_percentage: item.product.cashback_percentage,
-              }
-            : null,
-          quantity: item.quantity,
-        })),
-      })),
+      id: order.id,
+      store: {
+        id: order.store.id,
+        name: order.store.name,
+      },
+      totalAmount: Number(order.totalAmount),
+      discountApplied: Number(order.discountApplied ?? 0),
+      status: order.status,
+      created_at: order.created_at,
+      validated_at: order.validated_at,
+      qrCodeUrl: order.qrCodeUrl ?? undefined,
+
+      items: order.orderItems.map((item) => {
+        const price = Number(item.product.price);
+        const quantity = Number(item.quantity);
+        const subtotal = price * quantity;
+
+        return {
+          id: item.id,
+          quantity,
+          subtotal, // ✅ calculado corretamente
+          product: {
+            id: item.product.id,
+            name: item.product.name,
+            image: item.product.image ?? null,
+            price,
+            cashback_percentage: item.product.cashback_percentage,
+          },
+        };
+      }),
     };
   }
 }

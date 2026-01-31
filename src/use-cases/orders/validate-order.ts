@@ -1,9 +1,9 @@
 import { OrdersRepository } from "@/repositories/prisma/Iprisma/orders-repository";
 import { CashbacksRepository } from "@/repositories/prisma/Iprisma/cashbacks-repository";
+import { CashbackTransactionsRepository } from "@/repositories/prisma/Iprisma/cashback-transations-repository";
 
 import { OrderStatus } from "@prisma/client";
 import { differenceInHours } from "date-fns";
-import { CashbackTransactionsRepository } from "@/repositories/prisma/Iprisma/cashback-transations-repository";
 
 interface ValidateOrderUseCaseRequest {
   orderId: string;
@@ -24,7 +24,7 @@ export class ValidateOrderUseCase {
       throw new Error("Pedido não encontrado.");
     }
 
-    // 🔐 Garante que a loja é dona do pedido
+    // 🔐 Loja dona do pedido
     if (order.store_id !== storeId) {
       throw new Error("Você não tem permissão para validar este pedido.");
     }
@@ -43,7 +43,7 @@ export class ValidateOrderUseCase {
     // ✅ 1. Valida o pedido
     await this.ordersRepository.markAsValidated(order.id);
 
-    // 🔎 Busca cashback vinculado ao pedido
+    // 🔎 Cashback do pedido
     const cashback = await this.cashbacksRepository.findByOrderId(order.id);
 
     if (!cashback) {
@@ -61,5 +61,12 @@ export class ValidateOrderUseCase {
       type: "RECEIVE",
       orderId: order.id,
     });
+
+    // ✅ 4. Retorno consistente
+    return {
+      orderId: order.id,
+      status: OrderStatus.VALIDATED,
+      cashbackCredited: cashback.amount,
+    };
   }
 }

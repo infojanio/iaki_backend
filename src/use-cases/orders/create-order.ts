@@ -17,17 +17,21 @@ export class CreateOrderUseCase {
   ) {}
 
   async execute({ userId, storeId }: CreateOrderUseCaseRequest) {
-    // 1️⃣ Busca carrinho aberto do usuário + loja
-    const cart = await this.cartsRepository.findOpenByUserAndStore(
-      userId,
-      storeId,
-    );
+    // 1️⃣ Buscar carrinho aberto APENAS pelo usuário
+    const cart = await this.cartsRepository.findLatestOpenCartByUser(userId);
 
     if (!cart || cart.items.length === 0) {
       throw new Error("Carrinho vazio ou inexistente.");
     }
 
-    // 2️⃣ Calcula totais com snapshot
+    // ✅ GARANTIA ABSOLUTA DA LOJA
+    const resolvedStoreId = cart.storeId;
+
+    if (!resolvedStoreId) {
+      throw new Error("Loja não informada.");
+    }
+
+    // 2️⃣ Totais
     let totalAmount = new Decimal(0);
     let cashbackTotal = new Decimal(0);
 
@@ -39,42 +43,37 @@ export class CreateOrderUseCase {
       totalAmount = totalAmount.add(subtotal);
 
       const cashback = subtotal.mul(item.cashbackSnapshot).div(100);
-
       cashbackTotal = cashbackTotal.add(cashback);
 
       return {
-        product_id: item.productId,
-        quantity,
+        productId: item.productId,
+        quantity: Number(quantity),
         subtotal,
       };
     });
 
-    // 3️⃣ Cria pedido + itens
+    // 3️⃣ Criar pedido (🔥 store_id vem do cart)
     const order = await this.ordersRepository.create({
       user_id: userId,
-      store_id: storeId,
+      store_id: resolvedStoreId,
       totalAmount,
       discountApplied: new Decimal(0),
       status: OrderStatus.PENDING,
-      orderItems: {
-        createMany: {
-          data: orderItems,
-        },
-      },
+      items: orderItems,
     });
 
-    // 4️⃣ Cria cashback (PENDING)
+    // 4️⃣ Cashback
     await this.cashbacksRepository.create({
       user_id: userId,
-      store_id: storeId,
+      store_id: resolvedStoreId,
       order_id: order.id,
       amount: cashbackTotal,
       status: "PENDING",
       credited_at: new Date(),
     });
 
-    // 5️⃣ Limpa carrinho da loja
-    await this.cartsRepository.clearCartByUserAndStore(userId, storeId);
+    // 5️⃣ Limpa carrinho (mantendo seu método atual)
+    await this.cartsRepository.clearCartByUserAndStore(userId, resolvedStoreId);
 
     return order;
   }

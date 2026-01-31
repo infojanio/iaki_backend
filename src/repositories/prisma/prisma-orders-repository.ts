@@ -1,7 +1,6 @@
-import { PrismaClient, OrderStatus, Prisma, Order } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime/library";
+import { PrismaClient, OrderStatus } from "@prisma/client";
 import { OrdersRepository } from "@/repositories/prisma/Iprisma/orders-repository";
-import { prisma } from "@/lib/prisma";
+import { OrderWithItemsProductsAndStore } from "@/@types/order-with-items-products-and-store";
 
 export class PrismaOrdersRepository implements OrdersRepository {
   constructor(private prisma: PrismaClient) {}
@@ -18,15 +17,13 @@ export class PrismaOrdersRepository implements OrdersRepository {
       subtotal: any;
     }[];
   }) {
-    return prisma.order.create({
+    return this.prisma.order.create({
       data: {
         user_id: data.user_id,
         store_id: data.store_id,
         totalAmount: data.totalAmount,
         discountApplied: data.discountApplied,
         status: data.status,
-
-        // ✅ NESTED CREATE CORRETO
         orderItems: {
           create: data.items.map((item) => ({
             product_id: item.productId,
@@ -42,34 +39,69 @@ export class PrismaOrdersRepository implements OrdersRepository {
     return this.prisma.order.findUnique({
       where: { id: orderId },
       include: {
+        store: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         orderItems: {
-          include: {
-            product: true,
+          select: {
+            id: true, // 🔥 OBRIGATÓRIO
+            quantity: true,
+            product: {
+              select: {
+                id: true, // 🔥 OBRIGATÓRIO
+                name: true,
+                image: true,
+                price: true,
+                cashback_percentage: true,
+              },
+            },
           },
         },
       },
     });
   }
+  async findManyByUserId(
+    userId: string,
+    page: number,
+    status?: OrderStatus,
+  ): Promise<OrderWithItemsProductsAndStore[]> {
+    const take = 10;
+    const skip = (page - 1) * take;
 
-  async findManyByUserId(userId: string, page: number, status?: OrderStatus) {
     return this.prisma.order.findMany({
       where: {
         user_id: userId,
-        ...(status ? { status } : {}), // ✅ só inclui se existir
-      },
-      include: {
-        store: true, // ✅ ESSENCIAL para o frontend
-        orderItems: {
-          include: {
-            product: true,
-          },
-        },
+        ...(status && { status }),
       },
       orderBy: {
         created_at: "desc",
       },
-      take: 20,
-      skip: (page - 1) * 20,
+      take,
+      skip,
+      include: {
+        store: {
+          select: {
+            id: true,
+            name: true, // 🔥 ESSENCIAL
+          },
+        },
+        orderItems: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+                price: true,
+                cashback_percentage: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 
@@ -77,7 +109,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
     return this.prisma.order.findMany({
       where: {
         store_id: storeId,
-        status,
+        ...(status ? { status } : {}),
       },
       include: {
         orderItems: {
@@ -110,9 +142,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
   async cancel(orderId: string) {
     return this.prisma.order.update({
       where: { id: orderId },
-      data: {
-        status: OrderStatus.EXPIRED,
-      },
+      data: { status: OrderStatus.EXPIRED },
     });
   }
 }

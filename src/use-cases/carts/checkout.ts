@@ -1,12 +1,11 @@
 import { Decimal } from "@prisma/client/runtime/library";
 import { CartsRepository } from "@/repositories/prisma/Iprisma/carts-repository";
 import { OrdersRepository } from "@/repositories/prisma/Iprisma/orders-repository";
-import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-found-error";
 import { CartNotFoundError } from "@/utils/messages/errors/cart-not-found-error";
+import { CartStatus } from "@prisma/client";
 
 interface CheckoutUseCaseRequest {
   userId: string;
-  storeId: string;
 }
 
 export class CheckoutUseCase {
@@ -15,14 +14,17 @@ export class CheckoutUseCase {
     private ordersRepository: OrdersRepository,
   ) {}
 
-  async execute({ userId, storeId }: CheckoutUseCaseRequest) {
-    // 1️⃣ Buscar carrinho OPEN da loja
-    const cart = await this.cartsRepository.findOpenByUserAndStoreWithItems(
-      userId,
-      storeId,
-    );
+  async execute({ userId }: CheckoutUseCaseRequest) {
+    // 1️⃣ Buscar carrinho OPEN do usuário (fonte da verdade)
+    const cart = await this.cartsRepository.findLatestOpenCartByUser(userId);
 
     if (!cart || cart.items.length === 0) {
+      throw new CartNotFoundError();
+    }
+
+    const storeId = cart.storeId;
+
+    if (!storeId) {
       throw new CartNotFoundError();
     }
 
@@ -39,12 +41,12 @@ export class CheckoutUseCase {
 
       return {
         productId: item.productId,
-        quantity: item.quantity,
+        quantity: Number(item.quantity),
         subtotal,
       };
     });
 
-    // 3️⃣ Criar pedido (PENDING)
+    // 3️⃣ Criar pedido
     const order = await this.ordersRepository.create({
       user_id: userId,
       store_id: storeId,
@@ -54,8 +56,8 @@ export class CheckoutUseCase {
       items: orderItems,
     });
 
-    // 4️⃣ Atualizar carrinho → CHECKED_OUT
-    await this.cartsRepository.updateStatus(cart.id, "CHECKED_OUT");
+    // 4️⃣ Fechar carrinho
+    await this.cartsRepository.updateStatus(cart.id, CartStatus.CLOSED);
 
     // 5️⃣ Retorno
     return {

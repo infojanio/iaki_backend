@@ -41,7 +41,7 @@ export async function getOrderByUser(
     discountApplied: order.discountApplied,
     status: order.status,
     qrCodeUrl: order.qrCodeUrl ?? undefined,
-    storeId: order.store_id,
+
     createdAt: order.created_at,
     items: order.items.map((item) => ({
       productId: item.product,

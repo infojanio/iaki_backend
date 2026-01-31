@@ -1,4 +1,5 @@
 import { CartWithItems } from "@/@types/cart-with-items";
+import { OpenCartWithItems } from "@/@types/open-cart-with-items";
 import { Cart, CartItem } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
@@ -49,7 +50,7 @@ export interface CartsRepository {
   // ===== MÉTODOS ANTIGOS (COMPATIBILIDADE) =====
 
   /** 🔁 Alias para get-open-cart.ts */
-  findLatestOpenCartByUser(userId: string): Promise<CartWithItems | null>;
+  findLatestOpenCartByUser(userId: string): Promise<OpenCartWithItems | null>;
 
   /** 🔁 Alias para removeItem */
   removeItemByCartAndProduct(cartId: string, productId: string): Promise<void>;
