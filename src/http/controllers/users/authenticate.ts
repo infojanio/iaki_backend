@@ -1,9 +1,9 @@
-import { FastifyReply, FastifyRequest } from 'fastify'
-import { z } from 'zod'
-import { InvalidCredentialsError } from '@/utils/messages/errors/invalid-credentials-error'
-import { makeAuthenticateUseCase } from '@/use-cases/_factories/make-authenticate-use-case'
-import { prisma } from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
+import { FastifyReply, FastifyRequest } from "fastify";
+import { z } from "zod";
+import { makeAuthenticateUseCase } from "@/use-cases/_factories/make-authenticate-use-case";
+import { prisma } from "@/lib/prisma";
+import { InvalidCredentialsError } from "@/utils/messages/errors/invalid-credentials-error";
+import { AdminWithoutStoreError } from "@/utils/messages/errors/admin-without-store-error";
 
 export async function authenticate(
   request: FastifyRequest,
@@ -12,46 +12,67 @@ export async function authenticate(
   const authenticateBodySchema = z.object({
     email: z.string().email(),
     password: z.string().min(6),
-  })
+  });
 
-  const { email, password } = authenticateBodySchema.parse(request.body)
+  const { email, password } = authenticateBodySchema.parse(request.body);
 
   try {
-    const authenticateUseCase = makeAuthenticateUseCase()
-    const { user } = await authenticateUseCase.execute({ email, password })
+    const authenticateUseCase = makeAuthenticateUseCase();
 
-    // Comparação da senha digitada com o hash do banco de dados
-    const passwordMatch = await bcrypt.compare(password, user.passwordHash)
-    if (!passwordMatch) {
-      return reply.status(400).send({ message: 'Invalid credentials' })
-    }
+    const { user } = await authenticateUseCase.execute({
+      email,
+      password,
+    });
 
-    //consulta o saldo do usuário na tabela cashbacks
-    const cashback = await prisma.cashback.findFirst({
-      where: { user_id: user.id },
-      select: { amount: true },
-    })
+    // 💰 saldo do usuário (opcional, mantido)
+    const cashback = await prisma.cashback.aggregate({
+      where: {
+        user_id: user.id,
+        status: "CONFIRMED",
+      },
+      _sum: {
+        amount: true,
+      },
+    });
 
-    const userBalance = cashback ? cashback.amount : 0
+    const userBalance = cashback._sum.amount ?? 0;
 
-    const token = await reply.jwtSign(
-      { role: user.role },
-      { sign: { sub: user.id, expiresIn: '15m' } },
-    )
+    // 🔐 ACCESS TOKEN (15 min)
+    const accessToken = await reply.jwtSign(
+      {
+        role: user.role,
+        storeId: user.storeId ?? null,
+      },
+      {
+        sign: {
+          sub: user.id,
+          expiresIn: "15m",
+        },
+      },
+    );
 
+    // 🔁 REFRESH TOKEN (7 dias)
     const refreshToken = await reply.jwtSign(
-      { role: user.role },
-      { sign: { sub: user.id, expiresIn: '7d' } },
-    )
+      {
+        role: user.role,
+        storeId: user.storeId ?? null,
+      },
+      {
+        sign: {
+          sub: user.id,
+          expiresIn: "7d",
+        },
+      },
+    );
 
-    // Salva o refresh token no banco de dados
+    // 💾 salva refresh token
     await prisma.refreshToken.create({
       data: {
         userId: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         token: refreshToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
-    })
+    });
 
     return reply.status(200).send({
       user: {
@@ -62,13 +83,26 @@ export async function authenticate(
         avatar: user.avatar,
         balance: userBalance,
       },
-      accessToken: token,
+      accessToken,
       refreshToken,
-    })
+    });
   } catch (err) {
     if (err instanceof InvalidCredentialsError) {
-      return reply.status(400).send({ message: err.message })
+      return reply.status(401).send({
+        message: err.message,
+      });
     }
-    throw err
+
+    if (err instanceof AdminWithoutStoreError) {
+      return reply.status(403).send({
+        message: err.message,
+      });
+    }
+
+    console.error("[AUTH ERROR]", err);
+
+    return reply.status(500).send({
+      message: "Erro interno ao autenticar usuário.",
+    });
   }
 }

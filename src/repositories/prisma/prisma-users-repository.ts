@@ -2,10 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { Prisma, User } from "@prisma/client";
 import { UserProfileDB, UsersRepository } from "./Iprisma/users-repository";
 import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-found-error";
-import { userInfo } from "os";
 import { Decimal } from "@prisma/client/runtime/library";
 
-// Select "seguro" sem passwordHash
+// Select "seguro" para profile (sem passwordHash)
 const userProfileSelect = Prisma.validator<Prisma.UserSelect>()({
   id: true,
   name: true,
@@ -22,20 +21,10 @@ const userProfileSelect = Prisma.validator<Prisma.UserSelect>()({
 });
 
 export class PrismaUsersRepository implements UsersRepository {
-  /**
-   * Cria um usuário com seus dados pessoais e endereço.
-   *
-   * @param data - Dados do usuário e do endereço.
-   * @returns O usuário criado com os dados do endereço.
-   */
   async create(data: Prisma.UserUncheckedCreateInput) {
-    const user = await prisma.user.create({
-      data: {
-        ...data, // Inclui os dados pessoais
-      },
+    return prisma.user.create({
+      data,
     });
-
-    return user;
   }
 
   async findProfileById(userId: string): Promise<UserProfileDB | null> {
@@ -46,7 +35,7 @@ export class PrismaUsersRepository implements UsersRepository {
   }
 
   async findById(id: string): Promise<User | null> {
-    const user = await prisma.user.findUnique({
+    return prisma.user.findUnique({
       where: { id },
       select: {
         id: true,
@@ -57,13 +46,16 @@ export class PrismaUsersRepository implements UsersRepository {
         avatar: true,
         role: true,
         passwordHash: true,
+
+        // 🔥 OBRIGATÓRIO
+        storeId: true,
+
         cityId: true,
         street: true,
         state: true,
         postalCode: true,
         created_at: true,
 
-        // 👇 RELAÇÃO
         city: {
           select: {
             id: true,
@@ -72,18 +64,28 @@ export class PrismaUsersRepository implements UsersRepository {
         },
       },
     });
-
-    return user;
   }
 
-  //verifica se o email já existe
+  /**
+   * 🔐 USADO NA AUTENTICAÇÃO
+   * PRECISA trazer storeId
+   */
   async findByEmail(email: string) {
-    const user = await prisma.user.findUnique({
-      where: {
-        email,
+    return prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        passwordHash: true,
+        role: true,
+
+        // 🔥 ESSENCIAL
+        storeId: true,
+
+        avatar: true,
       },
     });
-    return user;
   }
 
   async balanceByUserId(userId: string): Promise<number> {
@@ -113,7 +115,7 @@ export class PrismaUsersRepository implements UsersRepository {
         where: { id: userId },
         data,
       });
-    } catch (error) {
+    } catch {
       throw new ResourceNotFoundError();
     }
   }

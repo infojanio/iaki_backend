@@ -58,6 +58,10 @@ model User {
   role         Role    @default(USER)
   avatar       String?
 
+  // 🔥 NOVO VÍNCULO (ADMIN DA LOJA)
+  storeId String?
+  store   Store?  @relation(fields: [storeId], references: [id])
+
   street     String?
   cityId     String?
   city       City?   @relation(fields: [cityId], references: [id])
@@ -211,6 +215,7 @@ model Store {
   storeCategories StoreCategory[]
   banners         Banner[]
   carts           Cart[]
+  users           User[]
 
   @@map("stores")
 }

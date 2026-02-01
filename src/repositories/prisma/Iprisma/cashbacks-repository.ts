@@ -2,25 +2,64 @@ import { Cashback, CashbackTransaction, Prisma } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
 export interface CashbacksRepository {
-  totalCashbackByUserId(user_id: string): Promise<number>;
-  totalUsedCashbackByUserId(user_id: string): Promise<number>;
-  findByUserId(user_id: string): Promise<Cashback[]>;
+  // 🔹 Totais
+  totalCashbackByUserId(userId: string): Promise<number>;
+  totalUsedCashbackByUserId(userId: string): Promise<number>;
+
+  // 🔹 Consultas
+  findByUserId(userId: string): Promise<Cashback[]>;
   findById(cashbackId: string): Promise<Cashback | null>;
-  getBalance(user_id: string): Promise<number>;
-  getTransactionsByUserId(userId: string): Promise<CashbackTransaction[]>;
-  create(data: Prisma.CashbackUncheckedCreateInput): Promise<Cashback>;
+
   findByOrderId(orderId: string): Promise<Cashback | null>;
+  findByOrderIdWithTx(
+    tx: Prisma.TransactionClient,
+    orderId: string,
+  ): Promise<Cashback | null>;
+
+  // 🔹 Saldo consolidado
+  getBalance(userId: string): Promise<number>;
+
+  // 🔹 Histórico
+  getTransactionsByUserId(userId: string): Promise<CashbackTransaction[]>;
+
+  // 🔹 Criação
+  create(data: Prisma.CashbackUncheckedCreateInput): Promise<Cashback>;
+
+  // 🔹 Confirmação (validação do pedido)
   confirmCashback(cashbackId: string): Promise<void>;
 
+  // 🔹 Confirmação (TX – blindado)
+  confirmCashbackWithTx(
+    tx: Prisma.TransactionClient,
+    cashbackId: string,
+  ): Promise<void>;
+
+  // 🔹 Resgate de cashback
   redeemCashback(data: {
-    user_id: string;
-    order_id: string;
-    amount: number;
+    userId: string;
+    orderId: string;
+    storeId: string;
+    amount: Decimal;
   }): Promise<Cashback>;
 
+  // 🔹 Transações
   createTransaction(data: {
-    user_id: string;
-    amount: number | Decimal;
+    userId: string;
+    storeId: string;
+    orderId?: string;
+    amount: Decimal;
     type: "RECEIVE" | "USE";
   }): Promise<CashbackTransaction>;
+
+  // 🔹 Transações (TX)
+  createTransactionWithTx(
+    tx: Prisma.TransactionClient,
+    data: {
+      userId: string;
+      storeId: string;
+      orderId?: string;
+      amount: Decimal;
+      type: "RECEIVE" | "USE";
+    },
+  ): Promise<CashbackTransaction>;
 }

@@ -1,7 +1,11 @@
-import { CashbackTransactionType } from "@prisma/client";
+import {
+  CashbackTransaction,
+  CashbackTransactionType,
+  Prisma,
+} from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
-interface CreateCashbackTransactionDTO {
+export interface CreateCashbackTransactionDTO {
   userId: string;
   storeId: string;
   amount: Decimal;
@@ -10,5 +14,12 @@ interface CreateCashbackTransactionDTO {
 }
 
 export interface CashbackTransactionsRepository {
-  create(data: CreateCashbackTransactionDTO): Promise<void>;
+  //normal
+  create(data: CreateCashbackTransactionDTO): Promise<CashbackTransaction>;
+
+  //transacional
+  createWithTx(
+    tx: Prisma.TransactionClient,
+    data: CreateCashbackTransactionDTO,
+  ): Promise<CashbackTransaction>;
 }

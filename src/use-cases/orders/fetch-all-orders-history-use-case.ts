@@ -6,7 +6,7 @@ import { OrderStatus } from "@prisma/client";
 interface FetchAllOrdersHistoryUseCaseRequest {
   page: number;
   status?: OrderStatus;
-  storeId?: string;
+  storeId: string; // 🔥 já validado no controller
 }
 
 interface FetchAllOrdersHistoryUseCaseResponse {
@@ -18,7 +18,7 @@ interface FetchAllOrdersHistoryUseCaseResponse {
     totalAmount: number;
     discountApplied: number;
     qrCodeUrl?: string;
-    status: string;
+    status: OrderStatus;
     validated_at: Date | null;
     created_at: Date;
     items: Array<{
@@ -41,16 +41,20 @@ export class FetchAllOrdersHistoryUseCase {
     page,
     status,
     storeId,
-  }: FetchAllOrdersHistoryUseCaseRequest): Promise<
-    FetchAllOrdersHistoryUseCaseResponse
-  > {
+  }: FetchAllOrdersHistoryUseCaseRequest): Promise<FetchAllOrdersHistoryUseCaseResponse> {
+    /**
+     * 📦 Busca pedidos da loja
+     * (assume que storeId é válido)
+     */
     const orders = await this.ordersRepository.findManyWithItems(
       page,
       status,
-      storeId
+      storeId,
     );
-    // console.log("Total de pedidos:", orders.length);
 
+    /**
+     * 🧾 Normalização do retorno
+     */
     return {
       orders: orders.map((order) => ({
         id: order.id,
@@ -58,7 +62,7 @@ export class FetchAllOrdersHistoryUseCase {
         user_name: order.user_name,
         store_id: order.store_id,
         totalAmount: order.totalAmount,
-        discountApplied: order.discountApplied || 0,
+        discountApplied: order.discountApplied ?? 0,
         qrCodeUrl: order.qrCodeUrl ?? undefined,
         status: order.status,
         validated_at: order.validated_at,
