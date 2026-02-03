@@ -11,6 +11,7 @@ export async function validateOrder(
   });
 
   const { orderId } = paramsSchema.parse(request.params);
+
   const storeId = request.user.storeId;
 
   if (!storeId) {
@@ -35,7 +36,7 @@ export async function validateOrder(
     });
   } catch (err: any) {
     return reply.status(400).send({
-      message: err.message ?? "Erro ao validar pedido.",
+      message: err?.message ?? "Erro ao validar pedido.",
     });
   }
 }

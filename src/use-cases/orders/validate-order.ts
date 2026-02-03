@@ -4,6 +4,7 @@ import { CashbackTransactionsRepository } from "@/repositories/prisma/Iprisma/ca
 import { OrdersRepository } from "@/repositories/prisma/Iprisma/orders-repository";
 import { OrderStatus } from "@prisma/client";
 import { differenceInHours } from "date-fns";
+import { ProductsRepository } from "@/repositories/prisma/Iprisma/products-repository";
 
 interface ValidateOrderUseCaseRequest {
   orderId: string;
@@ -15,6 +16,7 @@ export class ValidateOrderUseCase {
     private ordersRepository: OrdersRepository,
     private cashbacksRepository: CashbacksRepository,
     private cashbackTransactionsRepository: CashbackTransactionsRepository,
+    private productsRepository: ProductsRepository,
   ) {}
 
   async execute({ orderId, storeId }: ValidateOrderUseCaseRequest) {
@@ -60,6 +62,14 @@ export class ValidateOrderUseCase {
         amount: cashbackAmount,
         status: OrderStatus.VALIDATED,
       });
+
+      for (const item of order.orderItems) {
+        await this.productsRepository.updateStockWithTx(
+          tx,
+          item.product.id,
+          Number(item.quantity),
+        );
+      }
 
       // 2️⃣ cria transação (única fonte de saldo)
       if (cashbackAmount > 0) {

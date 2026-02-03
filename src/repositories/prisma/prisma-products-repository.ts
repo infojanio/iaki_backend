@@ -234,6 +234,21 @@ export class PrismaProductsRepository implements ProductsRepository {
     };
   }
 
+  async updateStockWithTx(
+    tx: Prisma.TransactionClient,
+    id: string,
+    quantity: number,
+  ) {
+    await tx.product.update({
+      where: { id },
+      data: {
+        quantity: {
+          decrement: quantity,
+        },
+      },
+    });
+  }
+
   async updateStock(
     id: string,
     quantity: number,

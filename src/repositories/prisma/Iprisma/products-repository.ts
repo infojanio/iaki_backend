@@ -77,6 +77,12 @@ export interface ProductsRepository {
     action?: "increment" | "decrement",
   ): Promise<Product>;
 
+  updateStockWithTx(
+    tx: Prisma.TransactionClient,
+    id: string,
+    quantity: number,
+  ): Promise<void>;
+
   updateQuantity(
     id: string,
     data: { quantity: number; status: boolean },
