@@ -2,7 +2,6 @@ import { OrderWithItemsAndProducts } from "@/@types/order-with-items";
 import { OrderWithItemsProductsAndStore } from "@/@types/order-with-items-products-and-store";
 import { OrderStatus, Prisma } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
-import { TransactionRepositories } from "./transaction-repository";
 
 interface OrderItemInput {
   productId: string;
@@ -13,23 +12,26 @@ interface OrderItemInput {
 export interface OrdersRepository {
   /**
    * 🔹 Checkout (Cart → Order)
+   * Aqui já deve salvar cashbackAmount
    */
   create(data: {
     user_id: string;
     store_id: string;
     totalAmount: Decimal;
     discountApplied: Decimal;
+    cashbackAmount: Decimal; // 👈 IMPORTANTE
     status: OrderStatus;
     items: OrderItemInput[];
   }): Promise<any>;
 
   /**
-   * 🔹 Buscar pedido completo (itens + produtos + store)
+   * 🔹 Buscar pedido por ID
    */
   findById(orderId: string): Promise<OrderWithItemsProductsAndStore | null>;
 
   /**
-   * 🔹 Buscar pedido completo (TX)
+   * 🔹 Buscar pedido por ID (TX)
+   * 👉 usado na validação simples
    */
   findByIdWithTx(
     tx: Prisma.TransactionClient,
@@ -87,7 +89,7 @@ export interface OrdersRepository {
   ): Promise<OrderWithItemsAndProducts[]>;
 
   /**
-   * 🔹 Atualizar status
+   * 🔹 Atualizar status (simples)
    */
   updateStatus(orderId: string, status: OrderStatus): Promise<void>;
 
@@ -101,12 +103,9 @@ export interface OrdersRepository {
   ): Promise<void>;
 
   /**
-   * 🔹 Marcar pedido como validado
-   */
-  markAsValidated(orderId: string): Promise<void>;
-
-  /**
    * 🔹 Marcar pedido como validado (TX)
+   * 👉 NÃO calcula cashback
+   * 👉 Apenas muda status + validated_at
    */
   markAsValidatedWithTx(
     tx: Prisma.TransactionClient,

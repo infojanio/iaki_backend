@@ -5,6 +5,7 @@ import { balance } from "./balance";
 import { history } from "./history";
 import { redeemCashback } from "./redeem-cashback";
 import { getUserCashbackTransactions } from "./get-user-transactions";
+import { balanceByStore } from "./balance-by-store";
 
 export async function cashbacksRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
@@ -12,6 +13,10 @@ export async function cashbacksRoutes(app: FastifyInstance) {
   app.get("/cashbacks/balance", balance);
   app.get("/cashbacks/history", history);
   app.get("/cashbacks/transactions", getUserCashbackTransactions);
-
+  app.get(
+    "/cashbacks/balance/:storeId",
+    { onRequest: [verifyJWT] },
+    balanceByStore,
+  );
   app.post("/cashbacks/redeem", redeemCashback); // resgate de cashback
 }

@@ -152,6 +152,29 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
     });
   }
 
+  async createConfirmedCashbackWithTx(
+    tx: Prisma.TransactionClient,
+    data: {
+      userId: string;
+      storeId: string;
+      orderId: string;
+      status: string;
+      amount: Decimal | number;
+    },
+  ): Promise<Cashback> {
+    return tx.cashback.create({
+      data: {
+        user_id: data.userId,
+        store_id: data.storeId,
+        order_id: data.orderId,
+        amount: new Decimal(data.amount),
+        status: CashbackStatus.CONFIRMED,
+        validated: true,
+        credited_at: new Date(),
+      },
+    });
+  }
+
   // =====================================================
   // HISTÓRICO
   // =====================================================
@@ -174,6 +197,36 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
     });
 
     return (result._sum.amount ?? new Decimal(0)).toNumber();
+  }
+
+  //saldo gerado para a loja
+  async getBalanceByStore(userId: string, storeId: string): Promise<number> {
+    const received = await prisma.cashback.aggregate({
+      where: {
+        user_id: userId,
+        store_id: storeId,
+        status: "CONFIRMED",
+      },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    const used = await prisma.cashbackTransaction.aggregate({
+      where: {
+        user_id: userId,
+        store_id: storeId,
+        type: "USE",
+      },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    return (
+      Number(received._sum.amount ?? 0) -
+      Math.abs(Number(used._sum.amount ?? 0))
+    );
   }
 
   // =====================================================

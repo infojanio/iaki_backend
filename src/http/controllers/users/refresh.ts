@@ -50,7 +50,7 @@ export async function refresh(request: FastifyRequest, reply: FastifyReply) {
       {
         sign: {
           sub: userId,
-          expiresIn: "2m",
+          expiresIn: "15m",
         },
       },
     );

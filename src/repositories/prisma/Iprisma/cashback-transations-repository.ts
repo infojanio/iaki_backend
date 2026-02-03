@@ -8,7 +8,7 @@ import { Decimal } from "@prisma/client/runtime/library";
 export interface CreateCashbackTransactionDTO {
   userId: string;
   storeId: string;
-  amount: Decimal;
+  amount: Decimal | number;
   type: CashbackTransactionType;
   orderId?: string;
 }

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { OrdersRepository } from "@/repositories/prisma/Iprisma/orders-repository";
 import { CashbacksRepository } from "@/repositories/prisma/Iprisma/cashbacks-repository";
 import { CashbackTransactionsRepository } from "@/repositories/prisma/Iprisma/cashback-transations-repository";
+import { OrdersRepository } from "@/repositories/prisma/Iprisma/orders-repository";
 import { OrderStatus } from "@prisma/client";
 import { differenceInHours } from "date-fns";
 
@@ -19,33 +19,16 @@ export class ValidateOrderUseCase {
 
   async execute({ orderId, storeId }: ValidateOrderUseCaseRequest) {
     return prisma.$transaction(async (tx) => {
-      /**
-       * 🔎 1. Busca pedido COM LOCK lógico (via status)
-       */
       const order = await this.ordersRepository.findByIdWithTx(tx, orderId);
 
-      if (!order) {
-        throw new Error("Pedido não encontrado.");
-      }
+      if (!order) throw new Error("Pedido não encontrado.");
+      if (order.store_id !== storeId)
+        throw new Error("Sem permissão para validar este pedido.");
+      if (order.status !== OrderStatus.PENDING)
+        throw new Error("Pedido já processado.");
 
-      // 🔐 Loja dona do pedido
-      if (order.store_id !== storeId) {
-        throw new Error("Você não tem permissão para validar este pedido.");
-      }
-
-      /**
-       * 🛑 Idempotência
-       */
-      if (order.status !== OrderStatus.PENDING) {
-        throw new Error("Este pedido não pode mais ser validado.");
-      }
-
-      /**
-       * ⏰ Regra das 48h
-       */
       const hoursDiff = differenceInHours(new Date(), order.created_at);
-
-      if (hoursDiff > 48) {
+      if (hoursDiff > 96) {
         await this.ordersRepository.updateStatusWithTx(
           tx,
           order.id,
@@ -54,53 +37,45 @@ export class ValidateOrderUseCase {
         throw new Error("Pedido expirado.");
       }
 
-      /**
-       * 🔎 2. Busca cashback vinculado ao pedido
-       */
-      const cashback = await this.cashbacksRepository.findByOrderIdWithTx(
-        tx,
-        order.id,
-      );
+      // ✅ calcula cashback a partir dos itens
+      let cashbackAmount = 0;
 
-      if (!cashback) {
-        throw new Error("Cashback não encontrado para este pedido.");
+      if (Number(order.discountApplied) === 0) {
+        for (const item of order.orderItems) {
+          const percentual = item.product.cashback_percentage;
+          const subtotal = Number(item.product.price) * Number(item.quantity);
+
+          cashbackAmount += subtotal * (percentual / 100);
+        }
       }
 
-      /**
-       * 🛑 Idempotência de cashback
-       */
-      if (cashback.status === "CONFIRMED") {
-        throw new Error("Cashback já foi confirmado.");
-      }
-
-      /**
-       * ✅ 3. Valida pedido
-       */
+      // 1️⃣ valida pedido
       await this.ordersRepository.markAsValidatedWithTx(tx, order.id);
 
-      /**
-       * ✅ 4. Confirma cashback
-       */
-      await this.cashbacksRepository.confirmCashbackWithTx(tx, cashback.id);
-
-      /**
-       * 💰 5. Cria transação financeira
-       */
-      await this.cashbackTransactionsRepository.createWithTx(tx, {
-        userId: cashback.user_id,
-        storeId: cashback.store_id,
-        amount: cashback.amount,
-        type: "RECEIVE",
+      // 1️⃣ cria saldo
+      await this.cashbacksRepository.createConfirmedCashbackWithTx(tx, {
+        userId: order.user_id,
+        storeId: order.store_id,
         orderId: order.id,
+        amount: cashbackAmount,
+        status: OrderStatus.VALIDATED,
       });
 
-      /**
-       * 🚀 Retorno final
-       */
+      // 2️⃣ cria transação (única fonte de saldo)
+      if (cashbackAmount > 0) {
+        await this.cashbackTransactionsRepository.createWithTx(tx, {
+          userId: order.user_id,
+          storeId: order.store_id,
+          amount: cashbackAmount,
+          type: "RECEIVE",
+          orderId: order.id,
+        });
+      }
+
       return {
         orderId: order.id,
         status: OrderStatus.VALIDATED,
-        cashbackCredited: cashback.amount,
+        cashbackCredited: cashbackAmount,
       };
     });
   }

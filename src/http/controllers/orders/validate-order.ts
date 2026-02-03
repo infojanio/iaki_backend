@@ -11,8 +11,6 @@ export async function validateOrder(
   });
 
   const { orderId } = paramsSchema.parse(request.params);
-
-  // 🔐 storeId vem do JWT (STORE_ADMIN)
   const storeId = request.user.storeId;
 
   if (!storeId) {

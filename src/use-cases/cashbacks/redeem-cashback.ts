@@ -1,58 +1,63 @@
 import { CashbacksRepository } from "@/repositories/prisma/Iprisma/cashbacks-repository";
 import { OrdersRepository } from "@/repositories/prisma/Iprisma/orders-repository";
+import { Decimal } from "@prisma/client/runtime/library";
 
 interface RedeemCashbackUseCaseRequest {
   user_id: string;
-  order_id: string; // Agora recebe o ID do pedido em vez do produto
+  order_id: string;
   amount: number;
 }
 
 export class RedeemCashbackUseCase {
   constructor(
     private cashbacksRepository: CashbacksRepository,
-    private ordersRepository: OrdersRepository // Troca ProductsRepository por OrdersRepository
+    private ordersRepository: OrdersRepository,
   ) {}
 
   async execute({ user_id, order_id, amount }: RedeemCashbackUseCaseRequest) {
-    // Validação básica do amount
+    // 1️⃣ validação básica
     if (amount <= 0) {
       throw new Error("O valor deve ser positivo.");
     }
 
-    // Verifica saldo disponível
-    const balance = await this.cashbacksRepository.getBalance(user_id);
-    if (balance < amount) {
-      throw new Error("Saldo de cashback insuficiente.");
-    }
-
-    // 🔒 Comparação segura com tolerância
-    if (balance + 0.001 < amount) {
-      throw new Error("Saldo de cashback insuficiente.");
-    }
-
-    // Busca o pedido em vez do produto
+    // 2️⃣ busca pedido
     const order = await this.ordersRepository.findById(order_id);
     if (!order) {
       throw new Error("Pedido não encontrado.");
     }
 
-    // Verifica se o valor do cashback não excede o total do pedido
+    const storeId = order.store_id;
+
+    // 3️⃣ verifica saldo APENAS da loja do pedido
+    const balance = await this.cashbacksRepository.getBalanceByStore(
+      user_id,
+      storeId,
+    );
+
+    if (balance + 0.001 < amount) {
+      throw new Error("Saldo de cashback insuficiente para esta loja.");
+    }
+
+    // 4️⃣ valida se não excede o total do pedido
     if (amount > order.totalAmount.toNumber()) {
       throw new Error("O valor do cashback excede o total do pedido.");
     }
 
-    // Cria a transação de uso do cashback
+    // 5️⃣ registra transação de uso
     await this.cashbacksRepository.createTransaction({
-      user_id: user_id,
-      amount,
+      userId: user_id,
+      storeId,
+      orderId: order_id,
+      amount: new Decimal(amount),
       type: "USE",
     });
 
-    // Registra o débito no cashback vinculado ao pedido
+    // 6️⃣ registra débito (cashback negativo)
     await this.cashbacksRepository.redeemCashback({
-      user_id,
-      order_id, // Vincula ao pedido que recebeu o desconto
-      amount: -amount, // Valor negativo para débito
+      userId: user_id,
+      storeId,
+      orderId: order_id,
+      amount: new Decimal(amount).negated(),
     });
   }
 }

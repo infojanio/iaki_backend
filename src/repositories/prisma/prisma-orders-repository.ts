@@ -8,12 +8,16 @@ import { prisma } from "@/lib/prisma";
 export class PrismaOrdersRepository implements OrdersRepository {
   constructor(private prismaClient: PrismaClient = prisma) {}
 
-  // 🔹 Checkout (Cart → Order)
+  /**
+   * 🔹 Checkout (Cart → Order)
+   * 👉 cashbackAmount já deve vir calculado
+   */
   async create(data: {
     user_id: string;
     store_id: string;
     totalAmount: Decimal;
     discountApplied: Decimal;
+    cashbackAmount: Decimal;
     status: OrderStatus;
     items: {
       productId: string;
@@ -27,6 +31,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
         store_id: data.store_id,
         totalAmount: data.totalAmount,
         discountApplied: data.discountApplied,
+
         status: data.status,
         orderItems: {
           create: data.items.map((item) => ({
@@ -39,7 +44,9 @@ export class PrismaOrdersRepository implements OrdersRepository {
     });
   }
 
-  // 🔹 Buscar pedido completo (itens + produtos + store)
+  /**
+   * 🔹 Buscar pedido completo (itens + produtos + store)
+   */
   async findById(
     orderId: string,
   ): Promise<OrderWithItemsProductsAndStore | null> {
@@ -69,7 +76,10 @@ export class PrismaOrdersRepository implements OrdersRepository {
     });
   }
 
-  // 🔹 Buscar pedido completo (TX)
+  /**
+   * 🔹 Buscar pedido completo (TX)
+   * 👉 usado na validação simples
+   */
   async findByIdWithTx(
     tx: Prisma.TransactionClient,
     orderId: string,
@@ -100,7 +110,9 @@ export class PrismaOrdersRepository implements OrdersRepository {
     });
   }
 
-  // 🔹 Buscar pedidos do usuário
+  /**
+   * 🔹 Buscar pedidos do usuário
+   */
   async findManyByUserId(
     userId: string,
     page: number,
@@ -143,7 +155,9 @@ export class PrismaOrdersRepository implements OrdersRepository {
     });
   }
 
-  // 🔹 Buscar pedidos da loja (frontend loja)
+  /**
+   * 🔹 Buscar pedidos da loja (frontend loja)
+   */
   async findManyByStoreId(
     storeId: string,
     page: number,
@@ -172,7 +186,9 @@ export class PrismaOrdersRepository implements OrdersRepository {
     });
   }
 
-  // 🔹 Buscar pedidos da loja (admin)
+  /**
+   * 🔹 Buscar pedidos da loja (admin)
+   */
   async findManyWithItems(
     page: number,
     status: OrderStatus | undefined,
@@ -211,6 +227,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
       discountApplied: order.discountApplied
         ? Number(order.discountApplied)
         : null,
+
       qrCodeUrl: order.qrCodeUrl,
       status: order.status,
       validated_at: order.validated_at,
@@ -230,7 +247,9 @@ export class PrismaOrdersRepository implements OrdersRepository {
     }));
   }
 
-  // 🔹 Atualizar status
+  /**
+   * 🔹 Atualizar status
+   */
   async updateStatus(orderId: string, status: OrderStatus): Promise<void> {
     await this.prismaClient.order.update({
       where: { id: orderId },
@@ -238,7 +257,9 @@ export class PrismaOrdersRepository implements OrdersRepository {
     });
   }
 
-  // 🔹 Atualizar status (TX)
+  /**
+   * 🔹 Atualizar status (TX)
+   */
   async updateStatusWithTx(
     tx: Prisma.TransactionClient,
     orderId: string,
@@ -250,18 +271,9 @@ export class PrismaOrdersRepository implements OrdersRepository {
     });
   }
 
-  // 🔹 Marcar pedido como validado
-  async markAsValidated(orderId: string): Promise<void> {
-    await this.prismaClient.order.update({
-      where: { id: orderId },
-      data: {
-        status: OrderStatus.VALIDATED,
-        validated_at: new Date(),
-      },
-    });
-  }
-
-  // 🔹 Marcar pedido como validado (TX)
+  /**
+   * 🔹 Marcar pedido como validado (TX)
+   */
   async markAsValidatedWithTx(
     tx: Prisma.TransactionClient,
     orderId: string,
@@ -275,7 +287,9 @@ export class PrismaOrdersRepository implements OrdersRepository {
     });
   }
 
-  // 🔹 Cancelar pedido
+  /**
+   * 🔹 Cancelar pedido
+   */
   async cancel(orderId: string): Promise<void> {
     await this.prismaClient.order.update({
       where: { id: orderId },

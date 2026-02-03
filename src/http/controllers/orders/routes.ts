@@ -2,11 +2,8 @@
 import { FastifyInstance } from "fastify";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
 import { verifyUserRole } from "@/http/middlewares/verify-user-role";
-
 import { createOrder } from "./create-order";
 import { history } from "./history";
-import { getCartByStoreController } from "../carts/get-cart-by-store";
-import { getOrderByUser } from "./order-by-user";
 import { getOrderByOrderId } from "./order-by-orderId";
 import { getOrder } from "./get-order";
 import { allOrdersHistory } from "./all-orders-history";

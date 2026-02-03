@@ -1,4 +1,9 @@
-import { Cashback, CashbackTransaction, Prisma } from "@prisma/client";
+import {
+  Cashback,
+  CashbackStatus,
+  CashbackTransaction,
+  Prisma,
+} from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
 export interface CashbacksRepository {
@@ -19,11 +24,25 @@ export interface CashbacksRepository {
   // 🔹 Saldo consolidado
   getBalance(userId: string): Promise<number>;
 
+  getBalanceByStore(userId: string, storeId: string): Promise<number>;
+
   // 🔹 Histórico
   getTransactionsByUserId(userId: string): Promise<CashbackTransaction[]>;
 
   // 🔹 Criação
   create(data: Prisma.CashbackUncheckedCreateInput): Promise<Cashback>;
+
+  // 🔹 Criação + confirmação direta (fluxo de validação)
+  createConfirmedCashbackWithTx(
+    tx: Prisma.TransactionClient,
+    data: {
+      userId: string;
+      storeId: string;
+      orderId: string;
+      status: string;
+      amount: Decimal | number;
+    },
+  ): Promise<Cashback>;
 
   // 🔹 Confirmação (validação do pedido)
   confirmCashback(cashbackId: string): Promise<void>;
@@ -47,7 +66,7 @@ export interface CashbacksRepository {
     userId: string;
     storeId: string;
     orderId?: string;
-    amount: Decimal;
+    amount: Decimal | number;
     type: "RECEIVE" | "USE";
   }): Promise<CashbackTransaction>;
 
@@ -58,7 +77,7 @@ export interface CashbacksRepository {
       userId: string;
       storeId: string;
       orderId?: string;
-      amount: Decimal;
+      amount: Decimal | number;
       type: "RECEIVE" | "USE";
     },
   ): Promise<CashbackTransaction>;
