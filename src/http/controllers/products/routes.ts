@@ -13,6 +13,7 @@ import { searchProducts } from "./search-products";
 import { listProductsActive } from "./listProductsActive";
 import { listProductsByStoreController } from "./list-products-by-store";
 import { listProductsByStoreWithDiscountController } from "./list-products-by-store-with-discount";
+import { lowStock } from "./low-stock";
 
 export async function productsRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
@@ -50,6 +51,14 @@ export async function productsRoutes(app: FastifyInstance) {
     { onRequest: [verifyUserRole("ADMIN")] },
     updateStock,
   );
+
+  //alerta estoque mínimo
+  app.get(
+    "/products/low-stock",
+    { onRequest: [verifyUserRole("ADMIN")] },
+    lowStock,
+  );
+
   // Rota de criação
   app.post(
     "/products",

@@ -71,6 +71,12 @@ export interface ProductsRepository {
     productId: string,
   ): Promise<{ quantity: number; name: string }>;
 
+  findLowStockByStore(
+    storeId: string,
+  ): Promise<
+    { id: string; name: string; quantity: number; minStock: number }[]
+  >;
+
   updateStock(
     id: string,
     quantity: number,

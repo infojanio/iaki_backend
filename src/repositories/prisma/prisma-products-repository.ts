@@ -218,6 +218,21 @@ export class PrismaProductsRepository implements ProductsRepository {
     return Number(product.quantity);
   }
 
+  async findLowStockByStore(storeId: string) {
+    const products = await prisma.product.findMany({
+      where: { store_id: storeId },
+    });
+
+    return products
+      .filter((p) => Number(p.quantity) <= p.minStock)
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        quantity: Number(p.quantity),
+        minStock: p.minStock,
+      }));
+  }
+
   async getProductStockDetails(
     productId: string,
   ): Promise<{ quantity: number; name: string }> {

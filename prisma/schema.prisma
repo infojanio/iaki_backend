@@ -258,6 +258,7 @@ model Product {
   description         String?
   price               Decimal
   quantity            Decimal
+  minStock            Int     @default(5)
   image               String?
   status              Boolean @default(false)
   cashback_percentage Float   @default(0.0)
