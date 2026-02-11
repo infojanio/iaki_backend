@@ -3,10 +3,10 @@ import { Category } from "@prisma/client";
 import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-found-error";
 
 interface UpdateCategoryUseCaseRequest {
-  categoryId: string;
+  id: string;
   name?: string;
   image?: string;
-  category_id?: string;
+  categoryId?: string;
 }
 
 interface UpdateCategoryUseCaseResponse {
@@ -17,12 +17,11 @@ export class UpdateCategoryUseCase {
   constructor(private categoriesRepository: CategoriesRepository) {}
 
   async execute({
-    categoryId,
+    id,
     ...data
   }: UpdateCategoryUseCaseRequest): Promise<UpdateCategoryUseCaseResponse> {
     // Verifica se o category existe
-    const existingCategory =
-      await this.categoriesRepository.findById(categoryId);
+    const existingCategory = await this.categoriesRepository.findById(id);
 
     if (!existingCategory) {
       throw new ResourceNotFoundError();
@@ -35,7 +34,7 @@ export class UpdateCategoryUseCase {
 
     // Atualiza o produto
     const updatedCategory = await this.categoriesRepository.update(
-      categoryId,
+      id,
       updateData,
     );
 

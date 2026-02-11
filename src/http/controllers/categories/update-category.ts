@@ -10,7 +10,7 @@ const updateCategoryParamsSchema = z.object({
 const updateCategoryBodySchema = z.object({
   name: z.string().optional(),
   image: z.string().optional(),
-  category_id: z.string().uuid().optional(),
+  categoryId: z.string().uuid().optional(),
 });
 
 export async function updateCategory(

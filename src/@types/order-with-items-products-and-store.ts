@@ -5,21 +5,21 @@ import { OrderStatus } from "@prisma/client";
 
 export type OrderWithItemsProductsAndStore = {
   id: string;
-  user_id: string;
-  store_id: string;
+  userId: string;
+  storeId: string;
   totalAmount: Decimal;
   discountApplied: Decimal | null;
   qrCodeUrl: string | null;
   status: OrderStatus;
-  validated_at: Date | null;
-  created_at: Date;
+  validatedAt: Date | null;
+  createdAt: Date;
 
   store: {
     id: string;
     name: string;
   };
 
-  orderItems: {
+  items: {
     id: string;
     quantity: Decimal;
     product: {
@@ -27,7 +27,7 @@ export type OrderWithItemsProductsAndStore = {
       name: string;
       image: string | null;
       price: Decimal;
-      cashback_percentage: number;
+      cashbackPercentage: number;
     };
   }[];
 };

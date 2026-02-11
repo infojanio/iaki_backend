@@ -1,26 +1,24 @@
-import { CashbacksRepository } from '@/repositories/prisma/Iprisma/cashbacks-repository'
-import { Cashback } from '@prisma/client'
+import { CashbacksRepository } from "@/repositories/prisma/Iprisma/cashbacks-repository";
+import { Cashback } from "@prisma/client";
 
 interface GetUserCashbackHistoryUseCaseRequest {
-  user_id: string
+  userId: string;
 }
 
 interface GetUserCashbackHistoryUseCaseResponse {
-  cashbacks: Cashback[]
+  cashbacks: Cashback[];
 }
 
 export class GetUserCashbackHistory {
   constructor(private cashbacksRepository: CashbacksRepository) {}
 
   async execute({
-    user_id,
-  }: GetUserCashbackHistoryUseCaseRequest): Promise<
-    GetUserCashbackHistoryUseCaseResponse
-  > {
-    const cashbacks = await this.cashbacksRepository.findByUserId(user_id)
+    userId,
+  }: GetUserCashbackHistoryUseCaseRequest): Promise<GetUserCashbackHistoryUseCaseResponse> {
+    const cashbacks = await this.cashbacksRepository.findByUserId(userId);
 
     return {
       cashbacks,
-    }
+    };
   }
 }

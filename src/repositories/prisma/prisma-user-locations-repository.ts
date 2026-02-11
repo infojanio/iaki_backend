@@ -5,11 +5,11 @@ import { UserLocationRepository } from "./Iprisma/user-locations-repository";
 
 export class PrismaUserLocationsRepository implements UserLocationRepository {
   async create(
-    data: Prisma.UserLocationUncheckedCreateInput
+    data: Prisma.UserLocationUncheckedCreateInput,
   ): Promise<UserLocation> {
     const location = await prisma.userLocation.create({
       data: {
-        user_id: data.user_id,
+        userId: data.userId,
         latitude: data.latitude,
         longitude: data.longitude,
       },
@@ -19,7 +19,7 @@ export class PrismaUserLocationsRepository implements UserLocationRepository {
 
   async findByUserId(userId: string) {
     const location = await prisma.userLocation.findFirst({
-      where: { user_id: userId },
+      where: { userId: userId },
       select: {
         latitude: true,
         longitude: true,

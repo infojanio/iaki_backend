@@ -3,8 +3,8 @@ import { OrdersRepository } from "@/repositories/prisma/Iprisma/orders-repositor
 import { Decimal } from "@prisma/client/runtime/library";
 
 interface RedeemCashbackUseCaseRequest {
-  user_id: string;
-  order_id: string;
+  userId: string;
+  orderId: string;
   amount: number;
 }
 
@@ -14,23 +14,23 @@ export class RedeemCashbackUseCase {
     private ordersRepository: OrdersRepository,
   ) {}
 
-  async execute({ user_id, order_id, amount }: RedeemCashbackUseCaseRequest) {
+  async execute({ userId, orderId, amount }: RedeemCashbackUseCaseRequest) {
     // 1️⃣ validação básica
     if (amount <= 0) {
       throw new Error("O valor deve ser positivo.");
     }
 
     // 2️⃣ busca pedido
-    const order = await this.ordersRepository.findById(order_id);
+    const order = await this.ordersRepository.findById(orderId);
     if (!order) {
       throw new Error("Pedido não encontrado.");
     }
 
-    const storeId = order.store_id;
+    const storeId = order.storeId;
 
     // 3️⃣ verifica saldo APENAS da loja do pedido
     const balance = await this.cashbacksRepository.getBalanceByStore(
-      user_id,
+      userId,
       storeId,
     );
 
@@ -45,18 +45,18 @@ export class RedeemCashbackUseCase {
 
     // 5️⃣ registra transação de uso
     await this.cashbacksRepository.createTransaction({
-      userId: user_id,
+      userId: userId,
       storeId,
-      orderId: order_id,
+      orderId: orderId,
       amount: new Decimal(amount),
       type: "USE",
     });
 
     // 6️⃣ registra débito (cashback negativo)
     await this.cashbacksRepository.redeemCashback({
-      userId: user_id,
+      userId: userId,
       storeId,
-      orderId: order_id,
+      orderId: orderId,
       amount: new Decimal(amount).negated(),
     });
   }

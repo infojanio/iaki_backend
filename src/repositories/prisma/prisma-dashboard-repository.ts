@@ -11,21 +11,21 @@ export class PrismaDashboardMetricsRepository implements DashboardRepository {
     const transactions = await prisma.cashbackTransaction.findMany({
       where: {
         type: "RECEIVE",
-        created_at: {
+        createdAt: {
           gte: sixMonthsAgo,
         },
       },
       select: {
         amount: true,
-        created_at: true,
+        createdAt: true,
       },
     });
 
     // Agrupa em memória por mês/ano
     const grouped: Record<string, number> = {};
 
-    transactions.forEach(({ amount, created_at }) => {
-      const key = dayjs(created_at).format("MM/YYYY");
+    transactions.forEach(({ amount, createdAt }) => {
+      const key = dayjs(createdAt).format("MM/YYYY");
       grouped[key] = (grouped[key] || 0) + Number(amount);
     });
 
@@ -95,7 +95,7 @@ export class PrismaDashboardMetricsRepository implements DashboardRepository {
       total: Number(order.totalAmount),
       cashback: order.CashbackTransaction.reduce(
         (acc, cur) => acc + Number(cur.amount),
-        0
+        0,
       ),
       userName: order.user.name,
       storeName: order.store.name,
@@ -106,7 +106,7 @@ export class PrismaDashboardMetricsRepository implements DashboardRepository {
   async getLatestPendingOrders() {
     const orders = await prisma.order.findMany({
       where: { status: { equals: "PENDING" } },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 5,
       include: {
         user: true,
@@ -125,18 +125,18 @@ export class PrismaDashboardMetricsRepository implements DashboardRepository {
       status: order.status,
       user_name: order.user.name,
       store_name: order.store.name,
-      createdAt: order.created_at,
+      createdAt: order.createdAt,
       validatedAt: order.validated_at ?? null,
       cashback: order.CashbackTransaction.reduce(
         (acc, cur) => acc + Number(cur.amount),
-        0
+        0,
       ),
     }));
   }
 
   async getTopUsers() {
     const raw = await prisma.cashbackTransaction.groupBy({
-      by: ["user_id"],
+      by: ["userId"],
       where: { type: "RECEIVE" },
       _sum: { amount: true },
       orderBy: { _sum: { amount: "desc" } },
@@ -144,7 +144,7 @@ export class PrismaDashboardMetricsRepository implements DashboardRepository {
     });
 
     const users = await prisma.user.findMany({
-      where: { id: { in: raw.map((r) => r.user_id) } },
+      where: { id: { in: raw.map((r) => r.userId) } },
       select: {
         id: true,
         name: true,
@@ -153,9 +153,9 @@ export class PrismaDashboardMetricsRepository implements DashboardRepository {
     });
 
     return raw.map((entry) => {
-      const user = users.find((u) => u.id === entry.user_id);
+      const user = users.find((u) => u.id === entry.userId);
       return {
-        id: user?.id ?? entry.user_id,
+        id: user?.id ?? entry.userId,
         name: user?.name ?? "Usuário",
         email: user?.email ?? "",
         total: Number(entry._sum.amount),
@@ -208,13 +208,13 @@ export class PrismaDashboardMetricsRepository implements DashboardRepository {
     };
 
     if (storeId) {
-      todayConditions.store_id = storeId;
-      yesterdayConditions.store_id = storeId;
+      todayConditions.storeId = storeId;
+      yesterdayConditions.storeId = storeId;
     }
 
     if (userId) {
-      todayConditions.user_id = userId;
-      yesterdayConditions.user_id = userId;
+      todayConditions.userId = userId;
+      yesterdayConditions.userId = userId;
     }
 
     const todayOrdersCount = await prisma.order.count({
@@ -261,13 +261,13 @@ export class PrismaDashboardMetricsRepository implements DashboardRepository {
     };
 
     if (storeId) {
-      whereCurrent.store_id = storeId;
-      whereLast.store_id = storeId;
+      whereCurrent.storeId = storeId;
+      whereLast.storeId = storeId;
     }
 
     if (userId) {
-      whereCurrent.user_id = userId;
-      whereLast.user_id = userId;
+      whereCurrent.userId = userId;
+      whereLast.userId = userId;
     }
 
     const [current, previous] = await Promise.all([

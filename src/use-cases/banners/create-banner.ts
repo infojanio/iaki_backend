@@ -7,7 +7,7 @@ interface CreateBannerUseCaseRequest {
   link?: string;
   position: number;
   storeId: string;
-  created_at: Date;
+  createdAt: Date;
 }
 
 export class CreateBannerUseCase {
@@ -19,7 +19,7 @@ export class CreateBannerUseCase {
     link,
     position,
     storeId,
-    created_at,
+    createdAt,
   }: CreateBannerUseCaseRequest) {
     const banner = await this.bannersRepository.create({
       id,
@@ -28,7 +28,7 @@ export class CreateBannerUseCase {
       link,
       position,
       storeId,
-      created_at,
+      createdAt,
     });
     return {
       banner,

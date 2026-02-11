@@ -1,16 +1,16 @@
-import { prisma } from '@/lib/prisma'
+import { prisma } from "@/lib/prisma";
 import {
   FindManyNearbyParams,
   StoresRepository,
-} from '@/repositories/prisma/Iprisma/stores-repository'
-import { getDistanceBetweenCoordinates } from '@/utils/get-distance-between-coordinates'
+} from "@/repositories/prisma/Iprisma/stores-repository";
+import { getDistanceBetweenCoordinates } from "@/utils/get-distance-between-coordinates";
 
-import { Address, OrderItem, Prisma, Store } from '@prisma/client'
-import { randomUUID } from 'crypto'
+import { Address, OrderItem, Prisma, Store } from "@prisma/client";
+import { randomUUID } from "crypto";
 
 export class InMemoryStoresRepository implements StoresRepository {
-  public stores: Store[] = []
-  public addresses: Address[] = []
+  public stores: Store[] = [];
+  public addresses: Address[] = [];
 
   //busca lojas próximas até 15 km
   async findManyNearby(params: FindManyNearbyParams) {
@@ -21,28 +21,28 @@ export class InMemoryStoresRepository implements StoresRepository {
           latitude: item.latitude.toNumber(),
           longitude: item.longitude.toNumber(),
         },
-      )
-      console.log(distance)
-      return distance < 15
-    })
+      );
+      console.log(distance);
+      return distance < 15;
+    });
   }
 
   async findById(id: string): Promise<Store | null> {
-    const store = this.stores.find((store) => store.id === id)
-    console.log('Buscando loja com ID:', id, 'Resultado:', store)
-    return store ?? null
+    const store = this.stores.find((store) => store.id === id);
+    console.log("Buscando loja com ID:", id, "Resultado:", store);
+    return store ?? null;
   }
 
   async findByOrderId(orderId: string): Promise<OrderItem[]> {
     return prisma.orderItem.findMany({
-      where: { order_id: orderId },
-    })
+      where: { orderId: orderId },
+    });
   }
 
   async searchMany(query: string, page: number) {
     return this.stores
       .filter((item) => item.name.includes(query))
-      .slice((page - 1) * 20, page * 20)
+      .slice((page - 1) * 20, page * 20);
   }
 
   //verifica se o nome já existe
@@ -51,8 +51,8 @@ export class InMemoryStoresRepository implements StoresRepository {
       where: {
         name,
       },
-    })
-    return store
+    });
+    return store;
   }
 
   async create(data: Prisma.StoreCreateInput) {
@@ -62,20 +62,20 @@ export class InMemoryStoresRepository implements StoresRepository {
       slug: data.slug ?? null,
       latitude: new Prisma.Decimal(data.latitude.toString()),
       longitude: new Prisma.Decimal(data.longitude.toString()),
-      created_at: new Date(),
-    }
-    this.stores.push(store)
+      createdAt: new Date(),
+    };
+    this.stores.push(store);
 
-    return store
+    return store;
   }
 
-  async createAddress(data: Omit<Address, 'id'>) {
+  async createAddress(data: Omit<Address, "id">) {
     const address = {
       id: randomUUID(),
       ...data,
-    }
+    };
 
-    this.addresses.push(address)
-    return address
+    this.addresses.push(address);
+    return address;
   }
 }

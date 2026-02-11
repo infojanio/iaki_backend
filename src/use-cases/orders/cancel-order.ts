@@ -2,24 +2,24 @@ import { OrdersRepository } from "@/repositories/prisma/Iprisma/orders-repositor
 import { UsersRepository } from "@/repositories/prisma/Iprisma/users-repository";
 
 interface CancelOrderUseCaseRequest {
-  order_id: string;
-  admin_user_id: string; // Usuário que está validando o pedido (ADMIN)
+  orderId: string;
+  admin_userId: string; // Usuário que está validando o pedido (ADMIN)
 }
 
 export class CancelOrderUseCase {
   constructor(
     private ordersRepository: OrdersRepository,
-    private usersRepository: UsersRepository
+    private usersRepository: UsersRepository,
   ) {}
 
-  async execute({ order_id, admin_user_id }: CancelOrderUseCaseRequest) {
-    const adminUser = await this.usersRepository.findById(admin_user_id);
+  async execute({ orderId, admin_userId }: CancelOrderUseCaseRequest) {
+    const adminUser = await this.usersRepository.findById(admin_userId);
 
     if (!adminUser || adminUser.role !== "ADMIN") {
       throw new Error("Apenas usuários ADMIN podem cancelar pedidos.");
     }
 
-    const order = await this.ordersRepository.findById(order_id);
+    const order = await this.ordersRepository.findById(orderId);
 
     if (!order) {
       throw new Error("Pedido não encontrado.");
@@ -27,13 +27,13 @@ export class CancelOrderUseCase {
 
     if (order.status !== "PENDING") {
       throw new Error(
-        "Apenas pedidos com status PENDING podem ser cancelados."
+        "Apenas pedidos com status PENDING podem ser cancelados.",
       );
     }
 
     // Atualizar status do pedido para EXPIRED
-    await this.ordersRepository.updateStatus(order_id, "EXPIRED");
+    await this.ordersRepository.updateStatus(orderId, "EXPIRED");
 
-    return { order_id, status: "EXPIRED" };
+    return { orderId, status: "EXPIRED" };
   }
 }

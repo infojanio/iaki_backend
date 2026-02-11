@@ -15,9 +15,9 @@ export interface OrdersRepository {
    * Aqui já deve salvar cashbackAmount
    */
   create(data: {
-    user_id: string;
-    store_id: string;
-    totalAmount: Decimal;
+    userId: string;
+    storeId: string;
+    totalAmount: Decimal | number;
     discountApplied: Decimal;
     cashbackAmount: Decimal; // 👈 IMPORTANTE
     status: OrderStatus;
@@ -57,15 +57,15 @@ export interface OrdersRepository {
   ): Promise<
     {
       id: string;
-      user_id: string;
+      userId: string;
       user_name: string;
-      store_id: string;
+      storeId: string;
       totalAmount: number;
       discountApplied: number | null;
       qrCodeUrl: string | null;
       status: OrderStatus;
-      validated_at: Date | null;
-      created_at: Date;
+      validatedAt: Date | null;
+      createdAt: Date;
       items: {
         quantity: number;
         product: {
@@ -73,7 +73,7 @@ export interface OrdersRepository {
           name: string;
           image: string | null;
           price: number;
-          cashback_percentage: number;
+          cashbackPercentage: number;
         } | null;
       }[];
     }[]

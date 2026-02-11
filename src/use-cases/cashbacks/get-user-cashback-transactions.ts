@@ -1,16 +1,15 @@
 import { CashbacksRepository } from "@/repositories/prisma/Iprisma/cashbacks-repository";
 
 interface GetUserCashbackTransactionsRequest {
-  user_id: string;
+  userId: string;
 }
 
 export class GetUserCashbackTransactionsUseCase {
   constructor(private cashbacksRepository: CashbacksRepository) {}
 
-  async execute({ user_id }: GetUserCashbackTransactionsRequest) {
-    const transactions = await this.cashbacksRepository.getTransactionsByUserId(
-      user_id
-    );
+  async execute({ userId }: GetUserCashbackTransactionsRequest) {
+    const transactions =
+      await this.cashbacksRepository.getTransactionsByUserId(userId);
     return { transactions };
   }
 }

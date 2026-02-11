@@ -17,7 +17,7 @@ const userProfileSelect = Prisma.validator<Prisma.UserSelect>()({
   city: true,
   state: true,
   postalCode: true,
-  created_at: true,
+  createdAt: true,
 });
 
 export class PrismaUsersRepository implements UsersRepository {
@@ -54,7 +54,7 @@ export class PrismaUsersRepository implements UsersRepository {
         street: true,
         state: true,
         postalCode: true,
-        created_at: true,
+        createdAt: true,
 
         city: {
           select: {
@@ -90,7 +90,7 @@ export class PrismaUsersRepository implements UsersRepository {
 
   async balanceByUserId(userId: string): Promise<number> {
     const validatedCashbacks = await prisma.cashback.findMany({
-      where: { user_id: userId, order: { validated_at: { not: null } } },
+      where: { userId: userId, order: { validated_at: { not: null } } },
       select: { amount: true },
     });
 

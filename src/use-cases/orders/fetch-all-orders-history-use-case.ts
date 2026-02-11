@@ -12,22 +12,22 @@ interface FetchAllOrdersHistoryUseCaseRequest {
 interface FetchAllOrdersHistoryUseCaseResponse {
   orders: Array<{
     id: string;
-    user_id: string;
+    userId: string;
     user_name: string;
-    store_id: string;
+    storeId: string;
     totalAmount: number;
     discountApplied: number;
     qrCodeUrl?: string;
     status: OrderStatus;
-    validated_at: Date | null;
-    created_at: Date;
+    validatedAt: Date | null;
+    createdAt: Date;
     items: Array<{
       product: {
         id: string;
         name: string;
         image?: string | null;
         price: number;
-        cashback_percentage: number;
+        cashbackPercentage: number;
       } | null;
       quantity: number;
     }>;
@@ -58,15 +58,15 @@ export class FetchAllOrdersHistoryUseCase {
     return {
       orders: orders.map((order) => ({
         id: order.id,
-        user_id: order.user_id,
+        userId: order.userId,
         user_name: order.user_name,
-        store_id: order.store_id,
+        storeId: order.storeId,
         totalAmount: order.totalAmount,
         discountApplied: order.discountApplied ?? 0,
         qrCodeUrl: order.qrCodeUrl ?? undefined,
         status: order.status,
-        validated_at: order.validated_at,
-        created_at: order.created_at,
+        validatedAt: order.validatedAt,
+        createdAt: order.createdAt,
         items: order.items.map((item) => ({
           product: item.product
             ? {
@@ -74,7 +74,7 @@ export class FetchAllOrdersHistoryUseCase {
                 name: item.product.name,
                 image: item.product.image ?? null,
                 price: item.product.price,
-                cashback_percentage: item.product.cashback_percentage,
+                cashbackPercentage: item.product.cashbackPercentage,
               }
             : null,
           quantity: item.quantity,

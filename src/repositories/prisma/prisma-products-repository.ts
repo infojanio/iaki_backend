@@ -1,10 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { Product, Prisma } from "@prisma/client";
-import { ProductsRepository } from "./Iprisma/products-repository";
+import { Product, Prisma, PrismaClient } from "@prisma/client";
+import {
+  ProductsRepository,
+  ProductWithCategory,
+} from "./Iprisma/products-repository";
 import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-found-error";
 import { Decimal } from "@prisma/client/runtime/library";
 
 export class PrismaProductsRepository implements ProductsRepository {
+  constructor(private prisma: PrismaClient) {}
   /* ==============================
      🆕 CREATE
   ============================== */
@@ -47,17 +51,17 @@ export class PrismaProductsRepository implements ProductsRepository {
   /* ==============================
      🏪 POR LOJA
   ============================== */
-  async findByStoreId(store_id: string): Promise<Product[]> {
+  async findByStoreId(storeId: string): Promise<Product[]> {
     return prisma.product.findMany({
-      where: { store_id },
+      where: { storeId },
       orderBy: { name: "asc" },
     });
   }
 
-  async findByStoreIdActive(store_id: string): Promise<Product[]> {
+  async findByStoreIdActive(storeId: string): Promise<Product[]> {
     return prisma.product.findMany({
       where: {
-        store_id,
+        storeId,
         status: true,
       },
       orderBy: { name: "asc" },
@@ -73,14 +77,14 @@ export class PrismaProductsRepository implements ProductsRepository {
      🔥 SUBCATEGORIA + LOJA
   ============================== */
   async findBySubCategoryAndStore(
-    subcategory_id: string,
-    store_id: string,
+    subcategoryId: string,
+    storeId: string,
   ): Promise<Product[]> {
     return prisma.product.findMany({
       where: {
         status: true,
-        subcategory_id,
-        store_id,
+        subcategoryId,
+        storeId,
       },
       include: {
         store: {
@@ -109,7 +113,7 @@ export class PrismaProductsRepository implements ProductsRepository {
 
   async listMany(): Promise<Product[]> {
     const products = await prisma.product.findMany({
-      include: { subcategory: { include: { Category: true } } },
+      include: { subcategory: { include: { category: true } } },
     });
     return products;
   }
@@ -131,7 +135,7 @@ export class PrismaProductsRepository implements ProductsRepository {
   async findByCashback(): Promise<Product[]> {
     return prisma.product.findMany({
       where: { status: true },
-      orderBy: { cashback_percentage: "desc" },
+      orderBy: { cashbackPercentage: "desc" },
       take: 4,
       include: {
         store: {
@@ -176,28 +180,38 @@ export class PrismaProductsRepository implements ProductsRepository {
   async searchByName(
     query: string,
     page: number,
-    pageSize = 5,
-  ): Promise<[Product[], number]> {
-    const [products, total] = await prisma.$transaction([
-      prisma.product.findMany({
+    pageSize = 10,
+  ): Promise<[ProductWithCategory[], number]> {
+    const skip = (page - 1) * pageSize;
+
+    const [products, total] = await this.prisma.$transaction([
+      this.prisma.product.findMany({
         where: {
+          name: {
+            contains: query,
+            mode: "insensitive",
+          },
           status: true,
-          name: { contains: query, mode: "insensitive" },
         },
-        take: pageSize,
-        skip: (page - 1) * pageSize,
         include: {
+          store: true, // 🔥 OBRIGATÓRIO
           subcategory: {
             include: {
-              Category: true,
+              category: true, // 🔥 OBRIGATÓRIO
             },
           },
         },
+        skip,
+        take: pageSize,
       }),
-      prisma.product.count({
+
+      this.prisma.product.count({
         where: {
+          name: {
+            contains: query,
+            mode: "insensitive",
+          },
           status: true,
-          name: { contains: query, mode: "insensitive" },
         },
       }),
     ]);
@@ -220,7 +234,7 @@ export class PrismaProductsRepository implements ProductsRepository {
 
   async findLowStockByStore(storeId: string) {
     const products = await prisma.product.findMany({
-      where: { store_id: storeId },
+      where: { storeId: storeId },
     });
 
     return products

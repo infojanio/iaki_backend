@@ -9,9 +9,9 @@ export async function create(request: FastifyRequest, reply: FastifyReply) {
     link: z.string(),
     position: z.number(),
     storeId: z.string(),
-    created_at: z.date().optional(),
+    createdAt: z.date().optional(),
   });
-  const { title, imageUrl, link, position, storeId, created_at } =
+  const { title, imageUrl, link, position, storeId, createdAt } =
     createBannerBodySchema.parse(request.body);
   const createBannerUseCase = makeCreateBannerUseCase();
   await createBannerUseCase.execute({
@@ -20,7 +20,7 @@ export async function create(request: FastifyRequest, reply: FastifyReply) {
     link,
     position,
     storeId,
-    created_at: new Date(),
+    createdAt: new Date(),
   });
 
   return reply.status(201).send();

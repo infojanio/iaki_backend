@@ -21,7 +21,7 @@ export type UserProfileDB = {
   phone: string | null;
   role: Role;
   avatar: string | null;
-  created_at: Date;
+  createdAt: Date;
   address: AddressDTO;
 };
 

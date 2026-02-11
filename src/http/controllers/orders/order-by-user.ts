@@ -42,14 +42,14 @@ export async function getOrderByUser(
     status: order.status,
     qrCodeUrl: order.qrCodeUrl ?? undefined,
 
-    createdAt: order.created_at,
+    createdAt: order.createdAt,
     items: order.items.map((item) => ({
       productId: item.product,
       name: item.product.name,
       image: item.product.image ?? null,
       price: item.product.price,
       quantity: item.quantity,
-      cashback_percentage: item.product.cashback_percentage,
+      cashbackPercentage: item.product.cashbackPercentage,
     })),
   }));
 

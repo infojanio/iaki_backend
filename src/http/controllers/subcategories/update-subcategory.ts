@@ -10,16 +10,16 @@ const updateSubcategoryParamsSchema = z.object({
 const updateSubcategoryBodySchema = z.object({
   name: z.string().optional(),
   image: z.string().optional(),
-  category_id: z.string().uuid().optional(),
+  categoryId: z.string().uuid().optional(),
 });
 
 export async function updateSubcategory(
   request: FastifyRequest,
-  reply: FastifyReply
+  reply: FastifyReply,
 ) {
   try {
     const { subcategoryId } = updateSubcategoryParamsSchema.parse(
-      request.params
+      request.params,
     );
     const updateData = updateSubcategoryBodySchema.parse(request.body);
 

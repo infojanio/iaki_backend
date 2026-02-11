@@ -15,8 +15,8 @@ export class PrismaCashbackTransactionsRepository
   ): Promise<CashbackTransaction> {
     return prisma.cashbackTransaction.create({
       data: {
-        user_id: data.userId,
-        store_id: data.storeId,
+        userId: data.userId,
+        storeId: data.storeId,
         amount: new Decimal(data.amount),
         type: data.type,
         orderId: data.orderId ?? null,
@@ -30,8 +30,8 @@ export class PrismaCashbackTransactionsRepository
   ): Promise<CashbackTransaction> {
     return tx.cashbackTransaction.create({
       data: {
-        user_id: data.userId,
-        store_id: data.storeId,
+        userId: data.userId,
+        storeId: data.storeId,
         orderId: data.orderId ?? null,
         amount: new Decimal(data.amount),
         type: data.type,

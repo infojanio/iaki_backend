@@ -24,12 +24,12 @@ export class ValidateOrderUseCase {
       const order = await this.ordersRepository.findByIdWithTx(tx, orderId);
 
       if (!order) throw new Error("Pedido não encontrado.");
-      if (order.store_id !== storeId)
+      if (order.storeId !== storeId)
         throw new Error("Sem permissão para validar este pedido.");
       if (order.status !== OrderStatus.PENDING)
         throw new Error("Pedido já processado.");
 
-      const hoursDiff = differenceInHours(new Date(), order.created_at);
+      const hoursDiff = differenceInHours(new Date(), order.createdAt);
       if (hoursDiff > 96) {
         await this.ordersRepository.updateStatusWithTx(
           tx,
@@ -43,8 +43,8 @@ export class ValidateOrderUseCase {
       let cashbackAmount = 0;
 
       if (Number(order.discountApplied) === 0) {
-        for (const item of order.orderItems) {
-          const percentual = item.product.cashback_percentage;
+        for (const item of order.items) {
+          const percentual = item.product.cashbackPercentage;
           const subtotal = Number(item.product.price) * Number(item.quantity);
 
           cashbackAmount += subtotal * (percentual / 100);
@@ -56,14 +56,14 @@ export class ValidateOrderUseCase {
 
       // 1️⃣ cria saldo
       await this.cashbacksRepository.createConfirmedCashbackWithTx(tx, {
-        userId: order.user_id,
-        storeId: order.store_id,
+        userId: order.userId,
+        storeId: order.storeId,
         orderId: order.id,
         amount: cashbackAmount,
         status: OrderStatus.VALIDATED,
       });
 
-      for (const item of order.orderItems) {
+      for (const item of order.items) {
         await this.productsRepository.updateStockWithTx(
           tx,
           item.product.id,
@@ -74,8 +74,8 @@ export class ValidateOrderUseCase {
       // 2️⃣ cria transação (única fonte de saldo)
       if (cashbackAmount > 0) {
         await this.cashbackTransactionsRepository.createWithTx(tx, {
-          userId: order.user_id,
-          storeId: order.store_id,
+          userId: order.userId,
+          storeId: order.storeId,
           amount: cashbackAmount,
           type: "RECEIVE",
           orderId: order.id,

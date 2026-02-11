@@ -60,7 +60,7 @@
    email (String, único, obrigatório)
    password (String, obrigatório, criptografado)
    role (Enum: USER | ADMIN, padrão: USER)
-   created_at (DateTime, padrão: now)
+   createdAt (DateTime, padrão: now)
    updatedAt (DateTime, atualizado automaticamente)
 
 2. stores (Tabela de Lojas)
@@ -68,7 +68,7 @@
    id (String, PK, UUID, único)
    name (String, obrigatório)
    location (JSON ou campos específicos de latitude/longitude, obrigatório)
-   created_at (DateTime, padrão: now)
+   createdAt (DateTime, padrão: now)
    updatedAt (DateTime, atualizado automaticamente)
 
 3. products (Tabela de Produtos)
@@ -79,7 +79,7 @@
    price (Decimal, obrigatório)
    cashback_percentage (Float, obrigatório, ex.: 0.05 para 5%)
    storeId (String, FK para stores.id)
-   created_at (DateTime, padrão: now)
+   createdAt (DateTime, padrão: now)
    updatedAt (DateTime, atualizado automaticamente)
 
 4. orders (Tabela de Pedidos)
@@ -88,7 +88,7 @@
    userId (String, FK para users.id)
    storeId (String, FK para stores.id)
    totalAmount (Decimal, obrigatório)
-   created_at (DateTime, padrão: now)
+   createdAt (DateTime, padrão: now)
    validatedAt (DateTime, opcional, usado para registrar a validação do pedido)
    status (Enum: PENDING | VALIDATED | EXPIRED, padrão: PENDING)
 

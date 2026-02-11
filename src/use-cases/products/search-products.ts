@@ -31,7 +31,7 @@ export class SearchProductsUseCase {
     const [products, total] = await this.productsRepository.searchByName(
       trimmedQuery,
       page,
-      pageSize
+      pageSize,
     );
 
     return { products, total };

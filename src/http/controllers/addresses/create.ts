@@ -1,7 +1,7 @@
-import { z } from 'zod' // responsável pela validação dos dados
-import { FastifyReply, FastifyRequest } from 'fastify'
-import { UserAlreadyExistsError } from '@/utils/messages/errors/user-already-exists-error'
-import { makeAddressUseCase } from '@/use-cases/_factories/make-address-use-case'
+import { z } from "zod"; // responsável pela validação dos dados
+import { FastifyReply, FastifyRequest } from "fastify";
+import { UserAlreadyExistsError } from "@/utils/messages/errors/user-already-exists-error";
+import { makeAddressUseCase } from "@/use-cases/_factories/make-address-use-case";
 
 export async function create(request: FastifyRequest, reply: FastifyReply) {
   const registerAddressBodySchema = z
@@ -11,12 +11,12 @@ export async function create(request: FastifyRequest, reply: FastifyReply) {
       city: z.string(),
       state: z.string(),
       postalCode: z.string(),
-      store_id: z.string().optional().nullable(),
-      user_id: z.string().optional().nullable(),
+      storeId: z.string().optional().nullable(),
+      userId: z.string().optional().nullable(),
     })
-    .refine((data) => data.store_id || data.user_id, {
-      message: 'store_id ou user_id deve ser informado.',
-    })
+    .refine((data) => data.storeId || data.userId, {
+      message: "storeId ou userId deve ser informado.",
+    });
 
   const {
     // id,
@@ -24,34 +24,34 @@ export async function create(request: FastifyRequest, reply: FastifyReply) {
     city,
     state,
     postalCode,
-    store_id,
-    user_id,
+    storeId,
+    userId,
     // addressId,
     // address_id,
-    // created_at,
-  } = registerAddressBodySchema.parse(request.body)
+    // createdAt,
+  } = registerAddressBodySchema.parse(request.body);
 
   try {
-    const addressUseCase = makeAddressUseCase()
+    const addressUseCase = makeAddressUseCase();
     await addressUseCase.execute({
       // id,
       street,
       city,
       state,
       postalCode,
-      store_id,
-      user_id,
+      storeId,
+      userId,
 
       //  addressId,
       // address_id,
-      // created_at,
-    })
+      // createdAt,
+    });
   } catch (error) {
     if (error instanceof UserAlreadyExistsError) {
-      return reply.status(409).send({ message: error.message })
+      return reply.status(409).send({ message: error.message });
     }
-    throw error
+    throw error;
   }
 
-  return reply.status(201).send()
+  return reply.status(201).send();
 }

@@ -14,8 +14,8 @@ export async function cancel(request: FastifyRequest, reply: FastifyReply) {
 
   try {
     const result = await cancelOrderUseCase.execute({
-      order_id: orderId,
-      admin_user_id: adminUserId,
+      orderId: orderId,
+      admin_userId: adminUserId,
     });
 
     return reply

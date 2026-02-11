@@ -4,7 +4,7 @@ interface CreateCategoryUseCaseRequest {
   id?: string;
   name: string;
   image: string | null;
-  created_at: Date;
+  createdAt: Date;
   // subcategory: string
 }
 interface CreateCategoryUseCaseResponse {
@@ -16,14 +16,14 @@ export class CreateCategoryUseCase {
     id,
     name,
     image,
-    created_at,
+    createdAt,
   }: // subcategory,
   CreateCategoryUseCaseRequest): Promise<CreateCategoryUseCaseResponse> {
     const category = await this.categoriesRepository.create({
       id,
       name,
       image,
-      created_at,
+      createdAt,
       // SubCategory: subcategory,
     });
     return {

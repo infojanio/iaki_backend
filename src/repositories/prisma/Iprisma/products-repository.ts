@@ -1,9 +1,16 @@
-import { Prisma, Product } from "@prisma/client";
+import { Category, Prisma, Product, Store, SubCategory } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
 /* ==============================
    🧱 MODELOS AUXILIARES
 ============================== */
+
+export type ProductWithCategory = Product & {
+  store: Store;
+  subcategory: SubCategory & {
+    category: Category;
+  };
+};
 
 export interface ProductWithNames {
   id: string;
@@ -13,7 +20,7 @@ export interface ProductWithNames {
   quantity: Prisma.Decimal;
   image: string | null;
   status: boolean;
-  cashback_percentage: number;
+  cashbackPercentage: number;
   subcategoryName: string | null;
   categoryName: string | null;
 }
@@ -38,13 +45,13 @@ export interface ProductsRepository {
   findByIds(ids: string[]): Promise<Product[]>;
 
   /* ========= POR LOJA ========= */
-  findByStoreId(store_id: string): Promise<Product[]>;
-  findByStoreIdActive(store_id: string): Promise<Product[]>;
+  findByStoreId(storeId: string): Promise<Product[]>;
+  findByStoreIdActive(storeId: string): Promise<Product[]>;
 
   /* ========= SUBCATEGORIA + LOJA (OBRIGATÓRIO) ========= */
   findBySubCategoryAndStore(
-    subcategory_id: string,
-    store_id: string,
+    subcategoryId: string,
+    storeId: string,
   ): Promise<Product[]>;
 
   listMany(): Promise<Product[]>; // listar todos
@@ -52,8 +59,8 @@ export interface ProductsRepository {
   listManyProductActive(): Promise<Product[]>;
   listManyProductActiveByCity(cityId: string): Promise<Product[]>;
 
-  findByCashback(): Promise<Product[]>; // destaque (Home)
-  findByQuantity(): Promise<Product[]>; // baixo estoque (Home)
+  findByCashback(cashbackPercentage: number): Promise<Product[]>; // destaque (Home)
+  findByQuantity(quantity: number): Promise<Product[]>; // baixo estoque (Home)
 
   /* ========= BUSCA ========= */
   searchMany(search: string, page: number): Promise<Product[]>;
@@ -62,7 +69,7 @@ export interface ProductsRepository {
     query: string,
     page: number,
     pageSize?: number,
-  ): Promise<[Product[], number]>;
+  ): Promise<[ProductWithCategory[], number]>;
 
   /* ========= ESTOQUE ========= */
   getProductStock(productId: string): Promise<number | Decimal>;
@@ -108,9 +115,9 @@ export interface ProductsRepository {
         | { set: number };
       image?: string;
       status?: boolean;
-      cashback_percentage?: number;
-      store_id?: string;
-      subcategory_id?: string;
+      cashbackPercentage?: number;
+      storeId?: string;
+      subcategoryId?: string;
     },
   ): Promise<Product>;
 

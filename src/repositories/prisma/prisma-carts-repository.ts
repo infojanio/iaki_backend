@@ -164,7 +164,7 @@ export class PrismaCartsRepository implements CartsRepository {
                 name: true,
                 price: true,
                 image: true,
-                cashback_percentage: true,
+                cashbackPercentage: true,
               },
             },
           },
@@ -194,7 +194,7 @@ export class PrismaCartsRepository implements CartsRepository {
           name: item.product.name,
           price: item.product.price,
           image: item.product.image,
-          cashback_percentage: item.product.cashback_percentage,
+          cashbackPercentage: item.product.cashbackPercentage,
         },
       })),
     };

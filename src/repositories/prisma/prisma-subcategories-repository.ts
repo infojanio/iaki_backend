@@ -5,7 +5,7 @@ export class PrismaSubCategoriesRepository implements SubCategoriesRepository {
   async listMany(): Promise<SubCategory[]> {
     const subcategories = await prisma.subCategory.findMany({
       include: {
-        Category: {
+        category: {
           select: {
             id: true,
             name: true, // Aqui você especifica os campos que quer incluir da tabela Category
@@ -31,16 +31,16 @@ export class PrismaSubCategoriesRepository implements SubCategoriesRepository {
         id,
       },
       include: {
-        Category: true,
+        category: true,
       },
     });
     return subcategory;
   }
 
-  async findByCategory(category_id?: string): Promise<SubCategory[]> {
+  async findByCategory(categoryId?: string): Promise<SubCategory[]> {
     const subcategory = await prisma.subCategory.findMany({
       where: {
-        category_id,
+        categoryId,
       },
     });
     return subcategory;
@@ -53,10 +53,10 @@ export class PrismaSubCategoriesRepository implements SubCategoriesRepository {
 
     const subcategories = await prisma.subCategory.findMany({
       where: {
-        category_id: categoryId,
+        categoryId: categoryId,
       },
       include: {
-        Category: {
+        category: {
           select: {
             id: true,
             name: true, // Aqui você especifica os campos que quer incluir da tabela Category
@@ -77,10 +77,10 @@ export class PrismaSubCategoriesRepository implements SubCategoriesRepository {
       });
     }
 
-    // Busca as categorias com base no query category_id
+    // Busca as categorias com base no query categoryId
     return await prisma.subCategory.findMany({
       where: {
-        category_id: {
+        categoryId: {
           equals: query,
           mode: "insensitive", // Busca case-insensitive (maíuscula ou minúscula)
         },
@@ -95,8 +95,8 @@ export class PrismaSubCategoriesRepository implements SubCategoriesRepository {
     data: {
       name?: string;
       image?: string;
-      category_id?: string;
-    }
+      categoryId?: string;
+    },
   ): Promise<SubCategory> {
     return prisma.subCategory.update({
       where: { id },

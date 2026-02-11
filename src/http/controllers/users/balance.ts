@@ -5,13 +5,10 @@ import { makeGetUserCashbackBalanceUseCase } from "@/use-cases/_factories/make-g
 export async function balance(request: FastifyRequest, reply: FastifyReply) {
   const getUserCashbackBalanceUseCase = makeGetUserCashbackBalanceUseCase();
 
-  const {
-    balance,
-    totalReceived,
-    totalUsed,
-  } = await getUserCashbackBalanceUseCase.execute({
-    user_id: request.user.sub,
-  });
+  const { balance, totalReceived, totalUsed } =
+    await getUserCashbackBalanceUseCase.execute({
+      userId: request.user.sub,
+    });
 
   return reply.status(200).send({
     balance,

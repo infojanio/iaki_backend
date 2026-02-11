@@ -1,37 +1,37 @@
-import { ProductsRepository } from '@/repositories/prisma/Iprisma/products-repository'
-import { Prisma, Product } from '@prisma/client'
-import { Decimal } from '@prisma/client/runtime/library'
-import { randomUUID } from 'crypto'
+import { ProductsRepository } from "@/repositories/prisma/Iprisma/products-repository";
+import { Prisma, Product } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
+import { randomUUID } from "crypto";
 
 export class InMemoryProductsRepository implements ProductsRepository {
   findByQuantity(quantity: number): Promise<Product[]> {
-    throw new Error('Method not implemented.')
+    throw new Error("Method not implemented.");
   }
-  findByCashback(cashback_percentage: number): Promise<Product[]> {
-    throw new Error('Method not implemented.')
+  findByCashback(cashbackPercentage: number): Promise<Product[]> {
+    throw new Error("Method not implemented.");
   }
   listMany(): Promise<Product[]> {
-    throw new Error('Method not implemented.')
+    throw new Error("Method not implemented.");
   }
-  findBySubCategory(subcategory_id: string): Promise<Product[]> {
-    throw new Error('Method not implemented.')
+  findBySubCategory(subcategoryId: string): Promise<Product[]> {
+    throw new Error("Method not implemented.");
   }
-  public items: Product[] = []
+  public items: Product[] = [];
 
   async findByIds(ids: string[]): Promise<Product[]> {
-    return this.items.filter((item) => ids.includes(item.id))
+    return this.items.filter((item) => ids.includes(item.id));
   }
 
   async updateStock(productId: string, quantity: number): Promise<Product> {
-    const productIndex = this.items.findIndex((item) => item.id === productId)
+    const productIndex = this.items.findIndex((item) => item.id === productId);
     if (productIndex === -1) {
-      throw new Error('Product not found')
+      throw new Error("Product not found");
     }
 
-    const existingQuantity = new Decimal(this.items[productIndex].quantity) // Converte para Decimal
-    this.items[productIndex].quantity = existingQuantity.plus(quantity) // Usa `.plus()` do Decimal
+    const existingQuantity = new Decimal(this.items[productIndex].quantity); // Converte para Decimal
+    this.items[productIndex].quantity = existingQuantity.plus(quantity); // Usa `.plus()` do Decimal
 
-    return this.items[productIndex]
+    return this.items[productIndex];
   }
   async create(data: Prisma.ProductUncheckedCreateInput): Promise<Product> {
     const product: Product = {
@@ -42,44 +42,44 @@ export class InMemoryProductsRepository implements ProductsRepository {
       quantity: data.quantity || 0,
       status: data.status ?? false, // Garante que o status padrão seja false
       image: data.image || null,
-      cashback_percentage: data.cashback_percentage || 0,
-      store_id: data.store_id,
-      subcategory_id: data.subcategory_id,
-      created_at: data.created_at ?? new Date(),
-    }
+      cashbackPercentage: data.cashbackPercentage || 0,
+      storeId: data.storeId,
+      subcategoryId: data.subcategoryId,
+      createdAt: data.createdAt ?? new Date(),
+    };
 
-    this.items.push(product)
-    return product
+    this.items.push(product);
+    return product;
   }
 
   async findById(id: string): Promise<Product | null> {
-    return this.items.find((item) => item.id === id) || null
+    return this.items.find((item) => item.id === id) || null;
   }
 
-  async findByStoreId(store_id: string): Promise<Product[]> {
-    return this.items.filter((item) => item.store_id === store_id)
+  async findByStoreId(storeId: string): Promise<Product[]> {
+    return this.items.filter((item) => item.storeId === storeId);
   }
 
-  async findBySubcategoryId(subcategory_id: string): Promise<Product[]> {
-    return this.items.filter((item) => item.subcategory_id === subcategory_id)
+  async findBySubcategoryId(subcategoryId: string): Promise<Product[]> {
+    return this.items.filter((item) => item.subcategoryId === subcategoryId);
   }
 
   async searchMany(query: string, page: number): Promise<Product[]> {
     return this.items
       .filter((item) => item.name.includes(query))
-      .slice((page - 1) * 20, page * 20)
+      .slice((page - 1) * 20, page * 20);
   }
 
   async update(
     productId: string,
     data: Prisma.ProductUncheckedUpdateInput,
   ): Promise<Product> {
-    const productIndex = this.items.findIndex((item) => item.id === productId)
+    const productIndex = this.items.findIndex((item) => item.id === productId);
     if (productIndex === -1) {
-      throw new Error('Product not found')
+      throw new Error("Product not found");
     }
 
-    const existingProduct = this.items[productIndex]
+    const existingProduct = this.items[productIndex];
 
     // Atualiza os campos, garantindo que valores não sejam sobrescritos por `undefined`
     const updatedProduct: Product = {
@@ -106,34 +106,34 @@ export class InMemoryProductsRepository implements ProductsRepository {
         data.status !== undefined
           ? (data.status as boolean)
           : existingProduct.status,
-      cashback_percentage:
-        data.cashback_percentage !== undefined
-          ? (data.cashback_percentage as number)
-          : existingProduct.cashback_percentage,
-      store_id:
-        data.store_id !== undefined
-          ? (data.store_id as string)
-          : existingProduct.store_id,
-      subcategory_id:
-        data.subcategory_id !== undefined
-          ? (data.subcategory_id as string)
-          : existingProduct.subcategory_id,
-      created_at: existingProduct.created_at,
-    }
+      cashbackPercentage:
+        data.cashbackPercentage !== undefined
+          ? (data.cashbackPercentage as number)
+          : existingProduct.cashbackPercentage,
+      storeId:
+        data.storeId !== undefined
+          ? (data.storeId as string)
+          : existingProduct.storeId,
+      subcategoryId:
+        data.subcategoryId !== undefined
+          ? (data.subcategoryId as string)
+          : existingProduct.subcategoryId,
+      createdAt: existingProduct.createdAt,
+    };
 
-    this.items[productIndex] = updatedProduct
-    return updatedProduct
+    this.items[productIndex] = updatedProduct;
+    return updatedProduct;
   }
 
   async delete(where: { id: string }): Promise<Product> {
     const productIndex = this.items.findIndex(
       (product) => product.id === where.id,
-    )
+    );
     if (productIndex === -1) {
-      throw new Error('Product not found')
+      throw new Error("Product not found");
     }
 
-    this.items[productIndex].status = false // Marca como inativo
-    return this.items[productIndex]
+    this.items[productIndex].status = false; // Marca como inativo
+    return this.items[productIndex];
   }
 }

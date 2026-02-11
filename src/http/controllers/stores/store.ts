@@ -16,8 +16,8 @@ export async function store(request: FastifyRequest, reply: FastifyReply) {
     avatar: z.string(),
     cnpj: z.string(),
     street: z.string(),
-    city: z.string(),
-    state: z.string(),
+    cityId: z.string(),
+    isActive: z.boolean().default(true),
     postalCode: z.string(),
   });
 
@@ -31,8 +31,8 @@ export async function store(request: FastifyRequest, reply: FastifyReply) {
     avatar,
     cnpj,
     street,
-    city,
-    state,
+    cityId,
+    isActive,
     postalCode,
   } = createStoreBodySchema.parse(request.body);
 
@@ -49,8 +49,8 @@ export async function store(request: FastifyRequest, reply: FastifyReply) {
       avatar,
       cnpj,
       street,
-      city,
-      state,
+      cityId,
+      isActive,
       postalCode,
     });
 

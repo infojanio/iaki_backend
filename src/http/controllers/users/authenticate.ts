@@ -27,7 +27,7 @@ export async function authenticate(
     // 💰 saldo do usuário (opcional, mantido)
     const cashback = await prisma.cashback.aggregate({
       where: {
-        user_id: user.id,
+        userId: user.id,
         status: "CONFIRMED",
       },
       _sum: {

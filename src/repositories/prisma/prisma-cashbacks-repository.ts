@@ -16,7 +16,7 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
     const result = await prisma.cashback.aggregate({
       _sum: { amount: true },
       where: {
-        user_id: userId,
+        userId: userId,
         amount: { gt: 0 },
         status: CashbackStatus.CONFIRMED,
       },
@@ -29,7 +29,7 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
     const result = await prisma.cashback.aggregate({
       _sum: { amount: true },
       where: {
-        user_id: userId,
+        userId: userId,
         amount: { lt: 0 },
         status: CashbackStatus.CONFIRMED,
       },
@@ -43,8 +43,8 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
   // =====================================================
   async findByUserId(userId: string): Promise<Cashback[]> {
     return prisma.cashback.findMany({
-      where: { user_id: userId },
-      orderBy: { credited_at: "desc" },
+      where: { userId: userId },
+      orderBy: { creditedAt: "desc" },
     });
   }
 
@@ -56,7 +56,7 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
 
   async findByOrderId(orderId: string): Promise<Cashback | null> {
     return prisma.cashback.findFirst({
-      where: { order_id: orderId },
+      where: { orderId: orderId },
     });
   }
 
@@ -65,7 +65,7 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
     orderId: string,
   ): Promise<Cashback | null> {
     return tx.cashback.findFirst({
-      where: { order_id: orderId },
+      where: { orderId: orderId },
     });
   }
 
@@ -85,7 +85,7 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
       data: {
         status: CashbackStatus.CONFIRMED,
         validated: true,
-        credited_at: new Date(),
+        creditedAt: new Date(),
       },
     });
   }
@@ -99,7 +99,7 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
       data: {
         status: CashbackStatus.CONFIRMED,
         validated: true,
-        credited_at: new Date(),
+        creditedAt: new Date(),
       },
     });
   }
@@ -119,8 +119,8 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
 
     return prisma.cashbackTransaction.create({
       data: {
-        user_id: data.userId,
-        store_id: data.storeId,
+        userId: data.userId,
+        storeId: data.storeId,
         orderId: data.orderId,
         amount: finalAmount,
         type: data.type,
@@ -143,8 +143,8 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
 
     return tx.cashbackTransaction.create({
       data: {
-        user_id: data.userId,
-        store_id: data.storeId,
+        userId: data.userId,
+        storeId: data.storeId,
         orderId: data.orderId,
         amount: finalAmount,
         type: data.type,
@@ -164,13 +164,13 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
   ): Promise<Cashback> {
     return tx.cashback.create({
       data: {
-        user_id: data.userId,
-        store_id: data.storeId,
-        order_id: data.orderId,
+        userId: data.userId,
+        storeId: data.storeId,
+        orderId: data.orderId,
         amount: new Decimal(data.amount),
         status: CashbackStatus.CONFIRMED,
         validated: true,
-        credited_at: new Date(),
+        creditedAt: new Date(),
       },
     });
   }
@@ -182,8 +182,8 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
     userId: string,
   ): Promise<CashbackTransaction[]> {
     return prisma.cashbackTransaction.findMany({
-      where: { user_id: userId },
-      orderBy: { created_at: "desc" },
+      where: { userId: userId },
+      orderBy: { createdAt: "desc" },
     });
   }
 
@@ -193,7 +193,7 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
   async getBalance(userId: string): Promise<number> {
     const result = await prisma.cashbackTransaction.aggregate({
       _sum: { amount: true },
-      where: { user_id: userId },
+      where: { userId: userId },
     });
 
     return (result._sum.amount ?? new Decimal(0)).toNumber();
@@ -203,8 +203,8 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
   async getBalanceByStore(userId: string, storeId: string): Promise<number> {
     const received = await prisma.cashback.aggregate({
       where: {
-        user_id: userId,
-        store_id: storeId,
+        userId: userId,
+        storeId: storeId,
         status: "CONFIRMED",
       },
       _sum: {
@@ -214,8 +214,8 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
 
     const used = await prisma.cashbackTransaction.aggregate({
       where: {
-        user_id: userId,
-        store_id: storeId,
+        userId: userId,
+        storeId: storeId,
         type: "USE",
       },
       _sum: {
@@ -247,21 +247,21 @@ export class PrismaCashbacksRepository implements CashbacksRepository {
     return prisma.$transaction(async (tx) => {
       const cashback = await tx.cashback.create({
         data: {
-          user_id: data.userId,
-          order_id: data.orderId,
-          store_id: data.storeId,
+          userId: data.userId,
+          orderId: data.orderId,
+          storeId: data.storeId,
           amount: data.amount.abs().negated(),
           validated: true,
           status: CashbackStatus.CONFIRMED,
-          credited_at: new Date(),
+          creditedAt: new Date(),
         },
       });
 
       await tx.cashbackTransaction.create({
         data: {
-          user_id: data.userId,
+          userId: data.userId,
           orderId: data.orderId,
-          store_id: data.storeId,
+          storeId: data.storeId,
           amount: data.amount.abs().negated(),
           type: "USE",
         },

@@ -10,10 +10,10 @@ export interface OrderItemSnapshot {
 
 export interface OrderForValidation {
   id: string;
-  user_id: string;
-  store_id: string;
+  userId: string;
+  storeId: string;
   status: OrderStatus;
-  created_at: Date;
+  createdAt: Date;
   discountApplied: Decimal;
   items: OrderItemSnapshot[];
 }

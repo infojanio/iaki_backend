@@ -24,7 +24,7 @@ export type OpenCartWithItems = {
       name: string;
       price: Decimal;
       image: string | null;
-      cashback_percentage: number;
+      cashbackPercentage: number;
     };
   }[];
 };

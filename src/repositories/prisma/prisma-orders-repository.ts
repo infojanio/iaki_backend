@@ -13,8 +13,8 @@ export class PrismaOrdersRepository implements OrdersRepository {
    * 👉 cashbackAmount já deve vir calculado
    */
   async create(data: {
-    user_id: string;
-    store_id: string;
+    userId: string;
+    storeId: string;
     totalAmount: Decimal;
     discountApplied: Decimal;
     cashbackAmount: Decimal;
@@ -27,15 +27,15 @@ export class PrismaOrdersRepository implements OrdersRepository {
   }) {
     return this.prismaClient.order.create({
       data: {
-        user_id: data.user_id,
-        store_id: data.store_id,
+        userId: data.userId,
+        storeId: data.storeId,
         totalAmount: data.totalAmount,
         discountApplied: data.discountApplied,
 
         status: data.status,
-        orderItems: {
+        items: {
           create: data.items.map((item) => ({
-            product_id: item.productId,
+            productId: item.productId,
             quantity: item.quantity,
             subtotal: item.subtotal,
           })),
@@ -59,7 +59,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
             name: true,
           },
         },
-        orderItems: {
+        items: {
           include: {
             product: {
               select: {
@@ -67,7 +67,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
                 name: true,
                 image: true,
                 price: true,
-                cashback_percentage: true,
+                cashbackPercentage: true,
               },
             },
           },
@@ -93,7 +93,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
             name: true,
           },
         },
-        orderItems: {
+        items: {
           include: {
             product: {
               select: {
@@ -101,7 +101,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
                 name: true,
                 image: true,
                 price: true,
-                cashback_percentage: true,
+                cashbackPercentage: true,
               },
             },
           },
@@ -123,11 +123,11 @@ export class PrismaOrdersRepository implements OrdersRepository {
 
     return this.prismaClient.order.findMany({
       where: {
-        user_id: userId,
+        userId: userId,
         ...(status && { status }),
       },
       orderBy: {
-        created_at: "desc",
+        createdAt: "desc",
       },
       take,
       skip,
@@ -138,7 +138,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
             name: true,
           },
         },
-        orderItems: {
+        items: {
           include: {
             product: {
               select: {
@@ -146,7 +146,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
                 name: true,
                 image: true,
                 price: true,
-                cashback_percentage: true,
+                cashbackPercentage: true,
               },
             },
           },
@@ -168,16 +168,16 @@ export class PrismaOrdersRepository implements OrdersRepository {
 
     return this.prismaClient.order.findMany({
       where: {
-        store_id: storeId,
+        storeId: storeId,
         ...(status && { status }),
       },
       orderBy: {
-        created_at: "desc",
+        createdAt: "desc",
       },
       take,
       skip,
       include: {
-        orderItems: {
+        items: {
           include: {
             product: true,
           },
@@ -198,11 +198,11 @@ export class PrismaOrdersRepository implements OrdersRepository {
 
     const orders = await this.prismaClient.order.findMany({
       where: {
-        store_id: storeId,
+        storeId: storeId,
         ...(status && { status }),
       },
       orderBy: {
-        created_at: "desc",
+        createdAt: "desc",
       },
       skip: (page - 1) * limit,
       take: limit,
@@ -210,7 +210,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
         user: {
           select: { name: true },
         },
-        orderItems: {
+        items: {
           include: {
             product: true,
           },
@@ -220,9 +220,9 @@ export class PrismaOrdersRepository implements OrdersRepository {
 
     return orders.map((order) => ({
       id: order.id,
-      user_id: order.user_id,
+      userId: order.userId,
       user_name: order.user.name,
-      store_id: order.store_id,
+      storeId: order.storeId,
       totalAmount: Number(order.totalAmount),
       discountApplied: order.discountApplied
         ? Number(order.discountApplied)
@@ -230,9 +230,9 @@ export class PrismaOrdersRepository implements OrdersRepository {
 
       qrCodeUrl: order.qrCodeUrl,
       status: order.status,
-      validated_at: order.validated_at,
-      created_at: order.created_at,
-      items: order.orderItems.map((item) => ({
+      validated_at: order.validatedAt,
+      createdAt: order.createdAt,
+      items: order.items.map((item) => ({
         quantity: Number(item.quantity),
         product: item.product
           ? {
@@ -240,7 +240,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
               name: item.product.name,
               image: item.product.image,
               price: Number(item.product.price),
-              cashback_percentage: item.product.cashback_percentage,
+              cashbackPercentage: item.product.cashbackPercentage,
             }
           : null,
       })),
@@ -282,7 +282,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
       where: { id: orderId },
       data: {
         status: OrderStatus.VALIDATED,
-        validated_at: new Date(),
+        validatedAt: new Date(),
       },
     });
   }

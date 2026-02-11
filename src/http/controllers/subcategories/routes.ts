@@ -14,7 +14,7 @@ export async function subcategoriesRoutes(app: FastifyInstance) {
   app.patch(
     "/subcategories/:subcategoryId",
     { onRequest: [verifyJWT, verifyUserRole("ADMIN")] },
-    updateSubcategory
+    updateSubcategory,
   );
   app.get("/subcategories/category", fetchSubCategoriesByCategory);
   app.post("/subcategories", { onRequest: [verifyUserRole("ADMIN")] }, create);

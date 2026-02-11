@@ -2,29 +2,29 @@ import { CashbacksRepository } from "@/repositories/prisma/Iprisma/cashbacks-rep
 import { OrdersRepository } from "@/repositories/prisma/Iprisma/orders-repository";
 
 interface ValidateCashbackUseCaseRequest {
-  order_id: string;
-  user_id: string;
+  orderId: string;
+  userId: string;
   cashbackAmount: number;
 }
 
 export class ValidateCashback {
   constructor(
     private cashbacksRepository: CashbacksRepository,
-    private ordersRepository: OrdersRepository
+    private ordersRepository: OrdersRepository,
   ) {}
 
   async execute({
-    order_id,
-    user_id,
+    orderId,
+    userId,
     cashbackAmount,
   }: ValidateCashbackUseCaseRequest): Promise<void> {
-    const order = await this.ordersRepository.findById(order_id);
+    const order = await this.ordersRepository.findById(orderId);
 
     if (!order) {
       throw new Error("Order not found.");
     }
 
-    if (order.user_id !== user_id) {
+    if (order.userId !== userId) {
       throw new Error("Unauthorized operation.");
     }
 
@@ -34,13 +34,13 @@ export class ValidateCashback {
 
     /* Aplica cashback positivo
     await this.cashbacksRepository.applyCashback(
-      order_id,
-      user_id,
+      orderId,
+      userId,
       cashbackAmount,
     )
       */
 
     // Atualiza o pedido como validado
-    await this.ordersRepository.markAsValidated(order_id);
+    await this.ordersRepository.markAsValidated(orderId);
   }
 }

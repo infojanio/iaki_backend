@@ -1,23 +1,23 @@
-import { Product } from '@prisma/client'
-import { ProductsRepository } from '@/repositories/prisma/Iprisma/products-repository'
-import { StoresRepository } from '@/repositories/prisma/Iprisma/stores-repository'
-import { SubCategoriesRepository } from '@/repositories/prisma/Iprisma/subcategories-repository'
+import { Product } from "@prisma/client";
+import { ProductsRepository } from "@/repositories/prisma/Iprisma/products-repository";
+import { StoresRepository } from "@/repositories/prisma/Iprisma/stores-repository";
+import { SubCategoriesRepository } from "@/repositories/prisma/Iprisma/subcategories-repository";
 
 interface CreateProductUseCaseRequest {
-  id?: string
-  name: string
-  description?: string | null
-  price: number
-  quantity: number
-  image?: string | null
-  cashback_percentage: number
-  status: boolean
-  store_id: string
-  subcategory_id: string
+  id?: string;
+  name: string;
+  description?: string | null;
+  price: number;
+  quantity: number;
+  image?: string | null;
+  cashbackPercentage: number;
+  status: boolean;
+  storeId: string;
+  subcategoryId: string;
 }
 
 interface CreateProductUseCaseResponse {
-  product: Product
+  product: Product;
 }
 
 export class CreateProductUseCase {
@@ -34,26 +34,25 @@ export class CreateProductUseCase {
     price,
     quantity,
     image,
-    cashback_percentage,
+    cashbackPercentage,
     status,
-    store_id,
-    subcategory_id,
+    storeId,
+    subcategoryId,
   }: CreateProductUseCaseRequest): Promise<CreateProductUseCaseResponse> {
     // Verifica se a loja existe
 
-    console.log('store_id recebido:', store_id)
-    const storeExists = await this.storesRepository.findById(store_id)
+    console.log("storeId recebido:", storeId);
+    const storeExists = await this.storesRepository.findById(storeId);
     if (!storeExists) {
-      console.log('storeExists:', storeExists)
-      throw new Error('A loja com esse ID não existe!')
+      console.log("storeExists:", storeExists);
+      throw new Error("A loja com esse ID não existe!");
     }
 
     // Verifica se a subcategoria existe
-    const subcategoryExists = await this.subcategoriesRepository.findById(
-      subcategory_id,
-    )
+    const subcategoryExists =
+      await this.subcategoriesRepository.findById(subcategoryId);
     if (!subcategoryExists) {
-      throw new Error('A subcategoria com esse ID não existe!')
+      throw new Error("A subcategoria com esse ID não existe!");
     }
 
     // Cria o produto
@@ -65,14 +64,14 @@ export class CreateProductUseCase {
       price,
       quantity,
       image,
-      cashback_percentage,
+      cashbackPercentage,
       status,
-      store_id,
-      subcategory_id,
-      created_at: new Date(),
-    })
+      storeId,
+      subcategoryId,
+      createdAt: new Date(),
+    });
 
-    console.log('products', product)
-    return { product }
+    console.log("products", product);
+    return { product };
   }
 }

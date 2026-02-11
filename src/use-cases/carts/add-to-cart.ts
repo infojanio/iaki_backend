@@ -36,7 +36,7 @@ export class AddToCartUseCase {
     }
 
     // 🔹 segurança: produto deve pertencer à loja
-    if (product.store_id !== storeId) {
+    if (product.storeId !== storeId) {
       throw new Error("Produto não pertence à loja selecionada");
     }
 
@@ -71,7 +71,7 @@ export class AddToCartUseCase {
     }
 
     const priceSnapshot = new Decimal(product.price);
-    const cashbackSnapshot = product.cashback_percentage ?? 0;
+    const cashbackSnapshot = product.cashbackPercentage ?? 0;
 
     // ===============================
     // 🔥🔥🔥 VALIDAÇÃO DE ESTOQUE 🔥🔥🔥

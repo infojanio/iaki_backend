@@ -11,7 +11,7 @@ export type UserProfileResponse = {
   phone: string | null;
   role: string;
   avatar: string | null;
-  created_at: Date;
+  createdAt: Date;
   // Aqui já vem no formato que o front espera (objeto, não array)
   address: AddressDTO | null;
 };
@@ -39,7 +39,7 @@ export class GetUserProfileEdit {
       phone: dbUser.phone,
       role: String(dbUser.role),
       avatar: dbUser.avatar,
-      created_at: dbUser.created_at,
+      createdAt: dbUser.createdAt,
       address: flattenedAddress,
     };
 

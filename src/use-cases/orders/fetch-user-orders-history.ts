@@ -18,15 +18,15 @@ interface FetchUserOrdersHistoryUseCaseResponse {
     discountApplied: number;
     qrCodeUrl?: string;
     status: OrderStatus;
-    validated_at: Date | null;
-    created_at: Date;
+    validatedAt: Date | null;
+    createdAt: Date;
     items: Array<{
       quantity: number;
       product: {
         name: string;
         image: string | null;
         price: number;
-        cashback_percentage: number;
+        cashbackPercentage: number;
       };
     }>;
   }>;
@@ -57,15 +57,15 @@ export class FetchUserOrdersHistoryUseCase {
         discountApplied: Number(order.discountApplied ?? 0),
         qrCodeUrl: order.qrCodeUrl ?? undefined,
         status: order.status,
-        validated_at: order.validated_at,
-        created_at: order.created_at,
-        items: order.orderItems.map((item) => ({
+        validatedAt: order.validatedAt,
+        createdAt: order.createdAt,
+        items: order.items.map((item) => ({
           quantity: Number(item.quantity),
           product: {
             name: item.product.name,
             image: item.product.image ?? null,
             price: Number(item.product.price),
-            cashback_percentage: item.product.cashback_percentage,
+            cashbackPercentage: item.product.cashbackPercentage,
           },
         })),
       })),

@@ -12,7 +12,7 @@ const EPSILON = new Decimal(0.01); // Tolerância de 1 centavo
 export class ValidateOrderAndCreditCashbackUseCase {
   constructor(
     private orderRepository: OrdersRepository,
-    private cashbackRepository: CashbacksRepository
+    private cashbackRepository: CashbacksRepository,
   ) {}
 
   async execute({ orderId }: ValidateOrderAndCreditCashbackRequest) {
@@ -25,18 +25,18 @@ export class ValidateOrderAndCreditCashbackUseCase {
 
     if (order.status !== "PENDING") {
       throw new Error(
-        `Pedido não está pendente. Status atual: ${order.status}`
+        `Pedido não está pendente. Status atual: ${order.status}`,
       );
     }
     const discount = new Decimal(order.discountApplied ?? 0).toDecimalPlaces(2);
 
     if (discount.greaterThan(0)) {
       const availableBalance = new Decimal(
-        await this.cashbackRepository.getBalance(order.user_id)
+        await this.cashbackRepository.getBalance(order.userId),
       ).toDecimalPlaces(2);
 
       console.log(
-        `[UseCase] Verificando saldo disponível: ${availableBalance.toString()} vs desconto: ${discount.toString()}`
+        `[UseCase] Verificando saldo disponível: ${availableBalance.toString()} vs desconto: ${discount.toString()}`,
       );
 
       // converte para centavos
@@ -45,13 +45,13 @@ export class ValidateOrderAndCreditCashbackUseCase {
 
       if (balanceCents.lessThan(discountCents)) {
         throw new Error(
-          "Saldo de cashback insuficiente para validar o pedido com desconto aplicado."
+          "Saldo de cashback insuficiente para validar o pedido com desconto aplicado.",
         );
       }
 
       await this.cashbackRepository.redeemCashback({
-        user_id: order.user_id,
-        order_id: order.id,
+        userId: order.userId,
+        orderId: order.id,
         amount: discount.toNumber(),
       });
 
@@ -64,7 +64,7 @@ export class ValidateOrderAndCreditCashbackUseCase {
     // ⚠️ NOVA REGRA: se usou desconto, não gera cashback de retorno
     if (discount.greaterThan(0)) {
       console.log(
-        `[UseCase] Pedido teve desconto aplicado, cashback de retorno será zero.`
+        `[UseCase] Pedido teve desconto aplicado, cashback de retorno será zero.`,
       );
       return {
         cashback: null,
@@ -77,18 +77,18 @@ export class ValidateOrderAndCreditCashbackUseCase {
     let totalCashbackGerado = 0;
 
     for (const item of order.orderItems) {
-      if (!item.product || item.product.cashback_percentage === undefined) {
+      if (!item.product || item.product.cashbackPercentage === undefined) {
         continue;
       }
 
-      const percentual = item.product.cashback_percentage;
+      const percentual = item.product.cashbackPercentage;
       const valorTotalItem = new Decimal(item.subtotal ?? 0).toNumber();
 
       await this.cashbackRepository.applyCashback(
         order.id,
-        order.user_id,
+        order.userId,
         valorTotalItem,
-        percentual
+        percentual,
       );
 
       const cashbackItem = valorTotalItem * (percentual / 100);
@@ -97,12 +97,12 @@ export class ValidateOrderAndCreditCashbackUseCase {
 
     if (totalCashbackGerado > 0) {
       console.log(
-        `[UseCase] Cashback total gerado: R$ ${totalCashbackGerado.toFixed(2)}`
+        `[UseCase] Cashback total gerado: R$ ${totalCashbackGerado.toFixed(2)}`,
       );
       return {
         cashback: totalCashbackGerado,
         message: `Pedido validado com sucesso. Cashback de R$ ${totalCashbackGerado.toFixed(
-          2
+          2,
         )} gerado.`,
       };
     } else {

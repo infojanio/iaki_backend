@@ -1,15 +1,15 @@
-import { SubCategoriesRepository } from '@/repositories/prisma/Iprisma/subcategories-repository'
-import { SubCategory, Prisma } from '@prisma/client'
+import { SubCategoriesRepository } from "@/repositories/prisma/Iprisma/subcategories-repository";
+import { SubCategory, Prisma } from "@prisma/client";
 interface CreateSubCategoryUseCaseRequest {
-  id?: string
-  name: string
-  image: string | null
-  category_id: string
-  created_at: Date
+  id?: string;
+  name: string;
+  image: string | null;
+  categoryId: string;
+  createdAt: Date;
   //products: string
 }
 interface CreateSubCategoryUseCaseResponse {
-  subcategory: SubCategory
+  subcategory: SubCategory;
 }
 export class CreateSubCategoryUseCase {
   constructor(private subcategoriesRepository: SubCategoriesRepository) {}
@@ -17,20 +17,20 @@ export class CreateSubCategoryUseCase {
     id,
     name,
     image,
-    category_id,
-    created_at,
+    categoryId,
+    createdAt,
   }: //products,
   CreateSubCategoryUseCaseRequest): Promise<CreateSubCategoryUseCaseResponse> {
     const subcategory = await this.subcategoriesRepository.create({
       id,
       name,
       image,
-      category_id,
-      created_at,
+      categoryId,
+      createdAt,
       //products,
-    })
+    });
     return {
       subcategory,
-    }
+    };
   }
 }

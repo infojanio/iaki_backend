@@ -1,7 +1,7 @@
 import { Order, OrderItem, Product } from "@prisma/client";
 
 export type OrderWithItemsAndProducts = Order & {
-  orderItems: (OrderItem & {
+  items: (OrderItem & {
     product: Product;
   })[];
 };

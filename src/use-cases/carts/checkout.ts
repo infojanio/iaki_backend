@@ -48,8 +48,8 @@ export class CheckoutUseCase {
 
     // 3️⃣ Criar pedido
     const order = await this.ordersRepository.create({
-      user_id: userId,
-      store_id: storeId,
+      userId: userId,
+      storeId: storeId,
       totalAmount,
       discountApplied: new Decimal(0),
       status: "PENDING",

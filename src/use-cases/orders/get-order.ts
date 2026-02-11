@@ -14,7 +14,7 @@ interface GetOrderUseCaseResponse {
   totalAmount: number;
   discountApplied: number;
   status: OrderStatus;
-  created_at: Date;
+  createdAt: Date;
   validated_at: Date | null;
   qrCodeUrl?: string;
   items: Array<{
@@ -25,7 +25,7 @@ interface GetOrderUseCaseResponse {
       name: string;
       price: number;
       image: string | null;
-      cashback_percentage: number;
+      cashbackPercentage: number;
     };
   }>;
 }
@@ -51,10 +51,10 @@ export class GetOrderUseCase {
       totalAmount: Number(order.totalAmount),
       discountApplied: Number(order.discountApplied ?? 0),
       status: order.status,
-      created_at: order.created_at,
-      validated_at: order.validated_at,
+      createdAt: order.createdAt,
+      validated_at: order.validatedAt,
       qrCodeUrl: order.qrCodeUrl ?? undefined,
-      items: order.orderItems.map((item) => ({
+      items: order.items.map((item) => ({
         id: item.id,
         quantity: Number(item.quantity),
         product: {
@@ -62,7 +62,7 @@ export class GetOrderUseCase {
           name: item.product.name,
           price: Number(item.product.price),
           image: item.product.image ?? null,
-          cashback_percentage: item.product.cashback_percentage,
+          cashbackPercentage: item.product.cashbackPercentage,
         },
       })),
     };

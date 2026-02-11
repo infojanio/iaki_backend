@@ -12,8 +12,8 @@ export async function create(request: FastifyRequest, reply: FastifyReply) {
 
   const createProductBodySchema = z.object({
     // id: z.string().uuid(),
-    store_id: z.string().uuid(),
-    subcategory_id: z.string().uuid(),
+    storeId: z.string().uuid(),
+    subcategoryId: z.string().uuid(),
     name: z.string(),
     description: z.string().nullable(),
     price: z.number().positive({ message: "O preço deve ser maior que zero" }),
@@ -21,7 +21,7 @@ export async function create(request: FastifyRequest, reply: FastifyReply) {
       .number()
       .positive({ message: "A quantidade deve ser maior que zero" }),
     image: z.string().nullable(),
-    cashback_percentage: z
+    cashbackPercentage: z
       .number()
       .positive({ message: "O cashback deve ser maior que zero" }),
     status: z.boolean().default(true),

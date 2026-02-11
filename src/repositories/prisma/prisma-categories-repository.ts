@@ -62,14 +62,14 @@ export class PrismaCategoriesRepository implements CategoriesRepository {
     });
   }
 
-  async findManyByStoreId(store_id: string) {
+  async findManyByStoreId(storeId: string) {
     return prisma.category.findMany({
       where: {
-        SubCategory: {
+        subcategories: {
           some: {
             products: {
               some: {
-                store_id,
+                storeId,
               },
             },
           },

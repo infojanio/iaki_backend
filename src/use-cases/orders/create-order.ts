@@ -52,11 +52,12 @@ export class CreateOrderUseCase {
       };
     });
 
-    // 3️⃣ Criar pedido (🔥 store_id vem do cart)
+    // 3️⃣ Criar pedido (🔥 storeId vem do cart)
     const order = await this.ordersRepository.create({
-      user_id: userId,
-      store_id: resolvedStoreId,
+      userId: userId,
+      storeId: resolvedStoreId,
       totalAmount,
+      cashbackAmount: new Decimal(0),
       discountApplied: new Decimal(0),
       status: OrderStatus.PENDING,
       items: orderItems,
@@ -64,12 +65,12 @@ export class CreateOrderUseCase {
 
     // 4️⃣ Cashback
     await this.cashbacksRepository.create({
-      user_id: userId,
-      store_id: resolvedStoreId,
-      order_id: order.id,
+      userId: userId,
+      storeId: resolvedStoreId,
+      orderId: order.id,
       amount: cashbackTotal,
       status: "PENDING",
-      credited_at: new Date(),
+      creditedAt: new Date(),
     });
 
     // 5️⃣ Limpa carrinho (mantendo seu método atual)

@@ -6,7 +6,7 @@ interface UpdateSubCategoryUseCaseRequest {
   subcategoryId: string;
   name?: string;
   image?: string;
-  category_id?: string;
+  categoryId?: string;
 }
 
 interface UpdateSubCategoryUseCaseResponse {
@@ -19,13 +19,10 @@ export class UpdateSubCategoryUseCase {
   async execute({
     subcategoryId,
     ...data
-  }: UpdateSubCategoryUseCaseRequest): Promise<
-    UpdateSubCategoryUseCaseResponse
-  > {
+  }: UpdateSubCategoryUseCaseRequest): Promise<UpdateSubCategoryUseCaseResponse> {
     // Verifica se o subcategory existe
-    const existingSubCategory = await this.subcategoriesRepository.findById(
-      subcategoryId
-    );
+    const existingSubCategory =
+      await this.subcategoriesRepository.findById(subcategoryId);
 
     if (!existingSubCategory) {
       throw new ResourceNotFoundError();
@@ -39,7 +36,7 @@ export class UpdateSubCategoryUseCase {
     // Atualiza o produto
     const updatedSubcategory = await this.subcategoriesRepository.update(
       subcategoryId,
-      updateData
+      updateData,
     );
 
     return { updatedSubcategory };

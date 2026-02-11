@@ -3,12 +3,12 @@ import { FastifyRequest, FastifyReply } from "fastify";
 
 export async function getUserCashbackTransactions(
   request: FastifyRequest,
-  reply: FastifyReply
+  reply: FastifyReply,
 ) {
-  const user_id = request.user.sub;
+  const userId = request.user.sub;
 
   const useCase = makeGetUserCashbackTransactions();
-  const { transactions } = await useCase.execute({ user_id });
+  const { transactions } = await useCase.execute({ userId });
 
   return reply.send({ transactions });
 }

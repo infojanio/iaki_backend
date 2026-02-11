@@ -2,7 +2,7 @@ import { CashbacksRepository } from "@/repositories/prisma/Iprisma/cashbacks-rep
 import { Decimal } from "@prisma/client/runtime/library";
 
 interface GetUserCashbackBalanceUseCaseRequest {
-  user_id: string;
+  userId: string;
 }
 
 interface GetUserCashbackBalanceUseCaseResponse {
@@ -15,16 +15,14 @@ export class GetUserCashbackBalanceUseCase {
   constructor(private cashbacksRepository: CashbacksRepository) {}
 
   async execute({
-    user_id,
-  }: GetUserCashbackBalanceUseCaseRequest): Promise<
-    GetUserCashbackBalanceUseCaseResponse
-  > {
+    userId,
+  }: GetUserCashbackBalanceUseCaseRequest): Promise<GetUserCashbackBalanceUseCaseResponse> {
     const totalReceived = new Decimal(
-      (await this.cashbacksRepository.totalCashbackByUserId(user_id)) || 0
+      (await this.cashbacksRepository.totalCashbackByUserId(userId)) || 0,
     );
 
     const totalUsed = new Decimal(
-      (await this.cashbacksRepository.totalUsedCashbackByUserId(user_id)) || 0
+      (await this.cashbacksRepository.totalUsedCashbackByUserId(userId)) || 0,
     );
 
     const balance = totalReceived.minus(totalUsed);

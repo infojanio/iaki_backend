@@ -50,15 +50,15 @@ export async function allOrdersHistory(
     return reply.status(200).send({
       orders: orders.map((order) => ({
         id: order.id,
-        userId: order.user_id,
+        userId: order.userId,
         user_name: order.user_name,
-        storeId: order.store_id,
+        storeId: order.storeId,
         totalAmount: order.totalAmount,
         discountApplied: order.discountApplied,
         status: order.status,
         qrCodeUrl: order.qrCodeUrl,
         validatedAt: order.validated_at,
-        createdAt: order.created_at,
+        createdAt: order.createdAt,
         items: order.items.map((item) => ({
           quantity: item.quantity,
           product: item.product
@@ -67,7 +67,7 @@ export async function allOrdersHistory(
                 name: item.product.name,
                 image: item.product.image,
                 price: item.product.price,
-                cashback_percentage: item.product.cashback_percentage,
+                cashbackPercentage: item.product.cashbackPercentage,
               }
             : null,
         })),

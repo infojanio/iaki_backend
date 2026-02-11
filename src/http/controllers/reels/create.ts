@@ -7,17 +7,17 @@ export async function create(request: FastifyRequest, reply: FastifyReply) {
     title: z.string(),
     image_url: z.string(),
     link: z.string(),
-    created_at: z.date().optional(),
+    createdAt: z.date().optional(),
   });
-  const { title, image_url, link, created_at } = createReelBodySchema.parse(
-    request.body
+  const { title, image_url, link, createdAt } = createReelBodySchema.parse(
+    request.body,
   );
   const createReelUseCase = makeCreateReelUseCase();
   await createReelUseCase.execute({
     title,
     image_url,
     link,
-    created_at: new Date(),
+    createdAt: new Date(),
   });
 
   return reply.status(201).send();

@@ -5,14 +5,14 @@ export interface SubCategoriesRepository {
   create(data: Prisma.SubCategoryUncheckedCreateInput): Promise<SubCategory>;
   listMany(): Promise<SubCategory[]>; //listar todas
   searchMany(search: string, page: number): Promise<SubCategory[]>; //buscar por nome
-  listByCategory(category_id?: string): Promise<SubCategory[] | null>; //buscar por categoria
-  findByCategory(category_id?: string): Promise<SubCategory[] | null>; //buscar por categoria
+  listByCategory(categoryId?: string): Promise<SubCategory[] | null>; //buscar por categoria
+  findByCategory(categoryId?: string): Promise<SubCategory[] | null>; //buscar por categoria
   update(
     id: string,
     data: {
       name?: string;
       image?: string;
-      category_id?: string;
-    }
+      categoryId?: string;
+    },
   ): Promise<SubCategory>;
 }
