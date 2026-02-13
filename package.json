@@ -21,6 +21,8 @@
     "test:e2e": "vitest run --dir src/http",
     "test:e2e:watch": "vitest --dir src/http",
     "test:coverage": "vitest run --coverage",
+    "backup": "mkdir -p backups && docker exec -t iaki_backend-api-iaki-pg-1 pg_dump -U janio -d iaki-marketplace -F c > backups/backup_$(date +%Y%m%d_%H%M%S).dump",
+    "restore": "echo 'Informe o arquivo em backups/' && read file && docker exec -i iaki_backend-api-iaki-pg-1 dropdb -U janio --if-exists iaki-marketplace && docker exec -i iaki_backend-api-iaki-pg-1 createdb -U postgres iaki-marketplace && cat backups/$file | docker exec -i iaki_backend-api-iaki-pg-1 pg_restore -U postgres -d iaki-marketplace",
     "test:ui": "vitest --ui"
   },
   "prisma": {

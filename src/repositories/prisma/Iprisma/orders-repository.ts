@@ -64,7 +64,7 @@ export interface OrdersRepository {
       discountApplied: number | null;
       qrCodeUrl: string | null;
       status: OrderStatus;
-      validatedAt: Date | null;
+      validated_at: Date | null;
       createdAt: Date;
       items: {
         quantity: number;

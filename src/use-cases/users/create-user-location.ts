@@ -13,7 +13,7 @@ export class CreateUserLocationUseCase {
 
   async execute({ userId, latitude, longitude }: CreateUserLocationRequest) {
     const location = await this.userLocationRepository.create({
-      user_id: userId,
+      userId: userId,
       latitude,
       longitude,
     });

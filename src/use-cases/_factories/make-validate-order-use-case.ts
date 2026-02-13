@@ -7,17 +7,17 @@ import { PrismaProductsRepository } from "@/repositories/prisma/prisma-products-
 
 export function makeValidateOrderUseCase() {
   const ordersRepository = new PrismaOrdersRepository(prisma);
-  const cashbacksRepository = new PrismaCashbacksRepository();
-  const productsRepository = new PrismaProductsRepository();
+  const productsRepository = new PrismaProductsRepository(prisma);
+  //const cashbacksRepository = new PrismaCashbacksRepository();
 
   const cashbackTransactionsRepository =
     new PrismaCashbackTransactionsRepository();
 
   const useCase = new ValidateOrderUseCase(
     ordersRepository,
-    cashbacksRepository,
-    cashbackTransactionsRepository,
     productsRepository,
+    //  cashbacksRepository,
+    //  cashbackTransactionsRepository,
   );
 
   return useCase;

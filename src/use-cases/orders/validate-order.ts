@@ -14,9 +14,9 @@ interface ValidateOrderUseCaseRequest {
 export class ValidateOrderUseCase {
   constructor(
     private ordersRepository: OrdersRepository,
-    private cashbacksRepository: CashbacksRepository,
-    private cashbackTransactionsRepository: CashbackTransactionsRepository,
     private productsRepository: ProductsRepository,
+    //  private cashbacksRepository: CashbacksRepository,
+    //  private cashbackTransactionsRepository: CashbackTransactionsRepository,
   ) {}
 
   async execute({ orderId, storeId }: ValidateOrderUseCaseRequest) {
@@ -24,11 +24,14 @@ export class ValidateOrderUseCase {
       const order = await this.ordersRepository.findByIdWithTx(tx, orderId);
 
       if (!order) throw new Error("Pedido não encontrado.");
+
       if (order.storeId !== storeId)
         throw new Error("Sem permissão para validar este pedido.");
+
       if (order.status !== OrderStatus.PENDING)
         throw new Error("Pedido já processado.");
 
+      // ⏳ Verifica expiração (96 horas)
       const hoursDiff = differenceInHours(new Date(), order.createdAt);
       if (hoursDiff > 96) {
         await this.ordersRepository.updateStatusWithTx(
@@ -42,6 +45,11 @@ export class ValidateOrderUseCase {
       // ✅ calcula cashback a partir dos itens
       let cashbackAmount = 0;
 
+      // 1️⃣ valida pedido
+      await this.ordersRepository.markAsValidatedWithTx(tx, order.id);
+
+      /* Lógica de cashback congelada
+
       if (Number(order.discountApplied) === 0) {
         for (const item of order.items) {
           const percentual = item.product.cashbackPercentage;
@@ -50,9 +58,6 @@ export class ValidateOrderUseCase {
           cashbackAmount += subtotal * (percentual / 100);
         }
       }
-
-      // 1️⃣ valida pedido
-      await this.ordersRepository.markAsValidatedWithTx(tx, order.id);
 
       // 1️⃣ cria saldo
       await this.cashbacksRepository.createConfirmedCashbackWithTx(tx, {
@@ -81,11 +86,67 @@ export class ValidateOrderUseCase {
           orderId: order.id,
         });
       }
+        */
+
+      // 🪙 calcula pontos (1 ponto a cada 10 reais pagos)
+      const valorPago =
+        Number(order.totalAmount) - Number(order.discountApplied || 0);
+
+      const pointsEarned = Math.floor(valorPago / 10);
+
+      if (pointsEarned > 0) {
+        // 🔎 busca carteira
+        let wallet = await tx.storePointsWallet.findUnique({
+          where: {
+            userId_storeId: {
+              userId: order.userId,
+              storeId: order.storeId,
+            },
+          },
+        });
+
+        // 🏦 cria carteira se não existir
+        if (!wallet) {
+          wallet = await tx.storePointsWallet.create({
+            data: {
+              userId: order.userId,
+              storeId: order.storeId,
+            },
+          });
+        }
+
+        // 📄 cria transação de pontos
+        await tx.storePointsTransaction.create({
+          data: {
+            userId: order.userId,
+            storeId: order.storeId,
+            orderId: order.id,
+            type: "EARN",
+            points: pointsEarned,
+            note: "Pontos gerados por validação de pedido",
+          },
+        });
+
+        // ➕ atualiza saldo
+        await tx.storePointsWallet.update({
+          where: {
+            userId_storeId: {
+              userId: order.userId,
+              storeId: order.storeId,
+            },
+          },
+          data: {
+            balance: { increment: pointsEarned },
+            earned: { increment: pointsEarned },
+          },
+        });
+      }
 
       return {
         orderId: order.id,
         status: OrderStatus.VALIDATED,
-        cashbackCredited: cashbackAmount,
+        cashbackCredited: cashbackAmount, // sempre 0 por enquanto
+        pointsEarned,
       };
     });
   }
