@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { createStoreEvaluationController } from "./store-evaluations-controller";
+import { createStoreEvaluation } from "./store-evaluations";
 
 export async function storeEvaluationsRoutes(app: FastifyInstance) {
   app.post(
@@ -9,6 +9,6 @@ export async function storeEvaluationsRoutes(app: FastifyInstance) {
     {
       onRequest: [verifyJWT],
     },
-    createStoreEvaluationController,
+    createStoreEvaluation,
   );
 }

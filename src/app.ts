@@ -22,6 +22,7 @@ import { businessCategoriesRoutes } from "./http/controllers/business-category/r
 import { statesRoutes } from "./http/controllers/states/routes";
 import { storeCategoryRoutes } from "./http/controllers/store-category/routes";
 import { storeEvaluationsRoutes } from "./http/controllers/store-evaluations/routes";
+import { storePointsRoutes } from "./http/controllers/store-points/routes";
 
 export const app = fastify({
   // logger: true,
@@ -47,6 +48,7 @@ app.register(businessCategoriesRoutes);
 app.register(statesRoutes);
 app.register(citiesRoutes);
 app.register(storesRoutes);
+app.register(storePointsRoutes);
 app.register(storeBusinessCategoryRoutes);
 app.register(storeCategoryRoutes);
 app.register(categoriesRoutes);

@@ -60,6 +60,7 @@ model User {
   store                   Store?                   @relation(fields: [storeId], references: [id])
   storePointsWallets      StorePointsWallet[]
   storePointsTransactions StorePointsTransaction[]
+  storeRewardRedemptions  StoreRewardRedemption[]
 
   @@map("users")
 }
@@ -148,6 +149,7 @@ model Store {
   storePointsTransactions StorePointsTransaction[]
   storeRewards            StoreReward[]
   storeDraws              StoreDraw[]
+  storeRewardRedemptions  StoreRewardRedemption[]
 
   @@map("stores")
 }
@@ -525,9 +527,33 @@ model StoreReward {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now()) @map("created_at")
 
-  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  store                  Store                   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  storeRewardRedemptions StoreRewardRedemption[]
 
   @@map("store_rewards")
+}
+
+model StoreRewardRedemption {
+  id        String           @id @default(uuid())
+  rewardId  String           @map("reward_id")
+  userId    String           @map("user_id")
+  storeId   String           @map("store_id")
+  points    Int
+  status    RedemptionStatus @default(PENDING)
+  createdAt DateTime         @default(now()) @map("created_at")
+  usedAt    DateTime?
+
+  reward StoreReward @relation(fields: [rewardId], references: [id])
+  user   User        @relation(fields: [userId], references: [id])
+  store  Store       @relation(fields: [storeId], references: [id])
+
+  @@map("store_reward_redemptions")
+}
+
+enum RedemptionStatus {
+  PENDING
+  CONFIRMED
+  CANCELED
 }
 
 model StoreDraw {

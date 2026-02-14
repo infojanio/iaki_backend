@@ -2,7 +2,7 @@ import { makeCreateStoreEvaluationUseCase } from "@/use-cases/_factories/make-cr
 import { FastifyRequest, FastifyReply } from "fastify";
 import { z } from "zod";
 
-export async function createStoreEvaluationController(
+export async function createStoreEvaluation(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
