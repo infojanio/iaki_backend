@@ -2,7 +2,7 @@ import { makeGetStorePointsUseCase } from "@/use-cases/_factories/make-get-store
 import { FastifyRequest, FastifyReply } from "fastify";
 import { z } from "zod";
 
-export async function getStorePoints(
+export async function getStorePointsByStore(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
@@ -14,9 +14,9 @@ export async function getStorePoints(
 
   const userId = request.user.sub;
 
-  const getStorePointsUseCase = makeGetStorePointsUseCase();
-
   try {
+    const getStorePointsUseCase = makeGetStorePointsUseCase();
+
     const result = await getStorePointsUseCase.execute({
       userId,
       storeId,
@@ -24,8 +24,10 @@ export async function getStorePoints(
 
     return reply.status(200).send(result);
   } catch (err: any) {
+    console.error("Erro ao buscar carteira de pontos:", err);
+
     return reply.status(400).send({
-      message: err.message,
+      message: err.message ?? "Erro ao buscar pontos da loja.",
     });
   }
 }

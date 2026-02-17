@@ -1,3 +1,5 @@
+import { CashbacksRepository } from "@/repositories/prisma/Iprisma/cashbacks-repository";
+import { CashbackTransactionsRepository } from "@/repositories/prisma/Iprisma/cashback-transations-repository";
 import { prisma } from "@/lib/prisma";
 import { OrdersRepository } from "@/repositories/prisma/Iprisma/orders-repository";
 import { OrderStatus } from "@prisma/client";
@@ -9,10 +11,13 @@ interface ValidateOrderUseCaseRequest {
   storeId: string;
 }
 
+//ATENÇÃO: AQUI VALIDA CASHBACK E PONTOS - NÃO ESTÁ EM USO
 export class ValidateOrderUseCase {
   constructor(
     private ordersRepository: OrdersRepository,
     private productsRepository: ProductsRepository,
+    private cashbacksRepository: CashbacksRepository,
+    private cashbackTransactionsRepository: CashbackTransactionsRepository,
   ) {}
 
   async execute({ orderId, storeId }: ValidateOrderUseCaseRequest) {
@@ -38,21 +43,11 @@ export class ValidateOrderUseCase {
         throw new Error("Pedido expirado.");
       }
 
-      // ✅ Valida pedido
-      const updated = await tx.order.updateMany({
-        where: {
-          id: order.id,
-          status: OrderStatus.PENDING,
-        },
-        data: {
-          status: OrderStatus.VALIDATED,
-          validatedAt: new Date(),
-        },
-      });
+      // ✅ calcula cashback a partir dos itens
+      let cashbackAmount = 0;
 
-      if (updated.count === 0) {
-        throw new Error("Pedido já validado por outro operador.");
-      }
+      // ✅ Valida pedido
+      await this.ordersRepository.markAsValidatedWithTx(tx, order.id);
 
       // 📦 Atualiza estoque
       for (const item of order.items) {
@@ -61,6 +56,44 @@ export class ValidateOrderUseCase {
           item.product.id,
           Number(item.quantity),
         );
+      }
+      // Lógica de cashback congelada
+
+      if (Number(order.discountApplied) === 0) {
+        for (const item of order.items) {
+          const percentual = item.product.cashbackPercentage;
+          const subtotal = Number(item.product.price) * Number(item.quantity);
+
+          cashbackAmount += subtotal * (percentual / 100);
+        }
+      }
+
+      // 1️⃣ cria saldo
+      await this.cashbacksRepository.createConfirmedCashbackWithTx(tx, {
+        userId: order.userId,
+        storeId: order.storeId,
+        orderId: order.id,
+        amount: cashbackAmount,
+        status: OrderStatus.VALIDATED,
+      });
+
+      for (const item of order.items) {
+        await this.productsRepository.updateStockWithTx(
+          tx,
+          item.product.id,
+          Number(item.quantity),
+        );
+      }
+
+      // 2️⃣ cria transação (única fonte de saldo)
+      if (cashbackAmount > 0) {
+        await this.cashbackTransactionsRepository.createWithTx(tx, {
+          userId: order.userId,
+          storeId: order.storeId,
+          amount: cashbackAmount,
+          type: "RECEIVE",
+          orderId: order.id,
+        });
       }
 
       // 🪙 calcula pontos (1 ponto a cada 10 reais pagos)
@@ -99,7 +132,6 @@ export class ValidateOrderUseCase {
             type: "EARN",
             points: pointsEarned,
             note: "Pontos gerados por validação de pedido",
-            storePointsWalletId: wallet.id, // 🔥 ESSENCIAL
           },
         });
 
@@ -122,6 +154,7 @@ export class ValidateOrderUseCase {
         orderId: order.id,
         status: OrderStatus.VALIDATED,
         pointsEarned,
+        //  cashbackCredited: cashbackAmount, // sempre 0 por enquanto
       };
     });
   }

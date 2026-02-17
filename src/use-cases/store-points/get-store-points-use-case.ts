@@ -23,6 +23,11 @@ export class GetStorePointsUseCase {
       };
     }
 
-    return wallet;
+    return {
+      balance: wallet.balance ?? 0,
+      earned: wallet.earned ?? 0,
+      spent: wallet.spent ?? 0,
+      transactions: wallet.transactions ?? [],
+    };
   }
 }

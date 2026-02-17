@@ -12,6 +12,27 @@ export class PrismaStorePointsWalletRepository
           storeId,
         },
       },
+      include: {
+        transactions: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+      },
+    });
+  }
+
+  async findAllByUser(userId: string) {
+    return prisma.storePointsWallet.findMany({
+      where: { userId },
+      include: {
+        store: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
   }
 

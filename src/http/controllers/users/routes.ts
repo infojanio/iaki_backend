@@ -14,11 +14,18 @@ import { getUserAddress } from "../addresses/get-address";
 import { GetUserProfileEdit } from "@/use-cases/users/get-user-profile-edit";
 import { profileEdit } from "./get-profile";
 import { updateUserCity } from "./update-user-city";
+import { getUserStoresPoints } from "./get-user-stores-points";
 
 export async function usersRoutes(app: FastifyInstance) {
   /* Rotas acessíveis para usuário não autenticado */
   app.post("/users", register);
   app.post("/sessions", authenticate);
+
+  app.get(
+    "/users/me/stores-with-points",
+    { onRequest: [verifyJWT] },
+    getUserStoresPoints,
+  );
 
   app.patch("/users/city", { onRequest: [verifyJWT] }, updateUserCity);
   //app.get("/users/:userId/city", getUserLocation);
