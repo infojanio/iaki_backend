@@ -29,7 +29,7 @@ export class ValidateOrderUseCase {
 
       // ⏳ Verifica expiração (96 horas)
       const hoursDiff = differenceInHours(new Date(), order.createdAt);
-      if (hoursDiff > 96) {
+      if (hoursDiff > 360) {
         await this.ordersRepository.updateStatusWithTx(
           tx,
           order.id,

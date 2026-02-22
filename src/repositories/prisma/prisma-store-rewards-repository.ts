@@ -57,4 +57,22 @@ export class PrismaStoreRewardsRepository implements StoreRewardsRepository {
       throw new Error("Sem estoque disponível.");
     }
   }
+
+  async create(data: Prisma.StoreRewardUncheckedCreateInput) {
+    return prisma.storeReward.create({ data });
+  }
+
+  async findByStoreId(storeId: string) {
+    return prisma.storeReward.findMany({
+      where: { storeId },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async update(id: string, data: Prisma.StoreRewardUncheckedUpdateInput) {
+    return prisma.storeReward.update({
+      where: { id },
+      data,
+    });
+  }
 }

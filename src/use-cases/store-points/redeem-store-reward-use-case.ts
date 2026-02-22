@@ -1,59 +1,92 @@
-import { StoreRewardsRepository } from "@/repositories/prisma/Iprisma/store-rewards-repository";
-import { StorePointsWalletRepository } from "@/repositories/prisma/Iprisma/store-points-wallet-repository";
-import { StorePointsTransactionRepository } from "@/repositories/prisma/Iprisma/store-points-transaction-repository";
+// src/use-cases/redeem-store-reward-use-case.ts
 
-interface RedeemStoreRewardRequest {
-  userId: string;
-  storeId: string;
-  rewardId: string;
-}
+import { prisma } from "@/lib/prisma";
+import { RedemptionStatus, StorePointsTxType } from "@prisma/client";
 
 export class RedeemStoreRewardUseCase {
-  constructor(
-    private rewardsRepository: StoreRewardsRepository,
-    private walletRepository: StorePointsWalletRepository,
-    private transactionRepository: StorePointsTransactionRepository,
-  ) {}
+  async execute(params: { userId: string; rewardId: string }) {
+    const { userId, rewardId } = params;
 
-  async execute({ userId, storeId, rewardId }: RedeemStoreRewardRequest) {
-    const reward = await this.rewardsRepository.findById(rewardId);
+    return prisma.$transaction(async (tx) => {
+      // 1️⃣ Buscar reward
+      const reward = await tx.storeReward.findUnique({
+        where: { id: rewardId },
+      });
 
-    if (!reward) throw new Error("Brinde não encontrado.");
-    if (reward.storeId !== storeId)
-      throw new Error("Brinde inválido para esta loja.");
-    if (!reward.isActive) throw new Error("Brinde indisponível.");
-    if (reward.stock <= 0) throw new Error("Sem estoque.");
+      if (!reward || !reward.isActive) {
+        throw new Error("Brinde inválido ou inativo.");
+      }
 
-    const wallet = await this.walletRepository.findByUserAndStore(
-      userId,
-      storeId,
-    );
+      if (reward.expiresAt && reward.expiresAt < new Date()) {
+        throw new Error("Brinde expirado.");
+      }
 
-    if (!wallet || wallet.balance < reward.pointsCost)
-      throw new Error("Pontos insuficientes.");
+      if (reward.stock <= 0) {
+        throw new Error("Brinde sem estoque.");
+      }
 
-    await this.walletRepository.decrementBalance(
-      userId,
-      storeId,
-      reward.pointsCost,
-    );
+      // 2️⃣ Buscar wallet
+      const wallet = await tx.storePointsWallet.findUnique({
+        where: {
+          userId_storeId: {
+            userId,
+            storeId: reward.storeId,
+          },
+        },
+      });
 
-    await this.walletRepository.incrementSpent(
-      userId,
-      storeId,
-      reward.pointsCost,
-    );
+      if (!wallet) {
+        throw new Error("Carteira não encontrada.");
+      }
 
-    await this.transactionRepository.create({
-      userId,
-      storeId,
-      type: "SPEND",
-      points: reward.pointsCost,
-      note: `Resgate: ${reward.title}`,
+      if (wallet.balance < reward.pointsCost) {
+        throw new Error("Pontos insuficientes.");
+      }
+
+      // 3️⃣ Atualizar wallet
+      await tx.storePointsWallet.update({
+        where: { id: wallet.id },
+        data: {
+          balance: { decrement: reward.pointsCost },
+          spent: { increment: reward.pointsCost },
+        },
+      });
+
+      // 4️⃣ Criar transação
+      await tx.storePointsTransaction.create({
+        data: {
+          userId,
+          storeId: reward.storeId,
+          type: StorePointsTxType.SPEND,
+          points: reward.pointsCost,
+          note: `Resgate do brinde: ${reward.title}`,
+          storePointsWalletId: wallet.id,
+        },
+      });
+
+      // 5️⃣ Criar redemption
+      const redemption = await tx.storeRewardRedemption.create({
+        data: {
+          rewardId,
+          userId,
+          storeId: reward.storeId,
+          points: reward.pointsCost,
+          status: RedemptionStatus.PENDING,
+        },
+      });
+
+      // 6️⃣ Decrementar estoque
+      await tx.storeReward.update({
+        where: { id: rewardId },
+        data: {
+          stock: { decrement: 1 },
+        },
+      });
+
+      return {
+        redemptionId: redemption.id,
+        storeId: reward.storeId,
+      };
     });
-
-    await this.rewardsRepository.decrementStock(rewardId);
-
-    return { message: "Brinde resgatado com sucesso." };
   }
 }

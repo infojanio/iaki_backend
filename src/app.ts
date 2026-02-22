@@ -23,6 +23,7 @@ import { statesRoutes } from "./http/controllers/states/routes";
 import { storeCategoryRoutes } from "./http/controllers/store-category/routes";
 import { storeEvaluationsRoutes } from "./http/controllers/store-evaluations/routes";
 import { storePointsRoutes } from "./http/controllers/store-points/routes";
+import { storeRewardsRoutes } from "./http/controllers/store-reward/routes";
 
 export const app = fastify({
   // logger: true,
@@ -60,6 +61,7 @@ app.register(productsRoutes);
 app.register(ordersRoutes);
 app.register(dashboardRoutes);
 app.register(storeEvaluationsRoutes);
+app.register(storeRewardsRoutes);
 
 app.addHook("preHandler", async (request, reply) => {
   // console.log('REQUEST BODY:', request.body)

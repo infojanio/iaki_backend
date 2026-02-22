@@ -518,14 +518,17 @@ model StorePointsTransaction {
 }
 
 model StoreReward {
-  id          String   @id @default(uuid())
-  storeId     String   @map("store_id")
+  id          String    @id @default(uuid())
+  storeId     String    @map("store_id")
   title       String
   description String?
-  pointsCost  Int      @map("points_cost")
-  stock       Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now()) @map("created_at")
+  pointsCost  Int       @map("points_cost")
+  stock       Int       @default(0)
+  isActive    Boolean   @default(true)
+  image       String?
+  expiresAt   DateTime?
+  maxPerUser  Int?
+  createdAt   DateTime  @default(now()) @map("created_at")
 
   store                  Store                   @relation(fields: [storeId], references: [id], onDelete: Cascade)
   storeRewardRedemptions StoreRewardRedemption[]
