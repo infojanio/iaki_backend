@@ -7,7 +7,7 @@ app
     port: env.PORT,
   })
   .then(() => {
-    console.log("🚀 HTTP Server Local rodando!");
+    console.log("🚀 HTTP Server Local rodando na railway!");
   });
 
 //  npm run start:dev
