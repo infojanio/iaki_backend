@@ -5,7 +5,7 @@ interface FetchOrderByIdUseCaseRequest {
   orderId: string;
 }
 
-export class FetchOrderByIdUseCase {
+export class FetchOrderByIdHistoryUseCase {
   constructor(private ordersRepository: OrdersRepository) {}
 
   async execute({ orderId }: FetchOrderByIdUseCaseRequest) {
