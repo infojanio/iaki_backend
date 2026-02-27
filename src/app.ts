@@ -35,6 +35,7 @@ app.register(fastifyCors, {
   origin: [
     "http://localhost:5173", // opcional para dev local
     "https://rahdar-web-production.up.railway.app",
+    "https://iakipainel-production.up.railway.app",
     "https://iakipainel-wsnd--5173--d7bdb599.local-corp.webcontainer.io",
     "https://iaki.com.br", // ✅ frontend hospedado
   ],
