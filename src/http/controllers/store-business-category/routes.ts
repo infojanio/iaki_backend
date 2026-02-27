@@ -10,45 +10,46 @@ import { LinkStoreToBusinessCategoryController } from "./link-store-to-business-
 export async function storeBusinessCategoryRoutes(app: FastifyInstance) {
   // Todas as rotas exigem usuário autenticado
   app.addHook("onRequest", verifyJWT);
-
-  // (ADMIN / DEBUG) – listar todas as relações
-  app.get(
-    "/store-business-categories",
-    { onRequest: [verifyUserRole("ADMIN")] },
-    listStoreByBusinessCategoriesController,
-  );
-
+ 
   // Listar todas as lojas por categorias de negócio (usado na Home)
   app.get(
     "/stores-business-categories/category/:categoryId",
     listStoreByBusinessCategoriesController,
   );
 
+  // (ADMIN / DEBUG) – listar todas as relações
+  app.get(
+    "/store-business-categories",
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
+    listStoreByBusinessCategoriesController,
+  );
+
+
   // (ADMIN) – obter uma relação específica
   app.get(
     "/store-business-categories/:categoryId",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     getStoreBusinessCategoryController,
   );
 
   // Vincular BusinessCategory a City (ADMIN)
   app.post(
     "/store-business-categories/link-category",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     LinkStoreToBusinessCategoryController,
   );
 
   // (ADMIN) – criar vínculo loja ↔ categoria
   app.post(
     "/store-business-categories",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     createStoreBusinessCategoryController,
   );
 
   // (ADMIN) – remover vínculo loja ↔ categoria
   app.delete(
     "/store-business-categories/:id",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     deleteStoreBusinessCategoryController,
   );
 }

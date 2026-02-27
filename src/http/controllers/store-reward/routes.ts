@@ -5,17 +5,18 @@ import { createStoreReward } from "./create-store-reward";
 import { listMyPendingRedemptions } from "./list-pending-redemptions";
 
 export async function storeRewardsRoutes(app: FastifyInstance) {
+  app.addHook("onRequest", verifyJWT);
+
   app.post(
     "/stores/rewards",
     {
-      onRequest: [verifyJWT, verifyUserRole("ADMIN")],
+      onRequest: [verifyUserRole("ADMIN")],
     },
     createStoreReward,
   );
 
   app.get(
     "/stores/:storeId/rewards/redemptions/me",
-    { onRequest: [verifyJWT] },
     listMyPendingRedemptions,
   );
 }

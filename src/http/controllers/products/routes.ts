@@ -41,7 +41,7 @@ export async function productsRoutes(app: FastifyInstance) {
   // Rotas de estoque (separadas logicamente)
   app.patch(
     "/products/:productId",
-    { onRequest: [verifyJWT, verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("ADMIN")] },
     updateProduct,
   );
 
@@ -62,7 +62,7 @@ export async function productsRoutes(app: FastifyInstance) {
   // Rota de criação
   app.post(
     "/products",
-    { onRequest: [verifyJWT, verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("ADMIN")] },
     create,
   );
 }

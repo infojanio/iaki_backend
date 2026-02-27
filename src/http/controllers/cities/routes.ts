@@ -34,17 +34,17 @@ export async function citiesRoutes(app: FastifyInstance) {
   // ATUALIZAR CIDADE (ADMIN)
   app.patch(
     "/cities/:cityId",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     updateCity,
   );
 
   // CRIAR CIDADE (ADMIN)
-  app.post("/cities", { onRequest: [verifyUserRole("ADMIN")] }, createCity);
+  app.post("/cities", { onRequest: [verifyUserRole("SUPER_ADMIN")] }, createCity);
 
   // DELETAR CIDADE (ADMIN)
   app.delete(
     "/cities/:cityId",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     deleteCity,
   );
 }

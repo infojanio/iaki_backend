@@ -29,28 +29,28 @@ export async function businessCategoriesRoutes(app: FastifyInstance) {
   // Criar categoria (ADMIN)
   app.post(
     "/business-categories",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     createBusinessCategoryController,
   );
 
   // Vincular BusinessCategory a City (ADMIN)
   app.post(
     "/business-categories/link-city",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     linkBusinessCategoryToCityController,
   );
 
   // Atualizar categoria (ADMIN)
   app.patch(
     "/business-categories/:id",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     updateBusinessCategoryController,
   );
 
   // Deletar categoria (ADMIN)
   app.delete(
     "/business-categories/:id",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     deleteBusinessCategoryController,
   );
 }

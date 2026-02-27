@@ -13,7 +13,7 @@ export async function categoriesRoutes(app: FastifyInstance) {
   app.get("/categories/:categoryId", getCategory);
   app.patch(
     "/categories/:categoryId",
-    { onRequest: [verifyJWT, verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("ADMIN")] },
     updateCategory
   );
 

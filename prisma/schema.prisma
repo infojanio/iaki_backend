@@ -608,6 +608,7 @@ enum CashbackTransactionType {
 enum Role {
   USER
   ADMIN
+  SUPER_ADMIN
 }
 
 enum OrderStatus {

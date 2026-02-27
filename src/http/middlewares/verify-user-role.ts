@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 
-type UserRole = "ADMIN" | "USER";
+type UserRole = "SUPER_ADMIN" | "ADMIN" | "USER";
 
 export function verifyUserRole(...allowedRoles: UserRole[]) {
   return async (request: FastifyRequest, reply: FastifyReply) => {

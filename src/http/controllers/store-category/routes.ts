@@ -12,11 +12,7 @@ export async function storeCategoryRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
 
   // (ADMIN / DEBUG) – listar todas as relações
-  app.get(
-    "/store-categories",
-
-    listStoreByCategoriesController,
-  );
+  app.get("/store-categories", listStoreByCategoriesController);
 
   // Listar todas as lojas por categorias de negócio (usado na Home)
   app.get(

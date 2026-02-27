@@ -12,29 +12,28 @@ import { getBannersByCityController } from "./get-banners-by-city";
 export async function bannersRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
 
+  // leitura (ambos podem ver)
   app.get("/banners", listBanners);
   app.get("/banners/:bannerId", getBanner);
-
   app.get("/banners/store/:storeId", getBannersByStoreController);
   app.get("/banners/city/:cityId", getBannersByCityController);
 
-  app.patch(
-    "/banners/:bannerId",
-    { onRequest: [verifyJWT, verifyUserRole("ADMIN")] },
-    updateBanner,
-  );
-  app.delete(
-    "/banners/:bannerId",
-    { onRequest: [verifyJWT, verifyUserRole("ADMIN")] },
-    deleteBanner,
-  );
-
+  // modificação (somente SUPER_ADMIN)
   app.post(
-    //    '/stores/${storeId}/subcategories/${subcategoryId}/products',
     "/banners",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     create,
   );
 
-  //app.post('/stores/:storeId/orders', { onRequest: [verifyJWT] }, create)
+  app.patch(
+    "/banners/:bannerId",
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
+    updateBanner,
+  );
+
+  app.delete(
+    "/banners/:bannerId",
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
+    deleteBanner,
+  );
 }

@@ -10,25 +10,24 @@ import { validateStoreRewardRedemption } from "./validate-store-reward-redemptio
 export async function storePointsRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
 
-  app.get(
-    "/stores/:storeId/points/me",
-    { onRequest: [verifyJWT] },
-    getStorePointsByStore,
-  );
-
   app.get("/stores/:storeId/rewards", getStoreRewardsByStore);
 
+  app.get(
+    "/stores/:storeId/points/me",
+    getStorePointsByStore,
+  );
+  
+  app.post(
+    "/stores/:storeId/rewards/:rewardId/redeem",
+    redeemStoreReward,
+  );
+  
   app.post(
     "/stores/rewards/validate/:redemptionId",
     {
-      onRequest: [verifyJWT, verifyUserRole("ADMIN")],
+      onRequest: [verifyUserRole("ADMIN")],
     },
     validateStoreRewardRedemption,
-  );
-
-  app.post(
-    "/stores/:storeId/rewards/:rewardId/redeem",
-    { onRequest: [verifyJWT] },
-    redeemStoreReward,
-  );
-}
+    );
+  }
+    

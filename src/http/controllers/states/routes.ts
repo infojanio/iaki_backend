@@ -20,21 +20,21 @@ export async function statesRoutes(app: FastifyInstance) {
   // Criar estado (ADMIN)
   app.post(
     "/states",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     createStateController,
   );
 
   // Atualizar estado (ADMIN)
   app.patch(
     "/states/:id",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     updateStateController,
   );
 
   // Deletar estado (ADMIN)
   app.delete(
     "/states/:id",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     deleteStateController,
   );
 }

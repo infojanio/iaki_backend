@@ -15,16 +15,16 @@ export async function reelsRoutes(app: FastifyInstance) {
   app.get("/reels/:reelId", getReel);
   app.patch(
     "/reels/:reelId",
-    { onRequest: [verifyJWT, verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     updateReel
   );
   app.delete(
     "/reels/:reelId",
-    { onRequest: [verifyJWT, verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     deleteReel
   );
 
-  app.post("/reels", { onRequest: [verifyUserRole("ADMIN")] }, create);
+  app.post("/reels", { onRequest: [verifyUserRole("SUPER_ADMIN")] }, create);
 
-  //app.post('/stores/:storeId/orders', { onRequest: [verifyJWT] }, create)
+  
 }
