@@ -244,7 +244,7 @@ model Order {
   storeId                 String                   @map("store_id")
   totalAmount             Decimal                  @map("total_amount")
   discountApplied         Decimal                  @default(0) @map("discount_applied")
-  validatedAt             DateTime?                @map("validated_at")
+  validatedAt             DateTime?                @map("validatedAt")
   qrCodeUrl               String?
   status                  OrderStatus              @default(PENDING)
   createdAt               DateTime                 @default(now()) @map("created_at")

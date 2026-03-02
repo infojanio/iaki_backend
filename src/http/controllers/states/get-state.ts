@@ -2,24 +2,23 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import { z } from "zod";
 import { makeGetStateUseCase } from "@/use-cases/_factories/make-get-state-use-case";
 
-export async function getStateController(
-  request: FastifyRequest,
-  reply: FastifyReply,
-) {
+export async function getState(request: FastifyRequest, reply: FastifyReply) {
   const paramsSchema = z.object({
-    id: z.string().uuid(),
+    stateId: z.string().uuid("ID inválido"),
   });
 
   try {
-    const { id } = paramsSchema.parse(request.params);
+    const { stateId } = paramsSchema.parse(request.params);
 
-    const useCase = makeGetStateUseCase();
-    const { state } = await useCase.execute({ id });
+    const getStateUseCase = makeGetStateUseCase();
+    const { state } = await getStateUseCase.execute({ id: stateId });
 
     return reply.status(200).send(state);
-  } catch {
-    return reply.status(404).send({
-      message: "Estado não encontrado",
-    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return reply.status(400).send({ message: "ID inválido" });
+    }
+
+    return reply.status(404).send({ message: "Estado não encontrada" });
   }
 }

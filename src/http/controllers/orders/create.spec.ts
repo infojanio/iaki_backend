@@ -140,7 +140,7 @@ describe("Create Order Use Case", () => {
         latitude: -23.55052,
         longitude: -46.633308,
         totalAmount,
-        validated_at: null,
+        validatedAt: null,
         createdAt: new Date(),
         status: OrderStatus.PENDING,
         items: [

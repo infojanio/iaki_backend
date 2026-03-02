@@ -15,7 +15,7 @@ interface GetOrderUseCaseResponse {
   discountApplied: number;
   status: OrderStatus;
   createdAt: Date;
-  validated_at: Date | null;
+  validatedAt: Date | null;
   qrCodeUrl?: string;
   items: Array<{
     id: string;
@@ -52,7 +52,7 @@ export class GetOrderUseCase {
       discountApplied: Number(order.discountApplied ?? 0),
       status: order.status,
       createdAt: order.createdAt,
-      validated_at: order.validatedAt,
+      validatedAt: order.validatedAt,
       qrCodeUrl: order.qrCodeUrl ?? undefined,
       items: order.items.map((item) => ({
         id: item.id,

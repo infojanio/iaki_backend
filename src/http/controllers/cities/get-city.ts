@@ -4,14 +4,14 @@ import { z } from "zod";
 
 export async function getCity(request: FastifyRequest, reply: FastifyReply) {
   const paramsSchema = z.object({
-    id: z.string().uuid("ID inválido"),
+    cityId: z.string().uuid("ID inválido"),
   });
 
   try {
-    const { id } = paramsSchema.parse(request.params);
+    const { cityId } = paramsSchema.parse(request.params);
 
     const getCityUseCase = makeGetCityUseCase();
-    const { city } = await getCityUseCase.execute({ id });
+    const { city } = await getCityUseCase.execute({ id: cityId });
 
     return reply.status(200).send(city);
   } catch (error) {

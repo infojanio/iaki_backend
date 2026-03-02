@@ -4,20 +4,20 @@ import { z } from "zod";
 
 export async function updateCity(request: FastifyRequest, reply: FastifyReply) {
   const paramsSchema = z.object({
-    id: z.string().uuid("ID inválido"),
+    cityId: z.string().uuid("ID inválido"),
   });
 
   const bodySchema = z.object({
     name: z.string().optional(),
-    state: z.string().optional(),
+    stateId: z.string().uuid().optional(),
   });
 
   try {
-    const { id } = paramsSchema.parse(request.params);
+    const { cityId } = paramsSchema.parse(request.params);
     const data = bodySchema.parse(request.body);
 
     const useCase = makeUpdateCityUseCase();
-    const { city } = await useCase.execute({ id, ...data });
+    const { city } = await useCase.execute({ id: cityId, ...data });
 
     return reply.status(200).send(city);
   } catch (error) {

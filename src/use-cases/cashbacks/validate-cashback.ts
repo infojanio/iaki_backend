@@ -28,7 +28,7 @@ export class ValidateCashback {
       throw new Error("Unauthorized operation.");
     }
 
-    if (order.validated_at) {
+    if (order.validatedAt) {
       throw new Error("Cashback already validated for this order.");
     }
 

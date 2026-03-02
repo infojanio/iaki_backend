@@ -22,7 +22,7 @@ export class InMemoryOrdersRepository implements OrdersRepository {
       totalAmount: number;
       qrCodeUrl?: string | null;
       status: string;
-      validated_at: Date | null;
+      validatedAt: Date | null;
       createdAt: Date;
       items: Array<{
         product: {
@@ -48,7 +48,7 @@ export class InMemoryOrdersRepository implements OrdersRepository {
       totalAmount: number;
       qrCodeUrl?: string | null;
       status: string;
-      validated_at: Date | null;
+      validatedAt: Date | null;
       createdAt: Date;
       items: Array<{
         product: {
@@ -87,7 +87,7 @@ export class InMemoryOrdersRepository implements OrdersRepository {
       storeId: data.storeId,
       totalAmount: data.totalAmount || new Prisma.Decimal(1),
       status: data.status ?? "VALIDATED",
-      validated_at: data.validated_at || new Date(),
+      validatedAt: data.validatedAt || new Date(),
       createdAt: data.createdAt ?? new Date(),
     };
 
@@ -123,7 +123,7 @@ export class InMemoryOrdersRepository implements OrdersRepository {
   async balanceByUserId(userId: string): Promise<number> {
     const validatedCashbacks = this.cashbacks.filter((cashback) => {
       const order = this.orders.find((order) => order.id === cashback.orderId);
-      return order?.userId === userId && order?.validated_at !== null;
+      return order?.userId === userId && order?.validatedAt !== null;
     });
 
     console.log("Cashbacks encontrados:", validatedCashbacks);

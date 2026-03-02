@@ -7,7 +7,7 @@ export async function updateStateController(
   reply: FastifyReply,
 ) {
   const paramsSchema = z.object({
-    id: z.string().uuid(),
+    stateId: z.string().uuid(),
   });
 
   const bodySchema = z.object({
@@ -16,11 +16,11 @@ export async function updateStateController(
   });
 
   try {
-    const { id } = paramsSchema.parse(request.params);
+    const { stateId } = paramsSchema.parse(request.params);
     const data = bodySchema.parse(request.body);
 
     const useCase = makeUpdateStateUseCase();
-    const { state } = await useCase.execute({ id, ...data });
+    const { state } = await useCase.execute({ id: stateId, ...data });
 
     return reply.status(200).send(state);
   } catch (error: any) {

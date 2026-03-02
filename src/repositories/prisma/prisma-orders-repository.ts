@@ -230,7 +230,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
 
       qrCodeUrl: order.qrCodeUrl,
       status: order.status,
-      validated_at: order.validatedAt,
+      validatedAt: order.validatedAt,
       createdAt: order.createdAt,
       items: order.items.map((item) => ({
         quantity: Number(item.quantity),

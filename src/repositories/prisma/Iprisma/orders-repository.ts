@@ -64,7 +64,7 @@ export interface OrdersRepository {
       discountApplied: number | null;
       qrCodeUrl: string | null;
       status: OrderStatus;
-      validated_at: Date | null;
+      validatedAt: Date | null;
       createdAt: Date;
       items: {
         quantity: number;
@@ -105,7 +105,7 @@ export interface OrdersRepository {
   /**
    * 🔹 Marcar pedido como validado (TX)
    * 👉 NÃO calcula cashback
-   * 👉 Apenas muda status + validated_at
+   * 👉 Apenas muda status + validatedAt
    */
   markAsValidatedWithTx(
     tx: Prisma.TransactionClient,

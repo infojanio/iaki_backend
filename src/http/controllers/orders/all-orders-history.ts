@@ -57,7 +57,7 @@ export async function allOrdersHistory(
         discountApplied: order.discountApplied,
         status: order.status,
         qrCodeUrl: order.qrCodeUrl,
-        validatedAt: order.validated_at,
+        validatedAt: order.validatedAt,
         createdAt: order.createdAt,
         items: order.items.map((item) => ({
           quantity: item.quantity,

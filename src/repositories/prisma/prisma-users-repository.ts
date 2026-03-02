@@ -90,7 +90,7 @@ export class PrismaUsersRepository implements UsersRepository {
 
   async balanceByUserId(userId: string): Promise<number> {
     const validatedCashbacks = await prisma.cashback.findMany({
-      where: { userId: userId, order: { validated_at: { not: null } } },
+      where: { userId: userId, order: { validatedAt: { not: null } } },
       select: { amount: true },
     });
 

@@ -217,7 +217,7 @@ CREATE TABLE "orders" (
     "store_id" TEXT NOT NULL,
     "total_amount" DECIMAL(65,30) NOT NULL,
     "discount_applied" DECIMAL(65,30) NOT NULL DEFAULT 0,
-    "validated_at" TIMESTAMP(3),
+    "validatedAt" TIMESTAMP(3),
     "qrCodeUrl" TEXT,
     "status" "OrderStatus" NOT NULL DEFAULT 'PENDING',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

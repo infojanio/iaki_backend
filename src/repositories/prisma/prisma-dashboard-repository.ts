@@ -77,8 +77,8 @@ export class PrismaDashboardMetricsRepository implements DashboardRepository {
 
   async getLatestValidatedOrders() {
     const orders = await prisma.order.findMany({
-      where: { validated_at: { not: null } },
-      orderBy: { validated_at: "desc" },
+      where: { validatedAt: { not: null } },
+      orderBy: { validatedAt: "desc" },
       take: 5,
       include: {
         user: true,
@@ -99,7 +99,7 @@ export class PrismaDashboardMetricsRepository implements DashboardRepository {
       ),
       userName: order.user.name,
       storeName: order.store.name,
-      validatedAt: order.validated_at!,
+      validatedAt: order.validatedAt!,
     }));
   }
 
@@ -126,7 +126,7 @@ export class PrismaDashboardMetricsRepository implements DashboardRepository {
       user_name: order.user.name,
       store_name: order.store.name,
       createdAt: order.createdAt,
-      validatedAt: order.validated_at ?? null,
+      validatedAt: order.validatedAt ?? null,
       cashback: order.CashbackTransaction.reduce(
         (acc, cur) => acc + Number(cur.amount),
         0,
@@ -202,9 +202,9 @@ export class PrismaDashboardMetricsRepository implements DashboardRepository {
     const startOfYesterday = new Date(startOfToday);
     startOfYesterday.setDate(startOfYesterday.getDate() - 1);
 
-    const todayConditions: any = { validated_at: { gte: startOfToday } };
+    const todayConditions: any = { validatedAt: { gte: startOfToday } };
     const yesterdayConditions: any = {
-      validated_at: { gte: startOfYesterday, lt: startOfToday },
+      validatedAt: { gte: startOfYesterday, lt: startOfToday },
     };
 
     if (storeId) {
@@ -247,14 +247,14 @@ export class PrismaDashboardMetricsRepository implements DashboardRepository {
     const lastWeekEnd = startOfWeek.subtract(1, "day").endOf("day");
 
     const whereCurrent: any = {
-      validated_at: {
+      validatedAt: {
         gte: startOfWeek.toDate(),
         lte: today.toDate(),
       },
     };
 
     const whereLast: any = {
-      validated_at: {
+      validatedAt: {
         gte: lastWeekStart.toDate(),
         lte: lastWeekEnd.toDate(),
       },

@@ -3,9 +3,10 @@ import { verifyJWT } from "@/http/middlewares/verify-jwt";
 import { verifyUserRole } from "@/http/middlewares/verify-user-role";
 import { createStateController } from "./create-state";
 import { deleteStateController } from "./delete-state";
-import { getStateController } from "./get-state";
+
 import { listStatesController } from "./list-states";
 import { updateStateController } from "./update-state";
+import { getState } from "./get-state";
 
 export async function statesRoutes(app: FastifyInstance) {
   // Todas as rotas exigem autenticação
@@ -15,7 +16,7 @@ export async function statesRoutes(app: FastifyInstance) {
   app.get("/states", listStatesController);
 
   // Buscar estado por ID
-  app.get("/states/:id", getStateController);
+  app.get("/states/:stateId", getState);
 
   // Criar estado (ADMIN)
   app.post(
@@ -26,7 +27,7 @@ export async function statesRoutes(app: FastifyInstance) {
 
   // Atualizar estado (ADMIN)
   app.patch(
-    "/states/:id",
+    "/states/:stateId",
     { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     updateStateController,
   );
