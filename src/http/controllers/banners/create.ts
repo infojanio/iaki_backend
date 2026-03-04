@@ -7,7 +7,7 @@ export async function create(request: FastifyRequest, reply: FastifyReply) {
     title: z.string(),
     imageUrl: z.string(),
     link: z.string(),
-    position: z.number(),
+    position: z.number().optional(),
     storeId: z.string(),
     createdAt: z.date().optional(),
   });

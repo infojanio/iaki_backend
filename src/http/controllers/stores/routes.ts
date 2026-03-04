@@ -13,6 +13,7 @@ import { listStoreByBusinessCategoriesController } from "../store-business-categ
 import { listStoresByCity } from "./list-stores-by-city";
 import { FetchStoreById } from "./fetch-store-by-id";
 import { getStoreCategoriesController } from "./get-store-categories";
+import { updateStore } from "./update";
 
 export async function storesRoutes(app: FastifyInstance) {
   /**
@@ -40,15 +41,14 @@ export async function storesRoutes(app: FastifyInstance) {
   // Lojas por cidade
   app.get("/stores/city/:cityId", listStoresByCity);
 
-  // Buscar loja específica
-  app.get("/stores/:storeId", FetchStoreById);
-
   // Categorias internas da loja
   app.get("/stores/:storeId/categories", getStoreCategoriesController);
 
   // Lojas ativas
   app.get("/stores/active", listStoresActive);
 
+  // Buscar loja específica
+  app.get("/stores/:storeId", FetchStoreById);
   /**
    * ==============================
    * 🔐 ROTAS ADMINISTRATIVAS
@@ -59,10 +59,12 @@ export async function storesRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
 
   // Criar loja → SUPER_ADMIN
-  app.post(
-    "/stores",
-    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
-    create,
+  app.post("/stores", { onRequest: [verifyUserRole("SUPER_ADMIN")] }, create);
+
+  app.patch(
+    "/stores/:storeId",
+    { onRequest: [verifyJWT, verifyUserRole("SUPER_ADMIN")] },
+    updateStore,
   );
 
   // Ativar / Desativar loja → SUPER_ADMIN

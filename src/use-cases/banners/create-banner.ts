@@ -5,7 +5,7 @@ interface CreateBannerUseCaseRequest {
   title: string;
   imageUrl: string;
   link?: string;
-  position: number;
+  position?: number;
   storeId: string;
   createdAt: Date;
 }
@@ -21,6 +21,23 @@ export class CreateBannerUseCase {
     storeId,
     createdAt,
   }: CreateBannerUseCaseRequest) {
+    /* verifica se a loja tem plano ativo
+    const store = await storesRepository.findById(user.storeId);
+
+    if (!store.planId) {
+      throw new Error("Loja sem plano ativo.");
+    }
+
+    const plan = await plansRepository.findById(store.planId);
+
+    const bannerCount = await bannersRepository.countByStore(store.id);
+
+    if (bannerCount >= plan.maxBanners) {
+      throw new Error("Limite de banners atingido para o plano atual.");
+    }
+
+    */
+
     const banner = await this.bannersRepository.create({
       id,
       title,

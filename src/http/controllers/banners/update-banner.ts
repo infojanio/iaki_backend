@@ -9,14 +9,16 @@ const updateBannerParamsSchema = z.object({
 
 const updateBannerBodySchema = z.object({
   title: z.string().optional(),
-  image_url: z.string().optional(),
+  imageUrl: z.string().optional(),
+  isActive: z.boolean(),
+  storeId: z.string(),
   link: z.string().optional(),
-  banner_id: z.string().uuid().optional(),
+  bannerId: z.string().uuid().optional(),
 });
 
 export async function updateBanner(
   request: FastifyRequest,
-  reply: FastifyReply
+  reply: FastifyReply,
 ) {
   try {
     const { bannerId } = updateBannerParamsSchema.parse(request.params);

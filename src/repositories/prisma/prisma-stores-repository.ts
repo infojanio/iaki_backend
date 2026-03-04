@@ -31,7 +31,7 @@ export class PrismaStoresRepository implements StoresRepository {
 
   async findByCity(cityId: string) {
     const stores = await prisma.store.findMany({
-      where: { cityId },
+      where: { cityId, isActive: true },
       include: {
         storeCategories: {
           include: {
@@ -208,6 +208,15 @@ export class PrismaStoresRepository implements StoresRepository {
     });
     return store;
   }
+
+  async update(id: string, data: Partial<Store>) {
+    const store = await prisma.store.update({
+      where: { id },
+      data,
+    });
+    return store;
+  }
+
   async toggleStatus(storeId: string, isActive: boolean): Promise<void> {
     await prisma.store.update({
       where: { id: storeId },

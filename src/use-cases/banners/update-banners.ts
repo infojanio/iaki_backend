@@ -5,7 +5,9 @@ import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-foun
 interface UpdateBannerUseCaseRequest {
   bannerId: string;
   title?: string;
-  image_url?: string;
+  isActive: boolean;
+  storeId: string;
+  imageUrl?: string;
   link?: string;
 }
 
@@ -35,7 +37,7 @@ export class UpdateBannerUseCase {
     // Atualiza o produto
     const updatedBanner = await this.bannersRepository.update(
       bannerId,
-      updateData
+      updateData,
     );
 
     return { updatedBanner };

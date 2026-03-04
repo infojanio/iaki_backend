@@ -11,7 +11,9 @@ export interface BannersRepository {
     id: string,
     data: {
       title?: string;
-      image_url?: string;
+      imageUrl?: string;
+      isActive: boolean;
+      storeId: string;
       link?: string;
     },
   ): Promise<Banner>;

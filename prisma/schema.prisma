@@ -128,6 +128,8 @@ model Store {
   street                  String?
   postalCode              String?                  @map("postal_code")
   cityId                  String                   @map("city_id")
+  planId                  String?
+  plan                    Plan?                    @relation(fields: [planId], references: [id])
   createdAt               DateTime                 @default(now()) @map("created_at")
   banners                 Banner[]
   carts                   Cart[]
@@ -473,9 +475,14 @@ model Plan {
   productLimit  Int
   storeLimit    Int
   userLimit     Int
+  maxBanners    Int
+  maxReels      Int
+  bannerDays    Int? // dias de exibição permitidos
+  reelDays      Int?
   description   String?
   created_at    DateTime       @default(now())
   subscriptions Subscription[]
+  stores        Store[]
 }
 
 model StorePointsWallet {

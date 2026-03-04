@@ -1,14 +1,11 @@
 import { StoresRepository } from "@/repositories/prisma/Iprisma/stores-repository";
-import { hash } from "bcryptjs";
+import { Store } from "@prisma/client";
 import { StoreAlreadyExistsError } from "../../utils/messages/errors/store-already-exists-error";
-import { Role, Store } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime/library";
 
 interface RegisterUseCaseRequest {
   id?: string;
   name: string;
   slug: string;
-  isActive: boolean;
   latitude: number;
   longitude: number;
   phone: string;
@@ -30,7 +27,6 @@ export class RegisterUseCase {
     id,
     name,
     slug,
-    isActive,
     latitude,
     longitude,
     phone,
@@ -41,26 +37,25 @@ export class RegisterUseCase {
     cityId,
   }: RegisterUseCaseRequest): Promise<RegisterUseCaseResponse> {
     try {
+      // 🔹 Valida CNPJ duplicado
       const storeWithSameCnpj = await this.storesRepository.findByCnpj(cnpj);
-
       if (storeWithSameCnpj) {
         throw new StoreAlreadyExistsError();
       }
 
-      // Cria o usuário
       const store = await this.storesRepository.create({
         id,
         name,
-        phone,
         slug,
-        isActive,
         latitude,
         longitude,
+        phone,
         cnpj,
         avatar,
         street,
         postalCode,
         cityId,
+        isActive: true, // 🔥 sempre nasce desativada
       });
 
       return { store };

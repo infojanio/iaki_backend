@@ -20,7 +20,15 @@ export class PrismaBannersRepository implements BannersRepository {
   }
 
   async listMany(): Promise<Banner[]> {
-    const banners = await prisma.banner.findMany();
+    const banners = await prisma.banner.findMany({
+      orderBy: [{ createdAt: "desc" }],
+      include: {
+        store: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+
     return banners;
   }
 
@@ -67,7 +75,9 @@ export class PrismaBannersRepository implements BannersRepository {
     id: string,
     data: {
       title?: string;
-      image_url?: string;
+      imageUrl?: string;
+      isActive: boolean;
+      storeId: string;
       link?: string;
     },
   ): Promise<Banner> {
