@@ -113,9 +113,17 @@ export class PrismaStoreBusinessCategoryRepository
     });
   }
 
-  async findByCategoryId(categoryId: string): Promise<StoreBusinessCategory[]> {
+  async findByCategoryId(categoryId: string) {
     return prisma.storeBusinessCategory.findMany({
       where: { categoryId },
+      include: {
+        store: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
   }
 

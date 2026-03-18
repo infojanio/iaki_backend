@@ -10,12 +10,19 @@ import { LinkStoreToBusinessCategoryController } from "./link-store-to-business-
 export async function storeBusinessCategoryRoutes(app: FastifyInstance) {
   // Todas as rotas exigem usuário autenticado
   app.addHook("onRequest", verifyJWT);
- 
+
   // Listar todas as lojas por categorias de negócio (usado na Home)
   app.get(
     "/stores-business-categories/category/:categoryId",
     listStoreByBusinessCategoriesController,
   );
+
+  /* Listar todas as categorias de negócio  por loja  (usado na Home)
+  app.get(
+    "/stores-business-categories/category/:categoryId",
+    listStoreByBusinessCategoriesController,
+  );
+  */
 
   // (ADMIN / DEBUG) – listar todas as relações
   app.get(
@@ -23,7 +30,6 @@ export async function storeBusinessCategoryRoutes(app: FastifyInstance) {
     { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     listStoreByBusinessCategoriesController,
   );
-
 
   // (ADMIN) – obter uma relação específica
   app.get(
