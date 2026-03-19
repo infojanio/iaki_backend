@@ -65,21 +65,6 @@ model User {
   @@map("users")
 }
 
-model Subscription {
-  id        String             @id @default(uuid())
-  storeId   String             @map("store_id")
-  planId    String             @map("plan_id")
-  status    SubscriptionStatus @default(ACTIVE)
-  startAt   DateTime           @default(now()) @map("start_at")
-  endAt     DateTime           @map("end_at")
-  renewedAt DateTime?          @map("renewed_at")
-  createdAt DateTime           @default(now()) @map("created_at")
-  plan      Plan               @relation(fields: [planId], references: [id])
-  store     Store              @relation(fields: [storeId], references: [id])
-
-  @@map("subscriptions")
-}
-
 model BusinessCategory {
   id        String                  @id @default(uuid())
   name      String                  @unique
@@ -128,8 +113,6 @@ model Store {
   street                  String?
   postalCode              String?                  @map("postal_code")
   cityId                  String                   @map("city_id")
-  planId                  String?
-  plan                    Plan?                    @relation(fields: [planId], references: [id])
   createdAt               DateTime                 @default(now()) @map("created_at")
   banners                 Banner[]
   carts                   Cart[]
@@ -139,6 +122,7 @@ model Store {
   coupons                 Coupon[]
   orders                  Order[]
   products                Product[]
+  reels                   Reel[]
   storeBusinessCategories StoreBusinessCategory[]
   storeCategories         StoreCategory[]
   storeDiscounts          StoreDiscount[]
@@ -208,6 +192,7 @@ model Product {
   store              Store       @relation(fields: [storeId], references: [id])
   subcategory        SubCategory @relation(fields: [subcategoryId], references: [id])
 
+  @@index([storeId])
   @@map("products")
 }
 
@@ -311,22 +296,26 @@ model Banner {
   link      String?
   isActive  Boolean  @default(true)
   position  Int?
-  storeId   String
+  storeId   String   @map("store_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
+  @@index([storeId])
   @@map("banners")
 }
 
 model Reel {
-  id         String   @id @default(uuid())
-  title      String
-  image_url  String
-  link       String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id        String   @id @default(uuid())
+  title     String
+  imageUrl  String   @map("image_url")
+  link      String?
+  storeId   String   @map("store_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
+  @@index([storeId])
   @@map("reels")
 }
 
@@ -469,20 +458,36 @@ model PaymentType {
 }
 
 model Plan {
-  id            String         @id
-  name          String
-  price         Decimal
-  productLimit  Int
-  storeLimit    Int
-  userLimit     Int
-  maxBanners    Int
-  maxReels      Int
-  bannerDays    Int? // dias de exibição permitidos
-  reelDays      Int?
-  description   String?
-  created_at    DateTime       @default(now())
+  id            String         @id @default(uuid())
+  name          String         @unique
+  price         Decimal        @db.Decimal(10, 2)
+  durationDays  Int            @map("duration_days")
+  maxProducts   Int?           @map("max_products")
+  maxBanners    Int?           @map("max_banners")
+  maxReels      Int?           @map("max_reels")
+  maxCategories Int?           @map("max_categories")
+  isActive      Boolean        @default(true) @map("is_active")
+  createdAt     DateTime       @default(now()) @map("created_at")
   subscriptions Subscription[]
-  stores        Store[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id        String             @id @default(uuid())
+  storeId   String             @map("store_id")
+  planId    String             @map("plan_id")
+  status    SubscriptionStatus @default(ACTIVE)
+  startDate DateTime           @default(now()) @map("start_date")
+  endDate   DateTime           @map("end_date")
+  isTrial   Boolean            @default(false) @map("is_trial")
+  createdAt DateTime           @default(now()) @map("created_at")
+  plan      Plan               @relation(fields: [planId], references: [id])
+  store     Store              @relation(fields: [storeId], references: [id])
+
+  @@index([storeId, status])
+  @@index([planId])
+  @@map("subscriptions")
 }
 
 model StorePointsWallet {
@@ -505,20 +510,20 @@ model StorePointsWallet {
 }
 
 model StorePointsTransaction {
-  id        String            @id @default(uuid())
-  userId    String            @map("user_id")
-  storeId   String            @map("store_id")
-  orderId   String?           @map("order_id")
-  type      StorePointsTxType
-  points    Int
-  note      String?
-  createdAt DateTime          @default(now()) @map("created_at")
-
-  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  store               Store              @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  order               Order?             @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  storePointsWallet   StorePointsWallet? @relation(fields: [storePointsWalletId], references: [id])
+  id                  String            @id @default(uuid())
+  userId              String            @map("user_id")
+  storeId             String            @map("store_id")
+  orderId             String?           @map("order_id")
+  type                StorePointsTxType
+  points              Int
+  note                String?
+  createdAt           DateTime          @default(now()) @map("created_at")
   storePointsWalletId String?
+
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store             Store              @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  order             Order?             @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  storePointsWallet StorePointsWallet? @relation(fields: [storePointsWalletId], references: [id])
 
   @@index([userId, storeId])
   @@map("store_points_transactions")
@@ -560,12 +565,6 @@ model StoreRewardRedemption {
   @@map("store_reward_redemptions")
 }
 
-enum RedemptionStatus {
-  PENDING
-  CONFIRMED
-  CANCELED
-}
-
 model StoreDraw {
   id             String   @id @default(uuid())
   storeId        String   @map("store_id")
@@ -582,6 +581,12 @@ model StoreDraw {
   @@map("store_draws")
 }
 
+enum RedemptionStatus {
+  PENDING
+  CONFIRMED
+  CANCELED
+}
+
 enum StorePointsTxType {
   EARN
   SPEND
@@ -590,9 +595,9 @@ enum StorePointsTxType {
 
 enum SubscriptionStatus {
   ACTIVE
-  PAST_DUE
-  CANCELED
+  TRIALING
   EXPIRED
+  CANCELED
 }
 
 enum CartStatus {
