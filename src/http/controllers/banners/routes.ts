@@ -8,6 +8,7 @@ import { updateBanner } from "./update-banner";
 import { deleteBanner } from "./delete-banner";
 import { getBannersByStoreController } from "./get-banners-by-store";
 import { getBannersByCityController } from "./get-banners-by-city";
+import { checkStoreLimit } from "@/http/middlewares/check-store-limit";
 
 export async function bannersRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
@@ -21,7 +22,7 @@ export async function bannersRoutes(app: FastifyInstance) {
   // modificação (somente SUPER_ADMIN)
   app.post(
     "/banners",
-    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN"), checkStoreLimit("banners")] },
     create,
   );
 

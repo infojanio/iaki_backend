@@ -7,6 +7,7 @@ import { getReel } from "./get-reel";
 import { updateReel } from "./update-reel";
 import { deleteReel } from "./delete-reel";
 import { create } from "./create";
+import { checkStoreLimit } from "@/http/middlewares/check-store-limit";
 
 export async function reelsRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
@@ -16,15 +17,17 @@ export async function reelsRoutes(app: FastifyInstance) {
   app.patch(
     "/reels/:reelId",
     { onRequest: [verifyUserRole("SUPER_ADMIN")] },
-    updateReel
+    updateReel,
   );
   app.delete(
     "/reels/:reelId",
     { onRequest: [verifyUserRole("SUPER_ADMIN")] },
-    deleteReel
+    deleteReel,
   );
 
-  app.post("/reels", { onRequest: [verifyUserRole("SUPER_ADMIN")] }, create);
-
-  
+  app.post(
+    "/reels",
+    { onRequest: [verifyUserRole("SUPER_ADMIN"), checkStoreLimit("reels")] },
+    create,
+  );
 }

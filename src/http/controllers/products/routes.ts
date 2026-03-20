@@ -14,6 +14,7 @@ import { listProductsActive } from "./listProductsActive";
 import { listProductsByStoreController } from "./list-products-by-store";
 import { listProductsByStoreWithDiscountController } from "./list-products-by-store-with-discount";
 import { lowStock } from "./low-stock";
+import { checkStoreLimit } from "@/http/middlewares/check-store-limit";
 
 export async function productsRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
@@ -62,7 +63,7 @@ export async function productsRoutes(app: FastifyInstance) {
   // Rota de criação
   app.post(
     "/products",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("ADMIN"), checkStoreLimit("products")] },
     create,
   );
 }

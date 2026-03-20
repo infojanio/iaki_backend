@@ -169,8 +169,9 @@ async function main() {
   await prisma.reel.create({
     data: {
       title: "Promoção Relâmpago",
-      image_url: "https://placehold.co/500x800",
+      imageUrl: "https://placehold.co/500x800",
       link: "https://google.com",
+      storeId: "",
     },
   });
 
@@ -233,6 +234,58 @@ async function main() {
       status: CashbackStatus.CONFIRMED,
     },
   });
+
+  /* ===========================
+     PLANS
+  ============================ */
+  const plans = [
+    {
+      name: "FREE",
+      price: 0,
+      durationDays: 30,
+      maxProducts: 20,
+      maxBanners: 0,
+      maxReels: 0,
+      maxCategories: 2,
+      isActive: true,
+    },
+    {
+      name: "PRO",
+      price: 99.9,
+      durationDays: 30,
+      maxProducts: 200,
+      maxBanners: 10,
+      maxReels: 10,
+      maxCategories: 10,
+      isActive: true,
+    },
+    {
+      name: "PREMIUM",
+      price: 199.9,
+      durationDays: 30,
+      maxProducts: null,
+      maxBanners: null,
+      maxReels: null,
+      maxCategories: null,
+      isActive: true,
+    },
+  ];
+
+  for (const plan of plans) {
+    await prisma.plan.upsert({
+      where: { name: plan.name },
+      update: {
+        price: plan.price,
+        durationDays: plan.durationDays,
+        maxProducts: plan.maxProducts,
+        maxBanners: plan.maxBanners,
+        maxReels: plan.maxReels,
+        maxCategories: plan.maxCategories,
+        isActive: plan.isActive,
+      },
+      create: plan,
+    });
+  }
 
   /* ===========================
      MISSIONS

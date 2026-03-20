@@ -1,6 +1,9 @@
 import { StoresRepository } from "@/repositories/prisma/Iprisma/stores-repository";
 import { Store } from "@prisma/client";
 import { StoreAlreadyExistsError } from "../../utils/messages/errors/store-already-exists-error";
+import { PrismaPlansRepository } from "@/repositories/prisma/prisma-plans-repository";
+import { PrismaSubscriptionsRepository } from "@/repositories/prisma/prisma-subscriptions-repository";
+import { SubscribeStoreToPlanUseCase } from "../subscriptions/subscribe-store-to-plan";
 
 interface RegisterUseCaseRequest {
   id?: string;
@@ -56,6 +59,30 @@ export class RegisterUseCase {
         postalCode,
         cityId,
         isActive: true, // 🔥 sempre nasce desativada
+      });
+
+      //registro do plano free
+      const plansRepository = new PrismaPlansRepository();
+      const subscriptionsRepository = new PrismaSubscriptionsRepository();
+
+      const subscribeStoreToPlanUseCase = new SubscribeStoreToPlanUseCase(
+        subscriptionsRepository,
+        plansRepository,
+      );
+
+      const freePlan = await plansRepository.findByName("FREE");
+
+      if (!freePlan) {
+        throw new Error(
+          "Plano FREE não encontrado. Cadastre o plano base antes.",
+        );
+      }
+
+      await subscribeStoreToPlanUseCase.execute({
+        storeId: store.id,
+        planId: freePlan.id,
+        isTrial: true,
+        customDurationDays: 15,
       });
 
       return { store };
