@@ -38,6 +38,7 @@ export class SubscribeStoreToPlanUseCase {
 
     const startDate = new Date();
     const durationDays = customDurationDays ?? plan.durationDays;
+
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + durationDays);
 

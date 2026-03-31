@@ -17,6 +17,13 @@ export class PrismaReelsRepository implements ReelsRepository {
     return reels;
   }
 
+  async findManyByStoreId(storeId: string) {
+    return prisma.reel.findMany({
+      where: { storeId },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   async findByIdReel(id: string): Promise<Reel | null> {
     const reel = await prisma.reel.findUnique({
       where: {
@@ -30,9 +37,9 @@ export class PrismaReelsRepository implements ReelsRepository {
     id: string,
     data: {
       title?: string;
-      image_url?: string;
+      imageUrl?: string;
       link?: string;
-    }
+    },
   ): Promise<Reel> {
     return prisma.reel.update({
       where: { id },

@@ -36,6 +36,7 @@ export interface ProductsRepository {
   /* ========= FINDS BÁSICOS ========= */
   findByIdProduct(id: string): Promise<Product | null>;
   findProductById(id: string): Promise<Product | null>;
+  countByStoreId(storeId: string): Promise<number>;
 
   findById(
     id: string,

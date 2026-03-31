@@ -13,6 +13,7 @@ export interface StoreWithCategoriesDTO {
   rating?: number;
   ratingCount?: number;
   cityId: string;
+  isActive: boolean;
   categories: {
     id: string;
     name: string;

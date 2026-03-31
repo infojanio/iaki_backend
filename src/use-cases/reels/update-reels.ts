@@ -5,7 +5,7 @@ import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-foun
 interface UpdateReelUseCaseRequest {
   reelId: string;
   title?: string;
-  image_url?: string;
+  imageUrl?: string;
   link?: string;
 }
 

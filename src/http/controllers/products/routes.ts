@@ -15,6 +15,7 @@ import { listProductsByStoreController } from "./list-products-by-store";
 import { listProductsByStoreWithDiscountController } from "./list-products-by-store-with-discount";
 import { lowStock } from "./low-stock";
 import { checkStoreLimit } from "@/http/middlewares/check-store-limit";
+import { getUsage } from "./get-usage";
 
 export async function productsRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
@@ -27,7 +28,24 @@ export async function productsRoutes(app: FastifyInstance) {
   app.get("/products", listProducts);
 
   // Listar produtos da loja
-  app.get("/stores/:storeId/products", listProductsByStoreController);
+  app.get(
+    "/stores/:storeId/products",
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
+    listProductsByStoreController,
+  );
+
+  // Listar produtos da loja
+  app.get(
+    "/products/me",
+    { onRequest: [verifyUserRole("ADMIN")] },
+    listProductsByStoreController,
+  );
+
+  app.get(
+    "/stores/me/usage",
+    { onRequest: [verifyUserRole("ADMIN")] },
+    getUsage,
+  );
 
   // Produtos da loja (COM desconto aplicado)
   app.get(

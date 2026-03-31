@@ -118,6 +118,7 @@ export class PrismaStoresRepository implements StoresRepository {
       phone: store.phone,
       rating: store.rating,
       ratingCount: store.ratingCount,
+      isActive: store.isActive,
       cityId: store.cityId,
       categories: store.storeCategories.map((sc) => sc.category),
     }));

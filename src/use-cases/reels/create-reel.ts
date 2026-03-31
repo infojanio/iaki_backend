@@ -3,9 +3,10 @@ import { Reel, Prisma } from "@prisma/client";
 interface CreateReelUseCaseRequest {
   id?: string;
   title: string;
-  image_url: string;
+  imageUrl: string;
   link?: string;
-  created_at: Date;
+  storeId: string;
+  createdAt: Date;
 }
 
 export class CreateReelUseCase {
@@ -13,9 +14,10 @@ export class CreateReelUseCase {
   async execute({
     id,
     title,
-    image_url,
+    imageUrl,
     link,
-    created_at,
+    storeId,
+    createdAt,
   }: CreateReelUseCaseRequest) {
     /* verifica se a loja tem plano ativo
     const store = await storesRepository.findById(user.storeId);
@@ -37,9 +39,10 @@ export class CreateReelUseCase {
     const reel = await this.reelsRepository.create({
       id,
       title,
-      image_url,
+      imageUrl,
       link,
-      created_at,
+      storeId,
+      createdAt,
     });
     return {
       reel,

@@ -16,25 +16,31 @@ export async function bannersRoutes(app: FastifyInstance) {
   // leitura (ambos podem ver)
   app.get("/banners", listBanners);
   app.get("/banners/:bannerId", getBanner);
-  app.get("/banners/store/:storeId", getBannersByStoreController);
+
+  app.get(
+    "/banners/me",
+    { onRequest: [verifyUserRole("ADMIN")] },
+    getBannersByStoreController,
+  );
+
   app.get("/banners/city/:cityId", getBannersByCityController);
 
   // modificação (somente SUPER_ADMIN)
   app.post(
     "/banners",
-    { onRequest: [verifyUserRole("SUPER_ADMIN"), checkStoreLimit("banners")] },
+    { onRequest: [verifyUserRole("ADMIN"), checkStoreLimit("banners")] },
     create,
   );
 
   app.patch(
     "/banners/:bannerId",
-    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
+    { onRequest: [verifyUserRole("ADMIN")] },
     updateBanner,
   );
 
   app.delete(
     "/banners/:bannerId",
-    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
+    { onRequest: [verifyUserRole("ADMIN")] },
     deleteBanner,
   );
 }

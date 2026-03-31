@@ -32,6 +32,15 @@ export class PrismaProductsRepository implements ProductsRepository {
     });
   }
 
+  async countByStoreId(storeId: string): Promise<number> {
+    return this.prisma.product.count({
+      where: {
+        storeId,
+        status: true,
+      },
+    });
+  }
+
   async findById(
     id: string,
     options?: { select?: Prisma.ProductSelect },

@@ -3,14 +3,10 @@ import { z } from "zod";
 import { makeUpdateCategoryUseCase } from "@/use-cases/_factories/make-update-category-use-case";
 import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-found-error";
 
-const updateCategoryParamsSchema = z.object({
-  categoryId: z.string().uuid(),
-});
-
 const updateCategoryBodySchema = z.object({
+  id: z.string().uuid(),
   name: z.string().optional(),
   image: z.string().optional(),
-  categoryId: z.string().uuid().optional(),
 });
 
 export async function updateCategory(
@@ -18,13 +14,11 @@ export async function updateCategory(
   reply: FastifyReply,
 ) {
   try {
-    const { categoryId } = updateCategoryParamsSchema.parse(request.params);
     const updateData = updateCategoryBodySchema.parse(request.body);
 
     const updateCategoryUseCase = makeUpdateCategoryUseCase();
 
     const updatedCategory = await updateCategoryUseCase.execute({
-      categoryId,
       ...updateData,
     });
 

@@ -2,16 +2,17 @@ import { Reel, Prisma } from "@prisma/client";
 export interface ReelsRepository {
   findById(id: string): Promise<Reel | null>;
   findByIdReel(id: string): Promise<Reel | null>;
-  create(data: Prisma.ReelCreateInput): Promise<Reel>;
+  create(data: Prisma.ReelUncheckedCreateInput): Promise<Reel>;
   listMany(): Promise<Reel[]>; //listar todas
+  findManyByStoreId(storeId: string): Promise<Reel[]>;
   searchMany(search: string, page: number): Promise<Reel[]>; //buscar por nome
   update(
     id: string,
     data: {
       title?: string;
-      image_url?: string;
+      imageUrl?: string;
       link?: string;
-    }
+    },
   ): Promise<Reel>;
   delete(id: string): Promise<void>;
 }

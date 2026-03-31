@@ -6,7 +6,6 @@ interface UpdateCategoryUseCaseRequest {
   id: string;
   name?: string;
   image?: string;
-  categoryId?: string;
 }
 
 interface UpdateCategoryUseCaseResponse {

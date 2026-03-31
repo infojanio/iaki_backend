@@ -13,13 +13,11 @@ interface CreateBannerUseCaseRequest {
 export class CreateBannerUseCase {
   constructor(private bannersRepository: BannersRepository) {}
   async execute({
-    id,
     title,
     imageUrl,
     link,
     position,
     storeId,
-    createdAt,
   }: CreateBannerUseCaseRequest) {
     /* verifica se a loja tem plano ativo
     const store = await storesRepository.findById(user.storeId);
@@ -39,13 +37,11 @@ export class CreateBannerUseCase {
     */
 
     const banner = await this.bannersRepository.create({
-      id,
       title,
       imageUrl,
       link,
       position,
       storeId,
-      createdAt,
     });
     return {
       banner,

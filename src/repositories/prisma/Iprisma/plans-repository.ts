@@ -5,4 +5,7 @@ export interface PlansRepository {
   findById(id: string): Promise<Plan | null>;
   findByName(name: string): Promise<Plan | null>;
   list(): Promise<Plan[]>;
+  update(id: string, data: Prisma.PlanUpdateInput): Promise<Plan>;
+  delete(id: string): Promise<void>;
+  countSubscriptionsByPlanId(planId: string): Promise<number>;
 }

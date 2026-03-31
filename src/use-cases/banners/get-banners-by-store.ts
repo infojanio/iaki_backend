@@ -4,16 +4,21 @@ interface GetBannersByStoreUseCaseRequest {
   storeId: string;
 }
 
+interface GetBannersByStoreUseCaseResponse {
+  banners: any[]; // pode tipar melhor depois
+}
+
 export class GetBannersByStoreUseCase {
   constructor(private bannersRepository: BannersRepository) {}
 
-  async execute({ storeId }: GetBannersByStoreUseCaseRequest) {
+  async execute({
+    storeId,
+  }: GetBannersByStoreUseCaseRequest): Promise<GetBannersByStoreUseCaseResponse> {
     const banners = await this.bannersRepository.findManyByStoreId(storeId);
 
-    if (!banners) {
-      throw new Error("Banner não encontrado");
-    }
-
-    return banners;
+    // 🔥 NÃO lança erro se vazio → comportamento correto
+    return {
+      banners,
+    };
   }
 }

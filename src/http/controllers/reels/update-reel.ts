@@ -9,7 +9,7 @@ const updateReelParamsSchema = z.object({
 
 const updateReelBodySchema = z.object({
   title: z.string().optional(),
-  image_url: z.string().optional(),
+  imageUrl: z.string().optional(),
   link: z.string().optional(),
   reel_id: z.string().uuid().optional(),
 });

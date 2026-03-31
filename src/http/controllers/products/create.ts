@@ -3,39 +3,40 @@ import { z } from "zod";
 import { makeCreateProductUseCase } from "@/use-cases/_factories/make-create-product-use-case";
 
 export async function create(request: FastifyRequest, reply: FastifyReply) {
-  /*
-  const createProductParamsSchema = z.object({
-    storeId: z.string(),
-    subcategoryId: z.string(),
-  })
-    */
-
   const createProductBodySchema = z.object({
-    // id: z.string().uuid(),
-    storeId: z.string().uuid(),
     subcategoryId: z.string().uuid(),
     name: z.string(),
     description: z.string().nullable(),
-    price: z.number().positive({ message: "O preço deve ser maior que zero" }),
-    quantity: z
-      .number()
-      .positive({ message: "A quantidade deve ser maior que zero" }),
+    price: z.number().positive(),
+    quantity: z.number().min(0),
     image: z.string().nullable(),
-    cashbackPercentage: z
-      .number()
-      .positive({ message: "O cashback deve ser maior que zero" }),
+    cashbackPercentage: z.number().min(0),
     status: z.boolean().default(true),
   });
 
   try {
-    const validatedData = createProductBodySchema.parse(request.body);
+    const user = request.user as {
+      storeId?: string;
+    };
+
+    if (!user.storeId) {
+      return reply.status(403).send({
+        message: "Usuário não vinculado a uma loja.",
+      });
+    }
+
+    const body = createProductBodySchema.parse(request.body);
 
     const productUseCase = makeCreateProductUseCase();
 
-    console.log("✅ Salvando no banco:", validatedData);
-    const { product } = await productUseCase.execute(validatedData);
+    const { product } = await productUseCase.execute({
+      ...body,
+      storeId: user.storeId, // 🔥 FIX PRINCIPAL
+    });
 
-    return reply.status(201).send(product);
+    return reply.status(201).send({
+      data: product,
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return reply.status(400).send({
@@ -43,6 +44,7 @@ export async function create(request: FastifyRequest, reply: FastifyReply) {
         errors: error.flatten().fieldErrors,
       });
     }
+
     console.error("Erro interno:", error);
     return reply.status(500).send({ message: "Erro interno no servidor" });
   }

@@ -6,15 +6,21 @@ export async function getBannersByStoreController(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const paramsSchema = z.object({
-    storeId: z.string().uuid(),
-  });
+  const storeId = request.user.storeId;
 
-  const { storeId } = paramsSchema.parse(request.params);
+  if (!storeId) {
+    return reply.status(403).send({
+      message: "Usuário não vinculado a uma loja.",
+    });
+  }
 
   const getBannersByStoreUseCase = makeGetBannersByStoreUseCase();
 
-  const banner = await getBannersByStoreUseCase.execute({ storeId });
+  const { banners } = await getBannersByStoreUseCase.execute({
+    storeId,
+  });
 
-  return reply.status(200).send(banner);
+  return reply.status(200).send({
+    data: banners,
+  });
 }

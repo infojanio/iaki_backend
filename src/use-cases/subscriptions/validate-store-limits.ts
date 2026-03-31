@@ -14,8 +14,10 @@ interface ValidateStoreLimitsUseCaseRequest {
 interface ValidateStoreLimitsUseCaseResponse {
   allowed: boolean;
   current: number;
-  limit: number | null;
+  limit: number;
   status: SubscriptionStatus | null;
+  overLimit: boolean;
+  percentage: number;
   reason?: string;
 }
 
@@ -78,13 +80,14 @@ export class ValidateStoreLimitsUseCase {
       !("plan" in latestSubscription) ||
       !latestSubscription.plan
     ) {
-      throw new StoreLimitExceededError(
-        "A loja não possui um plano ativo para executar esta ação.",
-      );
+      throw new StoreLimitExceededError("A loja não possui um plano ativo.");
     }
 
     const now = new Date();
 
+    /**
+     * 🔥 Expiração automática
+     */
     if (
       latestSubscription.endDate < now &&
       latestSubscription.status !== SubscriptionStatus.EXPIRED &&
@@ -96,7 +99,7 @@ export class ValidateStoreLimitsUseCase {
       );
 
       throw new StoreLimitExceededError(
-        "A assinatura da loja expirou. Faça upgrade ou renove o plano para continuar.",
+        "Sua assinatura expirou. Faça upgrade para continuar.",
       );
     }
 
@@ -104,26 +107,55 @@ export class ValidateStoreLimitsUseCase {
       latestSubscription.status === SubscriptionStatus.EXPIRED ||
       latestSubscription.status === SubscriptionStatus.CANCELED
     ) {
-      throw new StoreLimitExceededError("A assinatura da loja não está ativa.");
+      throw new StoreLimitExceededError("A assinatura não está ativa.");
     }
 
     const current = await this.getCurrentUsage(storeId, resource);
     const limit = this.getLimitFromPlan(latestSubscription.plan, resource);
 
+    /**
+     * 🔥 Plano ilimitado
+     */
     if (limit === null) {
       return {
         allowed: true,
         current,
-        limit: null,
+        limit: 0,
         status: latestSubscription.status,
+        overLimit: false,
+        percentage: 0,
       };
     }
 
     const nextValue = current + incrementBy;
 
+    /**
+     * 🔥 % de uso
+     */
+    const percentage = limit > 0 ? (current / limit) * 100 : 0;
+
+    /**
+     * 🔥 SOFT LIMIT (downgrade)
+     */
+    if (current > limit) {
+      return {
+        allowed: false,
+        current,
+        limit,
+        status: latestSubscription.status,
+        overLimit: true,
+        percentage,
+        reason:
+          "Você está acima do limite do seu plano. Exclua itens ou faça upgrade.",
+      };
+    }
+
+    /**
+     * 🔥 HARD LIMIT (bloqueio de criação)
+     */
     if (nextValue > limit) {
       throw new StoreLimitExceededError(
-        `Limite do plano excedido para ${resource}. Atual: ${current}, limite: ${limit}.`,
+        `Limite do plano atingido para ${resource}. (${current}/${limit})`,
       );
     }
 
@@ -132,6 +164,8 @@ export class ValidateStoreLimitsUseCase {
       current,
       limit,
       status: latestSubscription.status,
+      overLimit: false,
+      percentage,
     };
   }
 }

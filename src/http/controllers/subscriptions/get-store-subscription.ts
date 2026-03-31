@@ -14,7 +14,16 @@ export async function getStoreSubscription(
   }
 
   const useCase = makeGetStoreSubscriptionUseCase();
-  const result = await useCase.execute({ storeId });
 
-  return reply.status(200).send(result);
+  try {
+    const result = await useCase.execute({ storeId });
+
+    return reply.status(200).send(result);
+  } catch (error) {
+    console.error("ERRO GET SUBSCRIPTION:", error);
+
+    return reply.status(500).send({
+      message: "Internal server error.",
+    });
+  }
 }

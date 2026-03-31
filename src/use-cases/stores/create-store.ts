@@ -4,6 +4,8 @@ import { StoreAlreadyExistsError } from "../../utils/messages/errors/store-alrea
 import { PrismaPlansRepository } from "@/repositories/prisma/prisma-plans-repository";
 import { PrismaSubscriptionsRepository } from "@/repositories/prisma/prisma-subscriptions-repository";
 import { SubscribeStoreToPlanUseCase } from "../subscriptions/subscribe-store-to-plan";
+import { prisma } from "@/lib/prisma";
+import { CreateInitialSubscriptionUseCase } from "../subscriptions/create-initial-subscription";
 
 interface RegisterUseCaseRequest {
   id?: string;
@@ -11,6 +13,7 @@ interface RegisterUseCaseRequest {
   slug: string;
   latitude: number;
   longitude: number;
+  isActive: boolean;
   phone: string;
   cnpj: string;
   avatar: string;
@@ -32,6 +35,7 @@ export class RegisterUseCase {
     slug,
     latitude,
     longitude,
+    isActive,
     phone,
     cnpj,
     avatar,
@@ -58,31 +62,20 @@ export class RegisterUseCase {
         street,
         postalCode,
         cityId,
-        isActive: true, // 🔥 sempre nasce desativada
+        isActive: true, // 🔥 sempre nasce ativada
       });
 
       //registro do plano free
       const plansRepository = new PrismaPlansRepository();
-      const subscriptionsRepository = new PrismaSubscriptionsRepository();
+      const subscriptionsRepository = new PrismaSubscriptionsRepository(prisma);
 
-      const subscribeStoreToPlanUseCase = new SubscribeStoreToPlanUseCase(
-        subscriptionsRepository,
+      const initialSubscriptionUseCase = new CreateInitialSubscriptionUseCase(
         plansRepository,
+        subscriptionsRepository,
       );
 
-      const freePlan = await plansRepository.findByName("FREE");
-
-      if (!freePlan) {
-        throw new Error(
-          "Plano FREE não encontrado. Cadastre o plano base antes.",
-        );
-      }
-
-      await subscribeStoreToPlanUseCase.execute({
+      await initialSubscriptionUseCase.execute({
         storeId: store.id,
-        planId: freePlan.id,
-        isTrial: true,
-        customDurationDays: 15,
       });
 
       return { store };
