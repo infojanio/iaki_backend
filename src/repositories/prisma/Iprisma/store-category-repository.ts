@@ -7,6 +7,10 @@ export interface StoreCategoryRepository {
   // Buscar todas as categorias de uma loja
   findByStoreId(storeId: string): Promise<StoreCategory[]>;
 
+  findManyByStoreId(storeId: string): Promise<StoreCategory[]>;
+
+  replaceStoreCategories(storeId: string, categoryIds: string[]): Promise<void>;
+
   // Buscar todas as lojas de uma categoria
   findByCategoryId(categoryId: string): Promise<StoreCategory[]>;
 

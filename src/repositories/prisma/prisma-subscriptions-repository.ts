@@ -1,9 +1,7 @@
 import { PrismaClient, SubscriptionStatus } from "@prisma/client";
 import {
   SubscriptionsRepository,
-  SubscriptionWithPlan,
   SubscriptionUsageCounts,
-  SubscriptionWithPlanAndStore,
 } from "./Iprisma/subscriptions-repository";
 
 export class PrismaSubscriptionsRepository implements SubscriptionsRepository {
@@ -13,18 +11,25 @@ export class PrismaSubscriptionsRepository implements SubscriptionsRepository {
     return this.prisma.subscription.create({ data });
   }
 
-  async findActiveByStoreId(
-    storeId: string,
-    referenceDate = new Date(),
-  ): Promise<SubscriptionWithPlan | null> {
+  async update(id: string, data: any) {
+    return this.prisma.subscription.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async findById(id: string) {
+    return this.prisma.subscription.findUnique({
+      where: { id },
+    });
+  }
+
+  async findActiveByStoreId(storeId: string, referenceDate = new Date()) {
     return this.prisma.subscription.findFirst({
       where: {
         storeId,
         status: {
-          in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING],
-        },
-        startDate: {
-          lte: referenceDate,
+          in: ["ACTIVE", "TRIALING"],
         },
         endDate: {
           gte: referenceDate,
@@ -34,14 +39,12 @@ export class PrismaSubscriptionsRepository implements SubscriptionsRepository {
         plan: true,
       },
       orderBy: {
-        endDate: "desc",
+        createdAt: "desc",
       },
     });
   }
 
-  async findLatestByStoreId(
-    storeId: string,
-  ): Promise<SubscriptionWithPlan | null> {
+  async findLatestByStoreId(storeId: string) {
     return this.prisma.subscription.findFirst({
       where: { storeId },
       include: { plan: true },
@@ -49,29 +52,52 @@ export class PrismaSubscriptionsRepository implements SubscriptionsRepository {
     });
   }
 
-  async findCurrentByStoreId(
-    storeId: string,
-  ): Promise<SubscriptionWithPlan | null> {
+  async findCurrentByStoreId(storeId: string) {
     const active = await this.findActiveByStoreId(storeId);
-
     if (active) return active;
 
-    const latest = await this.findLatestByStoreId(storeId);
-
-    // fallback → última subscription (mesmo que expirada)
-    return latest ?? null;
+    return this.findLatestByStoreId(storeId);
   }
 
-  async cancelOpenSubscriptionsByStoreId(storeId: string): Promise<void> {
+  async cancelOpenSubscriptionsByStoreId(storeId: string) {
     await this.prisma.subscription.updateMany({
       where: {
         storeId,
         status: {
-          in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING],
+          in: ["ACTIVE", "TRIALING"],
         },
       },
       data: {
-        status: SubscriptionStatus.CANCELED,
+        status: "CANCELED",
+      },
+    });
+  }
+
+  async reactiveOpenSubscriptionsByStoreId(storeId: string) {
+    const latest = await this.prisma.subscription.findFirst({
+      where: { storeId },
+      include: { plan: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!latest) return;
+
+    if (latest.status !== "CANCELED" && latest.status !== "EXPIRED") {
+      return;
+    }
+
+    const now = new Date();
+
+    const endDate = new Date(
+      now.getTime() + latest.plan.durationDays * 24 * 60 * 60 * 1000,
+    );
+
+    await this.prisma.subscription.update({
+      where: { id: latest.id },
+      data: {
+        status: "ACTIVE",
+        startDate: now,
+        endDate,
       },
     });
   }
@@ -83,7 +109,33 @@ export class PrismaSubscriptionsRepository implements SubscriptionsRepository {
     });
   }
 
-  async listAllWithPlanAndStore(): Promise<SubscriptionWithPlanAndStore[]> {
+  async getUsageCountsByStoreId(
+    storeId: string,
+  ): Promise<SubscriptionUsageCounts> {
+    const [products, banners, reels, categories] = await Promise.all([
+      this.prisma.product.count({ where: { storeId } }),
+      this.prisma.banner.count({ where: { storeId } }),
+      this.prisma.reel.count({ where: { storeId } }),
+      this.prisma.category.count({
+        where: {
+          stores: {
+            some: {
+              storeId,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      products,
+      banners,
+      reels,
+      categories,
+    };
+  }
+
+  async listAllWithPlanAndStore() {
     return this.prisma.subscription.findMany({
       include: {
         plan: true,
@@ -97,27 +149,5 @@ export class PrismaSubscriptionsRepository implements SubscriptionsRepository {
         createdAt: "desc",
       },
     });
-  }
-
-  async getUsageCountsByStoreId(
-    storeId: string,
-  ): Promise<SubscriptionUsageCounts> {
-    const [products, banners, reels] = await Promise.all([
-      this.prisma.product.count({
-        where: { storeId },
-      }),
-      this.prisma.banner.count({
-        where: { storeId },
-      }),
-      this.prisma.reel.count({
-        where: { storeId },
-      }),
-    ]);
-
-    return {
-      products,
-      banners,
-      reels,
-    };
   }
 }

@@ -32,7 +32,7 @@ export async function ordersRoutes(app: FastifyInstance) {
   app.get("/orders/:orderId", getOrderByOrderId);
 
   // (se ainda estiver usando)
-  app.get("/order", getOrder);
+  // app.get("/order", getOrder);
 
   /**
    * ============================
@@ -43,6 +43,12 @@ export async function ordersRoutes(app: FastifyInstance) {
   // Listar pedidos da loja (PENDING / VALIDATED / EXPIRED)
   app.get(
     "/orders",
+    { onRequest: [verifyUserRole("ADMIN")] },
+    allOrdersHistory,
+  );
+
+  app.get(
+    "/orders/me",
     { onRequest: [verifyUserRole("ADMIN")] },
     allOrdersHistory,
   );

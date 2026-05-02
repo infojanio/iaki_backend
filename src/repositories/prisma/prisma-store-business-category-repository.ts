@@ -12,30 +12,15 @@ export class PrismaStoreBusinessCategoryRepository
     throw new Error("Method not implemented.");
   }
 
+  /* ==============================
+     🔥 LOJAS POR CATEGORIA
+  ============================== */
   async findManyStoresByCategoryId(categoryId: string): Promise<Store[]> {
-    console.log("🟡 [Repository] categoryId:", categoryId);
-
-    const relations = await prisma.storeBusinessCategory.findMany({
-      where: { categoryId },
-      include: { store: true },
-    });
-
-    const stores = relations.map((r) => r.store);
-
-    console.log("🟢 [Repository] lojas encontradas:", stores.length);
-
-    return stores;
-  }
-
-  async findManyStoresByCategoryAndCity(
-    categoryId: string,
-    cityId: string,
-  ): Promise<Store[]> {
     const relations = await prisma.storeBusinessCategory.findMany({
       where: {
         categoryId,
         store: {
-          cityId,
+          isActive: true,
         },
       },
       include: {
@@ -46,6 +31,32 @@ export class PrismaStoreBusinessCategoryRepository
     return relations.map((r) => r.store);
   }
 
+  /* ==============================
+     🔥 LOJAS POR CATEGORIA + CIDADE
+  ============================== */
+  async findManyStoresByCategoryAndCity(
+    categoryId: string,
+    cityId: string,
+  ): Promise<Store[]> {
+    const relations = await prisma.storeBusinessCategory.findMany({
+      where: {
+        categoryId,
+        store: {
+          cityId,
+          isActive: true,
+        },
+      },
+      include: {
+        store: true,
+      },
+    });
+
+    return relations.map((r) => r.store);
+  }
+
+  /* ==============================
+     🔍 BÁSICOS
+  ============================== */
   async findById(id: string): Promise<StoreBusinessCategory | null> {
     return prisma.storeBusinessCategory.findUnique({
       where: { id },
@@ -54,9 +65,7 @@ export class PrismaStoreBusinessCategoryRepository
 
   async findByCity(cityId: string) {
     const records = await prisma.businessCategoryCity.findMany({
-      where: {
-        cityId,
-      },
+      where: { cityId },
       select: {
         businessCategory: true,
       },
@@ -65,14 +74,13 @@ export class PrismaStoreBusinessCategoryRepository
     return records.map((item) => item.businessCategory);
   }
 
+  /* ==============================
+     🔥 LOJAS POR BUSINESS CATEGORY
+  ============================== */
   async findManyByBusinessCategoryId(categoryId: string): Promise<Store[]> {
-    console.log(
-      "🟡 [Repository] Filtrando lojas por tipo de negócio:",
-      categoryId,
-    );
-
-    const businessCategories = await prisma.store.findMany({
+    const stores = await prisma.store.findMany({
       where: {
+        isActive: true, // 🔥 AQUI
         storeBusinessCategories: {
           some: {
             categoryId,
@@ -82,12 +90,7 @@ export class PrismaStoreBusinessCategoryRepository
       orderBy: { name: "asc" },
     });
 
-    console.log(
-      "🟢 [Repository] Tipos de Negócios encontrados:",
-      businessCategories,
-    );
-
-    return businessCategories;
+    return stores;
   }
 
   async findByBusinessCategory({
@@ -97,7 +100,10 @@ export class PrismaStoreBusinessCategoryRepository
     const records = await prisma.storeBusinessCategory.findMany({
       where: {
         categoryId: businessCategoryId,
-        ...(cityId ? { store: { cityId } } : {}),
+        store: {
+          isActive: true,
+          ...(cityId ? { cityId } : {}),
+        },
       },
       select: {
         store: true,
@@ -107,6 +113,9 @@ export class PrismaStoreBusinessCategoryRepository
     return records.map((r) => r.store);
   }
 
+  /* ==============================
+     🔗 RELAÇÕES
+  ============================== */
   async findByStoreId(storeId: string): Promise<StoreBusinessCategory[]> {
     return prisma.storeBusinessCategory.findMany({
       where: { storeId },
@@ -115,7 +124,12 @@ export class PrismaStoreBusinessCategoryRepository
 
   async findByCategoryId(categoryId: string) {
     return prisma.storeBusinessCategory.findMany({
-      where: { categoryId },
+      where: {
+        categoryId,
+        store: {
+          isActive: true, // 🔥 AQUI
+        },
+      },
       include: {
         store: {
           select: {
@@ -145,12 +159,13 @@ export class PrismaStoreBusinessCategoryRepository
     return prisma.storeBusinessCategory.findMany();
   }
 
+  /* ==============================
+     🛠️ CRUD
+  ============================== */
   async create(
     data: Prisma.StoreBusinessCategoryUncheckedCreateInput,
   ): Promise<StoreBusinessCategory> {
-    return prisma.storeBusinessCategory.create({
-      data,
-    });
+    return prisma.storeBusinessCategory.create({ data });
   }
 
   async update(

@@ -6,10 +6,26 @@ import { getStoreCategoryController } from "./get-store-category";
 import { createStoreCategoryController } from "./create-store-category";
 import { deleteStoreCategoryController } from "./delete-store-category";
 import { LinkStoreToCategoryController } from "./link-store-to-category";
+import { listMyStoreCategoriesController } from "./list-my-store-categories";
+import { updateMyStoreCategoriesController } from "./update-my-store-categories";
 
 export async function storeCategoryRoutes(app: FastifyInstance) {
   // Todas as rotas exigem usuário autenticado
   app.addHook("onRequest", verifyJWT);
+
+  // 🔹 listar categorias da minha loja
+  app.get(
+    "/stores/me/categories",
+    { onRequest: [verifyUserRole("ADMIN")] },
+    listMyStoreCategoriesController,
+  );
+
+  // 🔹 atualizar TODAS as categorias da loja (REPLACE)
+  app.put(
+    "/stores/me/categories",
+    { onRequest: [verifyUserRole("ADMIN")] },
+    updateMyStoreCategoriesController,
+  );
 
   // (ADMIN / DEBUG) – listar todas as relações
   app.get("/store-categories", listStoreByCategoriesController);

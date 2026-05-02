@@ -7,6 +7,7 @@ import { verifyUserRole } from "@/http/middlewares/verify-user-role";
 import { listSubscriptions } from "./list-subscriptions";
 import { changeStorePlan } from "../plans/change-plan";
 import { validateDowngradePlanController } from "../plans/validate-downgrade-plan";
+import { updateSubscriptionEndDate } from "./update-subscription";
 
 export async function subscriptionRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
@@ -41,6 +42,12 @@ export async function subscriptionRoutes(app: FastifyInstance) {
       preHandler: [verifyUserRole("ADMIN")],
     },
     getStoreSubscription,
+  );
+
+  app.patch(
+    "/subscriptions/:subscriptionId/end-date",
+    { onRequest: [verifyUserRole("ADMIN")] },
+    updateSubscriptionEndDate,
   );
 
   app.get(

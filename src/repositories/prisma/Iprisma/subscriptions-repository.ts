@@ -8,23 +8,14 @@ import {
 } from "@prisma/client";
 
 export type SubscriptionWithPlan = Subscription & {
-  plan: {
-    id: string;
-    name: string;
-    price: Prisma.Decimal;
-    durationDays: number;
-    maxProducts: number | null;
-    maxBanners: number | null;
-    maxReels: number | null;
-    maxCategories: number | null;
-    isActive: boolean;
-  };
+  plan: Plan;
 };
 
 export interface SubscriptionUsageCounts {
   products: number;
   banners: number;
   reels: number;
+  categories: number;
 }
 
 export type SubscriptionWithPlanAndStore = Subscription & {
@@ -37,6 +28,13 @@ export type SubscriptionWithPlanAndStore = Subscription & {
 export interface SubscriptionsRepository {
   // 🔹 CORE
   create(data: Prisma.SubscriptionUncheckedCreateInput): Promise<Subscription>;
+
+  update(
+    id: string,
+    data: Prisma.SubscriptionUncheckedUpdateInput,
+  ): Promise<Subscription>;
+
+  findById(id: string): Promise<Subscription | null>;
 
   // 🔹 CONSULTAS
   findActiveByStoreId(
@@ -51,10 +49,13 @@ export interface SubscriptionsRepository {
   // 🔹 CONTROLE
   cancelOpenSubscriptionsByStoreId(storeId: string): Promise<void>;
 
+  reactiveOpenSubscriptionsByStoreId(storeId: string): Promise<void>;
+
   updateStatus(id: string, status: SubscriptionStatus): Promise<Subscription>;
 
   // 🔹 USAGE (ESSENCIAL PRO SAAS)
   getUsageCountsByStoreId(storeId: string): Promise<SubscriptionUsageCounts>;
 
+  // 🔹 ADMIN
   listAllWithPlanAndStore(): Promise<SubscriptionWithPlanAndStore[]>;
 }

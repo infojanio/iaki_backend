@@ -21,14 +21,24 @@ export class PrismaProductsRepository implements ProductsRepository {
   ============================== */
   async findByIdProduct(id: string): Promise<Product | null> {
     return prisma.product.findUnique({
-      where: { id },
+      where: {
+        id,
+        store: {
+          isActive: true,
+        },
+      },
       include: { store: true },
     });
   }
 
   async findProductById(id: string): Promise<Product | null> {
     return prisma.product.findUnique({
-      where: { id },
+      where: {
+        id,
+        store: {
+          isActive: true,
+        },
+      },
     });
   }
 
@@ -37,6 +47,9 @@ export class PrismaProductsRepository implements ProductsRepository {
       where: {
         storeId,
         status: true,
+        store: {
+          isActive: true,
+        },
       },
     });
   }
@@ -46,14 +59,24 @@ export class PrismaProductsRepository implements ProductsRepository {
     options?: { select?: Prisma.ProductSelect },
   ): Promise<Product | Partial<Product> | null> {
     return prisma.product.findUnique({
-      where: { id },
+      where: {
+        id,
+        store: {
+          isActive: true,
+        },
+      },
       select: options?.select,
     });
   }
 
   async findByIds(ids: string[]): Promise<Product[]> {
     return prisma.product.findMany({
-      where: { id: { in: ids } },
+      where: {
+        id: { in: ids },
+        store: {
+          isActive: true,
+        },
+      },
     });
   }
 
@@ -62,7 +85,13 @@ export class PrismaProductsRepository implements ProductsRepository {
   ============================== */
   async findByStoreId(storeId: string): Promise<Product[]> {
     return prisma.product.findMany({
-      where: { storeId },
+      where: {
+        storeId,
+        store: {
+          isActive: true,
+        },
+      },
+
       orderBy: { name: "asc" },
     });
   }
@@ -71,6 +100,9 @@ export class PrismaProductsRepository implements ProductsRepository {
     return prisma.product.findMany({
       where: {
         storeId,
+        store: {
+          isActive: true,
+        },
         status: true,
       },
       orderBy: { name: "asc" },
@@ -94,6 +126,9 @@ export class PrismaProductsRepository implements ProductsRepository {
         status: true,
         subcategoryId,
         storeId,
+        store: {
+          isActive: true,
+        },
       },
       include: {
         store: {
@@ -110,7 +145,7 @@ export class PrismaProductsRepository implements ProductsRepository {
     return prisma.product.findMany({
       where: {
         status: true,
-        store: { cityId },
+        store: { cityId, isActive: true },
       },
       include: {
         store: {
@@ -122,6 +157,11 @@ export class PrismaProductsRepository implements ProductsRepository {
 
   async listMany(): Promise<Product[]> {
     const products = await prisma.product.findMany({
+      where: {
+        store: {
+          isActive: true,
+        },
+      },
       include: { subcategory: { include: { category: true } } },
     });
     return products;
@@ -132,7 +172,12 @@ export class PrismaProductsRepository implements ProductsRepository {
   ============================== */
   async listManyProductActive(): Promise<Product[]> {
     return prisma.product.findMany({
-      where: { status: true },
+      where: {
+        status: true,
+        store: {
+          isActive: true,
+        },
+      },
       include: {
         store: {
           select: { id: true, name: true, cityId: true },
@@ -143,7 +188,12 @@ export class PrismaProductsRepository implements ProductsRepository {
 
   async findByCashback(): Promise<Product[]> {
     return prisma.product.findMany({
-      where: { status: true },
+      where: {
+        status: true,
+        store: {
+          isActive: true,
+        },
+      },
       orderBy: { cashbackPercentage: "desc" },
       take: 4,
       include: {
@@ -156,7 +206,12 @@ export class PrismaProductsRepository implements ProductsRepository {
 
   async findByQuantity(): Promise<Product[]> {
     return prisma.product.findMany({
-      where: { status: true },
+      where: {
+        status: true,
+        store: {
+          isActive: true,
+        },
+      },
       orderBy: { quantity: "asc" },
       take: 4,
       include: {
@@ -174,6 +229,9 @@ export class PrismaProductsRepository implements ProductsRepository {
     return prisma.product.findMany({
       where: {
         status: true,
+        store: {
+          isActive: true,
+        },
         name: { contains: search, mode: "insensitive" },
       },
       take: 20,
@@ -201,6 +259,9 @@ export class PrismaProductsRepository implements ProductsRepository {
             mode: "insensitive",
           },
           status: true,
+          store: {
+            isActive: true,
+          },
         },
         include: {
           store: true, // 🔥 OBRIGATÓRIO
@@ -233,7 +294,12 @@ export class PrismaProductsRepository implements ProductsRepository {
   ============================== */
   async getProductStock(productId: string): Promise<number | Decimal> {
     const product = await prisma.product.findUnique({
-      where: { id: productId },
+      where: {
+        id: productId,
+        store: {
+          isActive: true,
+        },
+      },
       select: { quantity: true },
     });
 
@@ -243,7 +309,12 @@ export class PrismaProductsRepository implements ProductsRepository {
 
   async findLowStockByStore(storeId: string) {
     const products = await prisma.product.findMany({
-      where: { storeId: storeId },
+      where: {
+        storeId: storeId,
+        store: {
+          isActive: true,
+        },
+      },
     });
 
     return products

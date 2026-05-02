@@ -44,6 +44,18 @@ export class PrismaOrdersRepository implements OrdersRepository {
     });
   }
 
+  async countManyByStoreId(
+    storeId: string,
+    status?: OrderStatus,
+  ): Promise<number> {
+    return prisma.order.count({
+      where: {
+        storeId,
+        ...(status ? { status } : {}),
+      },
+    });
+  }
+
   /**
    * 🔹 Buscar pedido completo (itens + produtos + store)
    */
@@ -194,7 +206,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
     status: OrderStatus | undefined,
     storeId: string,
   ) {
-    const limit = 8;
+    const limit = 10;
 
     const orders = await this.prismaClient.order.findMany({
       where: {

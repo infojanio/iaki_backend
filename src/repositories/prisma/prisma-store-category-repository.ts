@@ -10,6 +10,45 @@ export class PrismaStoreCategoryRepository implements StoreCategoryRepository {
     throw new Error("Method not implemented.");
   }
 
+  async findManyByStoreId(storeId: string): Promise<StoreCategory[]> {
+    return prisma.storeCategory.findMany({
+      where: {
+        storeId,
+      },
+      include: {
+        category: true,
+      },
+      orderBy: {
+        category: {
+          name: "asc",
+        },
+      },
+    });
+  }
+
+  async replaceStoreCategories(
+    storeId: string,
+    categoryIds: string[],
+  ): Promise<void> {
+    await prisma.$transaction(async (tx) => {
+      await tx.storeCategory.deleteMany({
+        where: {
+          storeId,
+        },
+      });
+
+      if (categoryIds.length > 0) {
+        await tx.storeCategory.createMany({
+          data: categoryIds.map((categoryId) => ({
+            storeId,
+            categoryId,
+          })),
+          skipDuplicates: true,
+        });
+      }
+    });
+  }
+
   async findByStoreAndCategory({
     storeId,
     categoryId,

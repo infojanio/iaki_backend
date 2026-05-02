@@ -79,6 +79,14 @@ export interface OrdersRepository {
     }[]
   >;
 
+  findManyWithItems(
+    page: number,
+    status: OrderStatus | undefined,
+    storeId: string,
+  ): Promise<any[]>;
+
+  countManyByStoreId(storeId: string, status?: OrderStatus): Promise<number>;
+
   /**
    * 🔹 Buscar pedidos da loja (frontend loja)
    */
