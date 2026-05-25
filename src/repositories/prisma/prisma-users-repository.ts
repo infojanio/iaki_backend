@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma, User } from "@prisma/client";
-import { UserProfileDB, UsersRepository } from "./Iprisma/users-repository";
+import { Prisma, PrismaClient, User } from "@prisma/client";
+import {
+  FindManyUsersParams,
+  FindManyUsersResponse,
+  UserProfileDB,
+  UsersRepository,
+} from "./Iprisma/users-repository";
 import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-found-error";
 import { Decimal } from "@prisma/client/runtime/library";
 
@@ -21,6 +26,8 @@ const userProfileSelect = Prisma.validator<Prisma.UserSelect>()({
 });
 
 export class PrismaUsersRepository implements UsersRepository {
+  constructor(private prisma: PrismaClient) {}
+
   async create(data: Prisma.UserUncheckedCreateInput) {
     return prisma.user.create({
       data,
@@ -118,5 +125,67 @@ export class PrismaUsersRepository implements UsersRepository {
     } catch {
       throw new ResourceNotFoundError();
     }
+  }
+
+  //transformar USUÁRIO em ADMIN
+  async attachStore(userId: string, storeId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+
+      data: {
+        storeId,
+        role: "ADMIN",
+      },
+    });
+  }
+
+  //listar usuários
+  async findManyUsers({
+    page,
+    query,
+  }: FindManyUsersParams): Promise<FindManyUsersResponse> {
+    const where = query
+      ? {
+          OR: [
+            {
+              name: {
+                contains: query,
+                mode: "insensitive" as const,
+              },
+            },
+            {
+              email: {
+                contains: query,
+                mode: "insensitive" as const,
+              },
+            },
+          ],
+        }
+      : {};
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        include: {
+          city: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 10,
+        skip: (page - 1) * 10,
+      }),
+
+      this.prisma.user.count({
+        where,
+      }),
+    ]);
+
+    return {
+      users,
+      total,
+    };
   }
 }

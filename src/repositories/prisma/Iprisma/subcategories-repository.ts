@@ -7,6 +7,7 @@ export interface SubCategoriesRepository {
   searchMany(search: string, page: number): Promise<SubCategory[]>; //buscar por nome
   listByCategory(categoryId?: string): Promise<SubCategory[] | null>; //buscar por categoria
   findByCategory(categoryId?: string): Promise<SubCategory[] | null>; //buscar por categoria
+  findManyByStoreId(storeId: string): Promise<SubCategory[]>;
   update(
     id: string,
     data: {

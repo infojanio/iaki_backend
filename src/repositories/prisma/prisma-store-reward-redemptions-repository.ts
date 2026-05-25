@@ -44,6 +44,72 @@ export class PrismaStoreRewardRedemptionsRepository
     });
   }
 
+  async findPendingByStoreId(storeId: string) {
+    return prisma.storeRewardRedemption.findMany({
+      where: {
+        storeId,
+        status: "PENDING",
+      },
+
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+          },
+        },
+
+        reward: {
+          select: {
+            id: true,
+            title: true,
+            pointsCost: true,
+            image: true,
+          },
+        },
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
+
+  async findConfirmedByStoreId(storeId: string) {
+    return prisma.storeRewardRedemption.findMany({
+      where: {
+        storeId,
+        status: "CONFIRMED",
+      },
+
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+          },
+        },
+
+        reward: {
+          select: {
+            id: true,
+            title: true,
+            pointsCost: true,
+            image: true,
+          },
+        },
+      },
+
+      orderBy: {
+        usedAt: "desc",
+      },
+    });
+  }
+
   async confirmPendingById(params: {
     redemptionId: string;
     storeId: string;

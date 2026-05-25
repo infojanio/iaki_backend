@@ -5,7 +5,7 @@ interface CreateReelUseCaseRequest {
   title: string;
   imageUrl: string;
   link?: string;
-  storeId: string;
+  storeId: string | null;
   createdAt: Date;
 }
 

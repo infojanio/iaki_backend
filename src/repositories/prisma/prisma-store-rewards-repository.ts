@@ -62,6 +62,14 @@ export class PrismaStoreRewardsRepository implements StoreRewardsRepository {
     return prisma.storeReward.create({ data });
   }
 
+  async delete(id: string): Promise<void> {
+    await prisma.storeReward.delete({
+      where: {
+        id,
+      },
+    });
+  }
+
   async findByStoreId(storeId: string) {
     return prisma.storeReward.findMany({
       where: { storeId },

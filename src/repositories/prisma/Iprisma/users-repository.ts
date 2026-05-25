@@ -39,6 +39,16 @@ export type AuthUserDB = {
   avatar: string | null;
 };
 
+export interface FindManyUsersParams {
+  page: number;
+  query?: string;
+}
+
+export interface FindManyUsersResponse {
+  users: User[];
+  total: number;
+}
+
 export interface UsersRepository {
   /**
    * Perfil público
@@ -49,6 +59,8 @@ export interface UsersRepository {
    * Busca completa (uso interno / admin)
    */
   findById(id: string): Promise<User | null>;
+
+  findManyUsers(params: FindManyUsersParams): Promise<FindManyUsersResponse>;
 
   /**
    * 🔐 AUTENTICAÇÃO
@@ -75,4 +87,7 @@ export interface UsersRepository {
    * Saldo de cashback
    */
   balanceByUserId(userId: string): Promise<number>;
+
+  //criar usuário ADMIN e vincular a loja
+  attachStore(userId: string, storeId: string): Promise<void>;
 }

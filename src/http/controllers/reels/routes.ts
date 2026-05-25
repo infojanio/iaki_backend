@@ -18,24 +18,24 @@ export async function reelsRoutes(app: FastifyInstance) {
 
   app.get(
     "/reels/me",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("ADMIN", "SUPER_ADMIN")] },
     getReelsByStoreController,
   );
 
   app.patch(
     "/reels/:reelId",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN", "ADMIN")] },
     updateReel,
   );
   app.delete(
     "/reels/:reelId",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
     deleteReel,
   );
 
   app.post(
     "/reels",
-    { onRequest: [verifyUserRole("ADMIN"), checkStoreLimit("reels")] },
+    { onRequest: [verifyUserRole("SUPER_ADMIN", "ADMIN")] },
     create,
   );
 }

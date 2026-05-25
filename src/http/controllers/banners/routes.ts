@@ -11,36 +11,56 @@ import { getBannersByCityController } from "./get-banners-by-city";
 import { checkStoreLimit } from "@/http/middlewares/check-store-limit";
 
 export async function bannersRoutes(app: FastifyInstance) {
-  app.addHook("onRequest", verifyJWT);
+  // =============================
+  // PUBLICAS
+  // =============================
 
-  // leitura (ambos podem ver)
   app.get("/banners", listBanners);
-  app.get("/banners/:bannerId", getBanner);
 
-  app.get(
-    "/banners/me",
-    { onRequest: [verifyUserRole("ADMIN")] },
-    getBannersByStoreController,
-  );
+  app.get("/banners/:bannerId", getBanner);
 
   app.get("/banners/city/:cityId", getBannersByCityController);
 
-  // modificação (somente SUPER_ADMIN)
+  // 🔥 NOVA
+  app.get("/stores/:storeId/banners", getBannersByStoreController);
+
+  // =============================
+  // PRIVADAS (ADMIN)
+  // =============================
+
   app.post(
     "/banners",
-    { onRequest: [verifyUserRole("ADMIN"), checkStoreLimit("banners")] },
+    {
+      onRequest: [
+        verifyJWT,
+        verifyUserRole("ADMIN"),
+        checkStoreLimit("banners"),
+      ],
+    },
     create,
   );
 
   app.patch(
     "/banners/:bannerId",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    {
+      onRequest: [verifyJWT, verifyUserRole("ADMIN")],
+    },
     updateBanner,
   );
 
   app.delete(
     "/banners/:bannerId",
-    { onRequest: [verifyUserRole("ADMIN")] },
+    {
+      onRequest: [verifyJWT, verifyUserRole("ADMIN")],
+    },
     deleteBanner,
+  );
+
+  app.get(
+    "/banners/me",
+    {
+      onRequest: [verifyJWT, verifyUserRole("ADMIN")],
+    },
+    getBannersByStoreController,
   );
 }

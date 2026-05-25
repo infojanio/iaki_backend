@@ -62,6 +62,22 @@ export class PrismaCategoriesRepository implements CategoriesRepository {
     });
   }
 
+  async findCategoriesByStoreId(storeId: string): Promise<Category[]> {
+    return prisma.category.findMany({
+      where: {
+        stores: {
+          some: {
+            storeId,
+          },
+        },
+      },
+
+      orderBy: {
+        name: "asc",
+      },
+    });
+  }
+
   async findManyByStoreId(storeId: string) {
     return prisma.category.findMany({
       where: {

@@ -3,6 +3,15 @@ import { Banner, Prisma } from "@prisma/client";
 import { BannersRepository } from "./Iprisma/banners-repository";
 import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-found-error";
 export class PrismaBannersRepository implements BannersRepository {
+  //banner valido por 7 dias
+  private getValidBannerDate() {
+    const sevenDaysAgo = new Date();
+
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    return sevenDaysAgo;
+  }
+
   async findById(id: string) {
     const banner = await prisma.banner.findUnique({
       where: {
@@ -37,6 +46,10 @@ export class PrismaBannersRepository implements BannersRepository {
       where: {
         storeId,
         isActive: true,
+        createdAt: {
+          //valida o banner por 7 dias
+          gte: this.getValidBannerDate(),
+        },
       },
       orderBy: {
         position: "asc",
@@ -53,6 +66,10 @@ export class PrismaBannersRepository implements BannersRepository {
           cityId,
         },
         isActive: true,
+        //o banner fica ativo por 7 dias
+        createdAt: {
+          gte: this.getValidBannerDate(),
+        },
       },
       orderBy: {
         position: "asc",

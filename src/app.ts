@@ -26,6 +26,7 @@ import { storePointsRoutes } from "./http/controllers/store-points/routes";
 import { storeRewardsRoutes } from "./http/controllers/store-reward/routes";
 import { planRoutes } from "./http/controllers/plans/routes";
 import { subscriptionRoutes } from "./http/controllers/subscriptions/routes";
+import { storeRewardRedemptionsRoutes } from "./http/controllers/store-reward-redemptions/routes";
 
 export const app = fastify({
   // logger: true,
@@ -64,6 +65,7 @@ app.register(productsRoutes);
 app.register(ordersRoutes);
 app.register(dashboardRoutes);
 app.register(storeEvaluationsRoutes);
+app.register(storeRewardRedemptionsRoutes);
 app.register(storeRewardsRoutes);
 app.register(planRoutes);
 app.register(subscriptionRoutes);

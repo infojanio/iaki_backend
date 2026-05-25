@@ -38,6 +38,19 @@ export interface StoreRewardRedemptionsRepository {
     tx?: Prisma.TransactionClient;
   }): Promise<ConfirmRedemptionResult>;
 
+  findPendingByStoreId(storeId: string): Promise<any[]>;
+
+  findConfirmedByStoreId(storeId: string): Promise<any[]>;
+
+  confirmPendingById(params: {
+    redemptionId: string;
+    storeId: string;
+    usedAt: Date;
+    tx?: Prisma.TransactionClient;
+  }): Promise<{
+    updatedCount: number;
+  }>;
+
   cancelPendingById?(params: {
     redemptionId: string;
     storeId: string;
