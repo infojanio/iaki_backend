@@ -19,25 +19,14 @@ export async function updateSubscriptionEndDate(
     const { subscriptionId } = paramsSchema.parse(request.params);
     const { endDate } = bodySchema.parse(request.body);
 
-    const user = request.user as { storeId?: string };
-
-    if (!user.storeId) {
-      return reply.status(403).send({
-        message: "Usuário não vinculado a uma loja.",
-      });
-    }
-
     const useCase = makeUpdateSubscriptionEndDateUseCase();
 
     const result = await useCase.execute({
       subscriptionId,
       endDate,
-      storeId: user.storeId,
     });
 
-    return reply.status(200).send({
-      data: result,
-    });
+    return reply.status(200).send({ data: result });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return reply.status(400).send({
@@ -47,13 +36,14 @@ export async function updateSubscriptionEndDate(
     }
 
     if (error instanceof ResourceNotFoundError) {
-      return reply.status(404).send({
-        message: error.message,
-      });
+      return reply.status(404).send({ message: error.message });
     }
 
     return reply.status(400).send({
-      message: error instanceof Error ? error.message : "Erro ao atualizar",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Erro ao atualizar assinatura.",
     });
   }
 }

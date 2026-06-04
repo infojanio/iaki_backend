@@ -8,6 +8,8 @@ import { listSubscriptions } from "./list-subscriptions";
 import { changeStorePlan } from "../plans/change-plan";
 import { validateDowngradePlanController } from "../plans/validate-downgrade-plan";
 import { updateSubscriptionEndDate } from "./update-subscription";
+import { cancelSubscription } from "./cancel-subscription";
+import { reactiveSubscription } from "./reactive-subscription";
 
 export async function subscriptionRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
@@ -31,7 +33,7 @@ export async function subscriptionRoutes(app: FastifyInstance) {
   app.post(
     "/subscriptions/validate-downgrade",
     {
-      onRequest: [verifyJWT, verifyUserRole("ADMIN")],
+      onRequest: [verifyJWT, verifyUserRole("SUPER_ADMIN")],
     },
     validateDowngradePlanController,
   );
@@ -50,12 +52,36 @@ export async function subscriptionRoutes(app: FastifyInstance) {
     updateSubscriptionEndDate,
   );
 
+  app.patch(
+    "/subscriptions/:subscriptionId/cancel",
+    {
+      onRequest: [verifyUserRole("ADMIN")],
+    },
+    cancelSubscription,
+  );
+
+  app.patch(
+    "/stores/me/subscription/cancel",
+    {
+      onRequest: [verifyUserRole("ADMIN")],
+    },
+    cancelSubscription,
+  );
+
   app.get(
     "/subscriptions",
     {
       preHandler: [verifyUserRole("SUPER_ADMIN")],
     },
     listSubscriptions,
+  );
+
+  app.patch(
+    "/subscriptions/store/:storeId/reactivate",
+    {
+      onRequest: [verifyUserRole("SUPER_ADMIN")],
+    },
+    reactiveSubscription,
   );
 
   app.get(

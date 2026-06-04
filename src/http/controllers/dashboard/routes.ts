@@ -1,10 +1,17 @@
 import { FastifyInstance } from "fastify";
-import { getDashboardMetrics } from "./get-dashboard-metrics";
-import { getDayOrdersAmount } from "./get-day-orders-amount";
-import { getWeekOrdersAmount } from "./get-week-orders-amount";
+
+import { getDashboardSummary } from "./get-dashboard-summary";
+import { verifyJWT } from "@/http/middlewares/verify-jwt";
+import { verifyUserRole } from "@/http/middlewares/verify-user-role";
 
 export async function dashboardRoutes(app: FastifyInstance) {
-  app.get("/dashboard/metrics", getDashboardMetrics);
-  app.get("/dashboard/day-orders-amount", getDayOrdersAmount);
-  app.get("/dashboard/week-orders-amount", getWeekOrdersAmount);
+  app.addHook("onRequest", verifyJWT);
+
+  app.get(
+    "/dashboard/summary",
+    {
+      onRequest: [verifyUserRole("SUPER_ADMIN", "ADMIN")],
+    },
+    getDashboardSummary,
+  );
 }

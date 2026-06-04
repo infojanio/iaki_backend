@@ -45,7 +45,7 @@ export class PrismaBannersRepository implements BannersRepository {
     const banners = await prisma.banner.findMany({
       where: {
         storeId,
-        isActive: true,
+        // isActive: true,
         createdAt: {
           //valida o banner por 7 dias
           gte: this.getValidBannerDate(),

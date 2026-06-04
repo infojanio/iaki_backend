@@ -1,32 +1,47 @@
-export interface DashboardRepository {
-  getTotalOrders(): Promise<number>;
-  getTotalUsers(): Promise<number>;
-  getTotalStores(): Promise<number>;
-  getActiveProducts(): Promise<number>;
-  getTotalCashbackGenerated(): Promise<number>;
-  getTotalCashbackUsed(): Promise<number>;
-  getCashbackByMonth(): Promise<{ month: string; total: number }[]>;
-  getLatestValidatedOrders(): Promise<
-    {
-      id: string;
-      total: number;
-      cashback: number;
-      userName: string;
-      storeName: string;
-      validatedAt: Date;
-    }[]
-  >;
-  getTopUsers(): Promise<
-    { id: string; name: string; email: string; total: number }[]
-  >;
-  getTopProducts(): Promise<{ id: string; name: string; totalSold: number }[]>;
-  getDayOrdersAmount(params: {
-    storeId?: string;
-    userId?: string;
-  }): Promise<{ amount: number; diffFromYesterday: number }>;
+export interface DashboardSummaryDTO {
+  todayOrders: number;
+  weekOrders: number;
+  pendingOrders: number;
+  activeProducts: number;
+  activeRewards: number;
+  pendingRedemptions: number;
+  confirmedRedemptions: number;
+  totalUsers: number;
 
-  getWeekOrdersAmount(params: {
-    storeId?: string;
-    userId?: string;
-  }): Promise<{ amount: number; diffFromLastWeek: number }>;
+  ordersByMonth: {
+    month: string;
+    total: number;
+  }[];
+
+  topProducts: {
+    id: string;
+    name: string;
+    totalSold: number;
+  }[];
+
+  topUsers: {
+    id: string;
+    name: string;
+    email: string;
+    totalPoints: number;
+    totalRedemptions: number;
+  }[];
+
+  latestValidatedOrders: {
+    id: string;
+    totalAmount: number;
+    userName: string;
+    createdAt: Date;
+  }[];
+
+  latestPendingOrders: {
+    id: string;
+    totalAmount: number;
+    userName: string;
+    createdAt: Date;
+  }[];
+}
+
+export interface DashboardRepository {
+  getSummary(storeId?: string): Promise<DashboardSummaryDTO>;
 }

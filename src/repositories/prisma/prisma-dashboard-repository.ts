@@ -1,150 +1,238 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
-import dayjs from "dayjs";
-import { DashboardRepository } from "./Iprisma/dashboard-repository";
+import {
+  DashboardRepository,
+  DashboardSummaryDTO,
+} from "./Iprisma/dashboard-repository";
 
-export class PrismaDashboardMetricsRepository implements DashboardRepository {
-  async getCashbackByMonth() {
-    const sixMonthsAgo = dayjs().subtract(5, "month").startOf("month").toDate();
+export class PrismaDashboardRepository implements DashboardRepository {
+  async getSummary(storeId?: string): Promise<DashboardSummaryDTO> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    // Busca todas transações do tipo 'RECEIVE' nos últimos 6 meses
-    const transactions = await prisma.cashbackTransaction.findMany({
-      where: {
-        type: "RECEIVE",
-        createdAt: {
-          gte: sixMonthsAgo,
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    const currentYear = new Date().getFullYear();
+
+    const [
+      todayOrders,
+      weekOrders,
+      pendingOrders,
+      activeProducts,
+      activeRewards,
+      pendingRedemptions,
+      confirmedRedemptions,
+      totalUsers,
+      ordersByMonthRaw,
+      topProductsGrouped,
+
+      topUsersGrouped,
+
+      latestValidatedOrdersRaw,
+      latestPendingOrdersRaw,
+    ] = await Promise.all([
+      prisma.order.count({
+        where: {
+          createdAt: { gte: today },
+          ...(storeId ? { storeId } : {}),
         },
-      },
-      select: {
-        amount: true,
-        createdAt: true,
-      },
-    });
+      }),
 
-    // Agrupa em memória por mês/ano
-    const grouped: Record<string, number> = {};
+      prisma.order.count({
+        where: {
+          createdAt: { gte: weekAgo },
+          ...(storeId ? { storeId } : {}),
+        },
+      }),
 
-    transactions.forEach(({ amount, createdAt }) => {
-      const key = dayjs(createdAt).format("MM/YYYY");
-      grouped[key] = (grouped[key] || 0) + Number(amount);
-    });
+      prisma.order.count({
+        where: {
+          status: "PENDING",
+          ...(storeId ? { storeId } : {}),
+        },
+      }),
 
-    // Gera array com os 6 últimos meses, preenchendo com zero onde não houver transações
-    const result = Array.from({ length: 6 }).map((_, i) => {
-      const date = dayjs().subtract(5 - i, "month");
-      const key = date.format("MM/YYYY");
+      prisma.product.count({
+        where: {
+          status: true,
+          ...(storeId ? { storeId } : {}),
+        },
+      }),
+
+      prisma.storeReward.count({
+        where: {
+          isActive: true,
+          ...(storeId ? { storeId } : {}),
+        },
+      }),
+
+      prisma.storeRewardRedemption.count({
+        where: {
+          status: "PENDING",
+          ...(storeId ? { storeId } : {}),
+        },
+      }),
+
+      prisma.storeRewardRedemption.count({
+        where: {
+          status: "CONFIRMED",
+          ...(storeId ? { storeId } : {}),
+        },
+      }),
+
+      prisma.user.count({
+        where: {
+          role: "USER",
+        },
+      }),
+
+      prisma.$queryRaw<{ month: number; total: bigint }[]>(
+        Prisma.sql`
+          SELECT
+            EXTRACT(MONTH FROM "created_at")::int AS month,
+            COUNT(*)::bigint AS total
+          FROM "orders"
+          WHERE EXTRACT(YEAR FROM "created_at") = ${currentYear}
+          ${storeId ? Prisma.sql`AND "store_id" = ${storeId}` : Prisma.empty}
+          GROUP BY month
+          ORDER BY month
+        `,
+      ),
+
+      prisma.orderItem.groupBy({
+        by: ["productId"],
+        _sum: {
+          quantity: true,
+        },
+        where: {
+          order: {
+            status: "VALIDATED",
+            ...(storeId ? { storeId } : {}),
+          },
+        },
+        orderBy: {
+          _sum: {
+            quantity: "desc",
+          },
+        },
+        take: 5,
+      }),
+
+      prisma.storeRewardRedemption.groupBy({
+        by: ["userId"],
+
+        _count: {
+          id: true,
+        },
+
+        where: {
+          status: "CONFIRMED",
+
+          ...(storeId ? { storeId } : {}),
+        },
+
+        orderBy: {
+          _count: {
+            id: "desc",
+          },
+        },
+
+        take: 5,
+      }),
+
+      prisma.order.findMany({
+        where: {
+          status: "VALIDATED",
+          ...(storeId ? { storeId } : {}),
+        },
+        take: 5,
+        orderBy: {
+          validatedAt: "desc",
+        },
+        include: {
+          user: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      }),
+
+      prisma.order.findMany({
+        where: {
+          status: "PENDING",
+          ...(storeId ? { storeId } : {}),
+        },
+        take: 5,
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          user: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const monthNames = [
+      "Jan",
+      "Fev",
+      "Mar",
+      "Abr",
+      "Mai",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Set",
+      "Out",
+      "Nov",
+      "Dez",
+    ];
+
+    const ordersByMonth = monthNames.map((month, index) => {
+      const found = ordersByMonthRaw.find((item) => item.month === index + 1);
 
       return {
-        month: date.format("MMM/YYYY"),
-        total: grouped[key] ?? 0,
+        month,
+        total: Number(found?.total ?? 0),
       };
     });
 
-    return result;
-  }
+    const productIds = topProductsGrouped.map((item) => item.productId);
 
-  async getTotalOrders() {
-    return prisma.order.count();
-  }
-
-  async getTotalUsers() {
-    return prisma.user.count();
-  }
-
-  async getTotalStores() {
-    return prisma.store.count();
-  }
-
-  async getActiveProducts() {
-    return prisma.product.count({ where: { status: true } });
-  }
-
-  async getTotalCashbackGenerated() {
-    const result = await prisma.cashbackTransaction.aggregate({
-      where: { type: "RECEIVE" },
-      _sum: { amount: true },
-    });
-    return Number(result._sum.amount ?? 0);
-  }
-
-  async getTotalCashbackUsed() {
-    const result = await prisma.cashbackTransaction.aggregate({
-      where: { type: "USE" },
-      _sum: { amount: true },
-    });
-    return Number(result._sum.amount ?? 0);
-  }
-
-  async getLatestValidatedOrders() {
-    const orders = await prisma.order.findMany({
-      where: { validatedAt: { not: null } },
-      orderBy: { validatedAt: "desc" },
-      take: 5,
-      include: {
-        user: true,
-        store: true,
-        CashbackTransaction: {
-          where: { type: "RECEIVE" },
-          select: { amount: true },
+    const products = await prisma.product.findMany({
+      where: {
+        id: {
+          in: productIds,
         },
+      },
+      select: {
+        id: true,
+        name: true,
       },
     });
 
-    return orders.map((order) => ({
-      id: order.id,
-      total: Number(order.totalAmount),
-      cashback: order.CashbackTransaction.reduce(
-        (acc, cur) => acc + Number(cur.amount),
-        0,
-      ),
-      userName: order.user.name,
-      storeName: order.store.name,
-      validatedAt: order.validatedAt!,
+    const topProducts = topProductsGrouped.map((item) => ({
+      id: item.productId,
+      name:
+        products.find((product) => product.id === item.productId)?.name ??
+        "Produto removido",
+      totalSold: Number(item._sum.quantity ?? 0),
     }));
-  }
 
-  async getLatestPendingOrders() {
-    const orders = await prisma.order.findMany({
-      where: { status: { equals: "PENDING" } },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      include: {
-        user: true,
-        store: true,
-        CashbackTransaction: {
-          where: { type: "RECEIVE" },
-          select: { amount: true },
-        },
-      },
-    });
-
-    return orders.map((order) => ({
-      id: order.id,
-      totalAmount: Number(order.totalAmount),
-      discountApplied: Number(order.discountApplied ?? 0),
-      status: order.status,
-      user_name: order.user.name,
-      store_name: order.store.name,
-      createdAt: order.createdAt,
-      validatedAt: order.validatedAt ?? null,
-      cashback: order.CashbackTransaction.reduce(
-        (acc, cur) => acc + Number(cur.amount),
-        0,
-      ),
-    }));
-  }
-
-  async getTopUsers() {
-    const raw = await prisma.cashbackTransaction.groupBy({
-      by: ["userId"],
-      where: { type: "RECEIVE" },
-      _sum: { amount: true },
-      orderBy: { _sum: { amount: "desc" } },
-      take: 5,
-    });
+    const userIds = topUsersGrouped.map((item) => item.userId);
 
     const users = await prisma.user.findMany({
-      where: { id: { in: raw.map((r) => r.userId) } },
+      where: {
+        id: {
+          in: userIds,
+        },
+      },
       select: {
         id: true,
         name: true,
@@ -152,137 +240,46 @@ export class PrismaDashboardMetricsRepository implements DashboardRepository {
       },
     });
 
-    return raw.map((entry) => {
-      const user = users.find((u) => u.id === entry.userId);
+    const topUsers = topUsersGrouped.map((item) => {
+      const user = users.find((user) => user.id === item.userId);
+
       return {
-        id: user?.id ?? entry.userId,
-        name: user?.name ?? "Usuário",
+        id: item.userId,
+        name: user?.name ?? "Cliente removido",
         email: user?.email ?? "",
-        total: Number(entry._sum.amount),
+        totalPoints: 0, // implementar depois
+        totalRedemptions: item._count.id,
       };
     });
-  }
 
-  async getTopProducts() {
-    const raw = await prisma.orderItem.groupBy({
-      by: ["product_id"],
-      _sum: { quantity: true },
-      orderBy: { _sum: { quantity: "desc" } },
-      take: 5,
-    });
+    const latestValidatedOrders = latestValidatedOrdersRaw.map((order) => ({
+      id: order.id,
+      totalAmount: Number(order.totalAmount),
+      userName: order.user?.name ?? "Cliente",
+      createdAt: order.createdAt,
+    }));
 
-    const products = await prisma.product.findMany({
-      where: { id: { in: raw.map((r) => r.product_id) } },
-      select: {
-        id: true,
-        name: true,
-      },
-    });
-
-    return raw.map((entry) => {
-      const product = products.find((p) => p.id === entry.product_id);
-      return {
-        id: product?.id ?? entry.product_id,
-        name: product?.name ?? "Produto",
-        totalSold: Number(entry._sum.quantity),
-      };
-    });
-  }
-
-  async getDayOrdersAmount({
-    storeId,
-    userId,
-  }: {
-    storeId?: string;
-    userId?: string;
-  }): Promise<{ amount: number; diffFromYesterday: number }> {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-
-    const startOfYesterday = new Date(startOfToday);
-    startOfYesterday.setDate(startOfYesterday.getDate() - 1);
-
-    const todayConditions: any = { validatedAt: { gte: startOfToday } };
-    const yesterdayConditions: any = {
-      validatedAt: { gte: startOfYesterday, lt: startOfToday },
-    };
-
-    if (storeId) {
-      todayConditions.storeId = storeId;
-      yesterdayConditions.storeId = storeId;
-    }
-
-    if (userId) {
-      todayConditions.userId = userId;
-      yesterdayConditions.userId = userId;
-    }
-
-    const todayOrdersCount = await prisma.order.count({
-      where: todayConditions,
-    });
-
-    const yesterdayOrdersCount = await prisma.order.count({
-      where: yesterdayConditions,
-    });
-
-    const diffFromYesterday = yesterdayOrdersCount
-      ? ((todayOrdersCount - yesterdayOrdersCount) / yesterdayOrdersCount) * 100
-      : 100;
+    const latestPendingOrders = latestPendingOrdersRaw.map((order) => ({
+      id: order.id,
+      totalAmount: Number(order.totalAmount),
+      userName: order.user?.name ?? "Cliente",
+      createdAt: order.createdAt,
+    }));
 
     return {
-      amount: todayOrdersCount,
-      diffFromYesterday: Math.round(diffFromYesterday),
-    };
-  }
-  async getWeekOrdersAmount({
-    storeId,
-    userId,
-  }: {
-    storeId?: string;
-    userId?: string;
-  }): Promise<{ amount: number; diffFromLastWeek: number }> {
-    const today = dayjs().startOf("day");
-    const startOfWeek = today.startOf("week"); // domingo
-    const lastWeekStart = startOfWeek.subtract(7, "day");
-    const lastWeekEnd = startOfWeek.subtract(1, "day").endOf("day");
-
-    const whereCurrent: any = {
-      validatedAt: {
-        gte: startOfWeek.toDate(),
-        lte: today.toDate(),
-      },
-    };
-
-    const whereLast: any = {
-      validatedAt: {
-        gte: lastWeekStart.toDate(),
-        lte: lastWeekEnd.toDate(),
-      },
-    };
-
-    if (storeId) {
-      whereCurrent.storeId = storeId;
-      whereLast.storeId = storeId;
-    }
-
-    if (userId) {
-      whereCurrent.userId = userId;
-      whereLast.userId = userId;
-    }
-
-    const [current, previous] = await Promise.all([
-      prisma.order.count({ where: whereCurrent }),
-      prisma.order.count({ where: whereLast }),
-    ]);
-
-    const diffFromLastWeek =
-      previous === 0
-        ? 100
-        : Math.round(((current - previous) / previous) * 100);
-
-    return {
-      amount: current,
-      diffFromLastWeek,
+      todayOrders,
+      weekOrders,
+      pendingOrders,
+      activeProducts,
+      activeRewards,
+      pendingRedemptions,
+      confirmedRedemptions,
+      totalUsers,
+      ordersByMonth,
+      topProducts,
+      topUsers,
+      latestValidatedOrders,
+      latestPendingOrders,
     };
   }
 }
