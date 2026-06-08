@@ -3,9 +3,21 @@ import {
   SubscriptionsRepository,
   SubscriptionUsageCounts,
 } from "./Iprisma/subscriptions-repository";
+import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-found-error";
 
 export class PrismaSubscriptionsRepository implements SubscriptionsRepository {
   constructor(private prisma: PrismaClient) {}
+
+  async updateEndDate(subscriptionId: string, endDate: Date): Promise<void> {
+    await this.prisma.subscription.update({
+      where: {
+        id: subscriptionId,
+      },
+      data: {
+        endDate,
+      },
+    });
+  }
 
   async create(data: any) {
     return this.prisma.subscription.create({ data });
@@ -52,11 +64,54 @@ export class PrismaSubscriptionsRepository implements SubscriptionsRepository {
     });
   }
 
+  /*
   async findCurrentByStoreId(storeId: string) {
     const active = await this.findActiveByStoreId(storeId);
     if (active) return active;
 
     return this.findLatestByStoreId(storeId);
+  }
+*/
+  async renewSubscription(subscriptionId: string): Promise<void> {
+    const subscription = await this.prisma.subscription.findUnique({
+      where: {
+        id: subscriptionId,
+      },
+    });
+
+    if (!subscription) {
+      throw new ResourceNotFoundError();
+    }
+
+    const currentEndDate =
+      subscription.endDate > new Date() ? subscription.endDate : new Date();
+
+    const newEndDate = new Date(currentEndDate);
+
+    newEndDate.setDate(newEndDate.getDate() + 30);
+
+    await this.prisma.subscription.update({
+      where: {
+        id: subscriptionId,
+      },
+
+      data: {
+        endDate: newEndDate,
+        status: "ACTIVE",
+      },
+    });
+  }
+
+  async cancelSubscription(subscriptionId: string): Promise<void> {
+    await this.prisma.subscription.update({
+      where: {
+        id: subscriptionId,
+      },
+
+      data: {
+        status: "CANCELED",
+      },
+    });
   }
 
   async cancelOpenSubscriptionsByStoreId(storeId: string) {
@@ -73,7 +128,9 @@ export class PrismaSubscriptionsRepository implements SubscriptionsRepository {
     });
   }
 
-  async reactiveOpenSubscriptionsByStoreId(storeId: string) {
+  // async reactiveOpenSubscriptionsByStoreId(storeId: string) { só foi renomeado para reactivateSubscription
+
+  async reactivateSubscription(storeId: string) {
     const latest = await this.prisma.subscription.findFirst({
       where: { storeId },
       include: { plan: true },

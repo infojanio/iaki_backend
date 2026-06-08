@@ -1,5 +1,6 @@
 import { StoreUsageRepository } from "@/repositories/prisma/Iprisma/store-usage-repository";
 import { SubscriptionsRepository } from "@/repositories/prisma/Iprisma/subscriptions-repository";
+import { ExpiredSubscriptionError } from "@/utils/messages/errors/expired-subscription-error";
 
 interface Response {
   subscription: any;
@@ -19,18 +20,25 @@ export class GetStoreSubscriptionUseCase {
 
   async execute({ storeId }: { storeId: string }): Promise<Response> {
     const subscription =
-      await this.subscriptionsRepository.findActiveByStoreId(storeId);
+      await this.subscriptionsRepository.findLatestByStoreId(storeId);
 
-    console.log("store id:", storeId);
+    // console.log("store id:", storeId);
+
     if (!subscription) {
-      throw new Error("Assinatura não encontrada.");
+      throw new ExpiredSubscriptionError();
+    }
+
+    if (
+      subscription.status === "EXPIRED" ||
+      subscription.status === "CANCELED"
+    ) {
+      throw new ExpiredSubscriptionError();
     }
 
     const usage =
       await this.subscriptionsRepository.getUsageCountsByStoreId(storeId);
 
-    const isExpired =
-      subscription.endDate < new Date() && subscription.status !== "ACTIVE";
+    const isExpired = subscription.endDate < new Date();
 
     return {
       subscription,

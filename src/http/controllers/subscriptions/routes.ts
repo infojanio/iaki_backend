@@ -1,18 +1,29 @@
 import { FastifyInstance } from "fastify";
+
+import { verifyJWT } from "@/http/middlewares/verify-jwt";
+import { verifyUserRole } from "@/http/middlewares/verify-user-role";
+
 import { subscribeStoreToPlan } from "../subscriptions/subscribe-store-to-plan";
 import { getStoreSubscription } from "../subscriptions/get-store-subscription";
 import { validateStoreLimits } from "../subscriptions/validate-store-limits";
-import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { verifyUserRole } from "@/http/middlewares/verify-user-role";
+
 import { listSubscriptions } from "./list-subscriptions";
-import { changeStorePlan } from "../plans/change-plan";
-import { validateDowngradePlanController } from "../plans/validate-downgrade-plan";
 import { updateSubscriptionEndDate } from "./update-subscription";
 import { cancelSubscription } from "./cancel-subscription";
 import { reactiveSubscription } from "./reactive-subscription";
+import { renewSubscription } from "./renew-subscription";
+
+import { changeStorePlan } from "../plans/change-plan";
+import { validateDowngradePlanController } from "../plans/validate-downgrade-plan";
 
 export async function subscriptionRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
+
+  /*
+  |--------------------------------------------------------------------------
+  | SUPER ADMIN
+  |--------------------------------------------------------------------------
+  */
 
   app.post(
     "/subscriptions",
@@ -20,52 +31,6 @@ export async function subscriptionRoutes(app: FastifyInstance) {
       preHandler: [verifyUserRole("SUPER_ADMIN")],
     },
     subscribeStoreToPlan,
-  );
-
-  app.post(
-    "/stores/me/subscription/change-plan",
-    {
-      preHandler: [verifyUserRole("ADMIN")],
-    },
-    changeStorePlan,
-  );
-
-  app.post(
-    "/subscriptions/validate-downgrade",
-    {
-      onRequest: [verifyJWT, verifyUserRole("SUPER_ADMIN")],
-    },
-    validateDowngradePlanController,
-  );
-
-  app.get(
-    "/stores/me/subscription",
-    {
-      preHandler: [verifyUserRole("ADMIN")],
-    },
-    getStoreSubscription,
-  );
-
-  app.patch(
-    "/subscriptions/:subscriptionId/end-date",
-    { onRequest: [verifyUserRole("ADMIN")] },
-    updateSubscriptionEndDate,
-  );
-
-  app.patch(
-    "/subscriptions/:subscriptionId/cancel",
-    {
-      onRequest: [verifyUserRole("ADMIN")],
-    },
-    cancelSubscription,
-  );
-
-  app.patch(
-    "/stores/me/subscription/cancel",
-    {
-      onRequest: [verifyUserRole("ADMIN")],
-    },
-    cancelSubscription,
   );
 
   app.get(
@@ -77,11 +42,73 @@ export async function subscriptionRoutes(app: FastifyInstance) {
   );
 
   app.patch(
+    "/subscriptions/:subscriptionId/renew",
+    {
+      preHandler: [verifyUserRole("SUPER_ADMIN")],
+    },
+    renewSubscription,
+  );
+
+  app.patch(
+    "/subscriptions/:subscriptionId/end-date",
+    {
+      preHandler: [verifyUserRole("SUPER_ADMIN")],
+    },
+    updateSubscriptionEndDate,
+  );
+
+  app.patch(
+    "/subscriptions/:subscriptionId/cancel",
+    {
+      preHandler: [verifyUserRole("SUPER_ADMIN")],
+    },
+    cancelSubscription,
+  );
+
+  app.patch(
     "/subscriptions/store/:storeId/reactivate",
     {
-      onRequest: [verifyUserRole("SUPER_ADMIN")],
+      preHandler: [verifyUserRole("SUPER_ADMIN")],
     },
     reactiveSubscription,
+  );
+
+  app.post(
+    "/subscriptions/validate-downgrade",
+    {
+      preHandler: [verifyUserRole("SUPER_ADMIN")],
+    },
+    validateDowngradePlanController,
+  );
+
+  /*
+  |--------------------------------------------------------------------------
+  | ADMIN
+  |--------------------------------------------------------------------------
+  */
+
+  app.get(
+    "/stores/me/subscription",
+    {
+      preHandler: [verifyUserRole("ADMIN")],
+    },
+    getStoreSubscription,
+  );
+
+  app.post(
+    "/stores/me/subscription/change-plan",
+    {
+      preHandler: [verifyUserRole("ADMIN")],
+    },
+    changeStorePlan,
+  );
+
+  app.patch(
+    "/stores/me/subscription/cancel",
+    {
+      preHandler: [verifyUserRole("ADMIN")],
+    },
+    cancelSubscription,
   );
 
   app.get(

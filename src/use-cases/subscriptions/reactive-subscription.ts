@@ -8,8 +8,6 @@ export class ReactiveSubscriptionUseCase {
   constructor(private subscriptionsRepository: SubscriptionsRepository) {}
 
   async execute({ storeId }: Request) {
-    await this.subscriptionsRepository.reactiveOpenSubscriptionsByStoreId(
-      storeId,
-    );
+    await this.subscriptionsRepository.reactivateSubscription(storeId);
   }
 }

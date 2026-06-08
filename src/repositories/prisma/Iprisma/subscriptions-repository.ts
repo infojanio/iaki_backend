@@ -37,6 +37,7 @@ export interface SubscriptionsRepository {
   findById(id: string): Promise<Subscription | null>;
 
   // 🔹 CONSULTAS
+  // findCurrentByStoreId(storeId: string): Promise<SubscriptionWithPlan | null>;
   findActiveByStoreId(
     storeId: string,
     referenceDate?: Date,
@@ -44,12 +45,10 @@ export interface SubscriptionsRepository {
 
   findLatestByStoreId(storeId: string): Promise<SubscriptionWithPlan | null>;
 
-  findCurrentByStoreId(storeId: string): Promise<SubscriptionWithPlan | null>;
-
   // 🔹 CONTROLE
   cancelOpenSubscriptionsByStoreId(storeId: string): Promise<void>;
 
-  reactiveOpenSubscriptionsByStoreId(storeId: string): Promise<void>;
+  //reactiveOpenSubscriptionsByStoreId(storeId: string): Promise<void>;
 
   updateStatus(id: string, status: SubscriptionStatus): Promise<Subscription>;
 
@@ -58,4 +57,12 @@ export interface SubscriptionsRepository {
 
   // 🔹 ADMIN
   listAllWithPlanAndStore(): Promise<SubscriptionWithPlanAndStore[]>;
+
+  renewSubscription(subscriptionId: string): Promise<void>;
+
+  reactivateSubscription(storeId: string): Promise<void>;
+
+  cancelSubscription(subscriptionId: string): Promise<void>;
+
+  updateEndDate(subscriptionId: string, endDate: Date): Promise<void>;
 }

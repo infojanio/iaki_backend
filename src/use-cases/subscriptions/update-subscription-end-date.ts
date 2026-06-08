@@ -6,27 +6,24 @@ interface Request {
   endDate: Date;
   //storeId: string;
 }
-
 export class UpdateSubscriptionEndDateUseCase {
   constructor(private repo: SubscriptionsRepository) {}
 
   async execute({ subscriptionId, endDate }: Request) {
-    const subscription = await this.repo.findActiveByStoreId(subscriptionId);
+    const subscription = await this.repo.findById(subscriptionId);
 
     if (!subscription) {
       throw new ResourceNotFoundError();
     }
 
-    /* 🔐 proteção multi-tenant
-    if (subscription.storeId !== storeId) {
-      throw new Error("Acesso negado a esta assinatura.");
-    }
-      */
+    const normalizedDate = new Date(endDate);
 
-    const updated = await this.repo.update(subscriptionId, {
-      endDate,
-    });
+    normalizedDate.setHours(12, 0, 0, 0);
 
-    return updated;
+    await this.repo.updateEndDate(subscriptionId, normalizedDate);
+
+    return {
+      success: true,
+    };
   }
 }

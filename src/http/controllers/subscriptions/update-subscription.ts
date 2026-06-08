@@ -12,18 +12,20 @@ export async function updateSubscriptionEndDate(
   });
 
   const bodySchema = z.object({
-    endDate: z.coerce.date(),
+    endDate: z.string(),
   });
 
   try {
     const { subscriptionId } = paramsSchema.parse(request.params);
     const { endDate } = bodySchema.parse(request.body);
 
+    const parsedDate = new Date(`${endDate}T12:00:00`);
+
     const useCase = makeUpdateSubscriptionEndDateUseCase();
 
     const result = await useCase.execute({
       subscriptionId,
-      endDate,
+      endDate: parsedDate,
     });
 
     return reply.status(200).send({ data: result });
