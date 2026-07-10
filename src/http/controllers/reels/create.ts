@@ -5,14 +5,12 @@ import { makeCreateReelUseCase } from "@/use-cases/_factories/make-create-reel-u
 
 export async function create(request: FastifyRequest, reply: FastifyReply) {
   const createReelBodySchema = z.object({
-    title: z.string(),
+    title: z.string().min(1, "Título é obrigatório."),
+    imageUrl: z.string().min(1, "Imagem é obrigatória."),
+    link: z.string().optional().default(""),
 
-    imageUrl: z.string(),
-
-    link: z.string(),
-
-    // 🔥 SUPER_ADMIN pode informar loja
-    storeId: z.string().uuid().optional(),
+    // SUPER_ADMIN pode informar a loja manualmente
+    storeId: z.string().uuid("Loja inválida.").optional(),
   });
 
   try {
@@ -24,27 +22,37 @@ export async function create(request: FastifyRequest, reply: FastifyReply) {
     } = createReelBodySchema.parse(request.body);
 
     console.log("[CREATE REEL USER]", request.user);
+    console.log("[CREATE REEL BODY STORE ID]", bodyStoreId);
 
     let storeId: string | undefined;
 
     /**
      * ===================================
-     * 👑 SUPER_ADMIN
+     * SUPER_ADMIN
      * ===================================
      */
     if (request.user?.role === "SUPER_ADMIN") {
-      // 🔥 usa storeId enviado no body
-      storeId = bodyStoreId;
-
-      // 🔥 SUPER_ADMIN pode criar reel sem loja
-      // (global / institucional)
-    } else {
       /**
-       * ===================================
-       * 🏪 ADMIN
-       * ===================================
+       * Prioridade:
+       * 1. storeId enviado no body
+       * 2. storeId vinculado ao SUPER_ADMIN no token
        */
-      storeId = request.user?.storeId;
+      storeId = bodyStoreId ?? request.user.storeId;
+
+      if (!storeId) {
+        return reply.status(400).send({
+          message: "Informe uma loja para cadastrar o reel.",
+        });
+      }
+    }
+
+    /**
+     * ===================================
+     * ADMIN
+     * ===================================
+     */
+    if (request.user?.role === "ADMIN") {
+      storeId = request.user.storeId;
 
       if (!storeId) {
         return reply.status(403).send({
@@ -53,16 +61,19 @@ export async function create(request: FastifyRequest, reply: FastifyReply) {
       }
     }
 
+    if (!storeId) {
+      return reply.status(403).send({
+        message: "Perfil de usuário não autorizado para cadastrar reel.",
+      });
+    }
+
     const createReelUseCase = makeCreateReelUseCase();
 
     await createReelUseCase.execute({
       title,
       imageUrl,
       link,
-
-      // 🔥 null se SUPER_ADMIN não enviar
-      storeId: storeId ?? "7acc5660-c054-4f67-af7b-068e902d3bd4",
-
+      storeId,
       createdAt: new Date(),
     });
 
