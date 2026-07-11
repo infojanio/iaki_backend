@@ -29,6 +29,14 @@ export interface SubscriptionsRepository {
   // 🔹 CORE
   create(data: Prisma.SubscriptionUncheckedCreateInput): Promise<Subscription>;
 
+  createReplacingOpenSubscriptions(data: {
+    storeId: string;
+    planId: string;
+    status: SubscriptionStatus;
+    startDate: Date;
+    endDate: Date;
+  }): Promise<Subscription>;
+
   update(
     id: string,
     data: Prisma.SubscriptionUncheckedUpdateInput,

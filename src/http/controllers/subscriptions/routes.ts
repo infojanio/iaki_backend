@@ -15,6 +15,7 @@ import { renewSubscription } from "./renew-subscription";
 
 import { changeStorePlan } from "../plans/change-plan";
 import { validateDowngradePlanController } from "../plans/validate-downgrade-plan";
+import { createSubscription } from "./create-subscription";
 
 export async function subscriptionRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
@@ -24,6 +25,14 @@ export async function subscriptionRoutes(app: FastifyInstance) {
   | SUPER ADMIN
   |--------------------------------------------------------------------------
   */
+
+  app.post(
+    "/subscription",
+    {
+      preHandler: [verifyUserRole("SUPER_ADMIN")],
+    },
+    createSubscription,
+  );
 
   app.post(
     "/subscriptions",

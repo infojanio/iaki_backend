@@ -23,6 +23,48 @@ export class PrismaSubscriptionsRepository implements SubscriptionsRepository {
     return this.prisma.subscription.create({ data });
   }
 
+  async createReplacingOpenSubscriptions(data: {
+    storeId: string;
+    planId: string;
+    status: SubscriptionStatus;
+    startDate: Date;
+    endDate: Date;
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.subscription.updateMany({
+        where: {
+          storeId: data.storeId,
+          status: {
+            in: ["ACTIVE", "TRIALING"],
+          },
+        },
+        data: {
+          status: "CANCELED",
+        },
+      });
+
+      const subscription = await tx.subscription.create({
+        data: {
+          storeId: data.storeId,
+          planId: data.planId,
+          status: data.status,
+          startDate: data.startDate,
+          endDate: data.endDate,
+        },
+        include: {
+          plan: true,
+          store: {
+            include: {
+              city: true,
+            },
+          },
+        },
+      });
+
+      return subscription;
+    });
+  }
+
   async update(id: string, data: any) {
     return this.prisma.subscription.update({
       where: { id },
@@ -110,6 +152,7 @@ export class PrismaSubscriptionsRepository implements SubscriptionsRepository {
 
       data: {
         status: "CANCELED",
+        endDate: new Date(),
       },
     });
   }
@@ -124,6 +167,7 @@ export class PrismaSubscriptionsRepository implements SubscriptionsRepository {
       },
       data: {
         status: "CANCELED",
+        endDate: new Date(),
       },
     });
   }
