@@ -26,6 +26,7 @@ export interface StoresRepository {
   findManyNearby(params: FindManyNearbyParams): Promise<Store[]>;
   findByCityAndCategory(categoryId: string, cityId: string): Promise<Store[]>;
   findByCity(cityId: string): Promise<Store[]>;
+  findPremiumByCity(cityId: string): Promise<Store[]>;
   update(id: string, data: Partial<Store>): Promise<Store>;
   findManyByBusinessCategoryId(categoryId: string): Promise<Store[]>;
 

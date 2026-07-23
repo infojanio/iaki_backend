@@ -3,14 +3,15 @@ import { Banner, Prisma } from "@prisma/client";
 import { BannersRepository } from "./Iprisma/banners-repository";
 import { ResourceNotFoundError } from "@/utils/messages/errors/resource-not-found-error";
 export class PrismaBannersRepository implements BannersRepository {
-  //banner valido por 7 dias
+  /*banner valido por 30 dias
   private getValidBannerDate() {
     const sevenDaysAgo = new Date();
 
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 30);
 
     return sevenDaysAgo;
   }
+    */
 
   async findById(id: string) {
     const banner = await prisma.banner.findUnique({
@@ -19,6 +20,63 @@ export class PrismaBannersRepository implements BannersRepository {
       },
     });
     return banner;
+  }
+
+  async findPremiumByCity(
+    cityId: string,
+    limit: number = 4,
+  ): Promise<Banner[]> {
+    const now = new Date();
+
+    return prisma.banner.findMany({
+      where: {
+        isActive: true,
+
+        store: {
+          cityId,
+          isActive: true,
+
+          subscriptions: {
+            some: {
+              status: "ACTIVE",
+
+              startDate: {
+                lte: now,
+              },
+
+              endDate: {
+                gte: now,
+              },
+
+              plan: {
+                name: "PREMIUM",
+                isActive: true,
+              },
+            },
+          },
+        },
+      },
+
+      orderBy: [
+        {
+          position: "asc",
+        },
+        {
+          createdAt: "desc",
+        },
+      ],
+
+      take: limit,
+
+      include: {
+        store: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
   }
 
   async create(data: Prisma.BannerUncheckedCreateInput) {
@@ -46,10 +104,11 @@ export class PrismaBannersRepository implements BannersRepository {
       where: {
         storeId,
         // isActive: true,
-        createdAt: {
-          //valida o banner por 7 dias
-          gte: this.getValidBannerDate(),
+        /* createdAt: {
+          valida o banner por 30 dias
+        //  gte: this.getValidBannerDate(),
         },
+        */
       },
       orderBy: {
         position: "asc",
@@ -66,10 +125,11 @@ export class PrismaBannersRepository implements BannersRepository {
           cityId,
         },
         isActive: true,
-        //o banner fica ativo por 7 dias
+        /*o banner fica ativo por 30 dias
         createdAt: {
           gte: this.getValidBannerDate(),
         },
+        */
       },
       orderBy: {
         position: "asc",

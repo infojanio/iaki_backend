@@ -9,6 +9,7 @@ import { deleteBanner } from "./delete-banner";
 import { getBannersByStoreController } from "./get-banners-by-store";
 import { getBannersByCityController } from "./get-banners-by-city";
 import { checkStoreLimit } from "@/http/middlewares/check-store-limit";
+import { listPremiumBannersByCity } from "./list-premium-banners-by-city";
 
 export async function bannersRoutes(app: FastifyInstance) {
   // =============================
@@ -23,6 +24,8 @@ export async function bannersRoutes(app: FastifyInstance) {
 
   // 🔥 NOVA
   app.get("/stores/:storeId/banners", getBannersByStoreController);
+
+  app.get("/banners/premium/city/:cityId", listPremiumBannersByCity);
 
   // =============================
   // PRIVADAS (ADMIN)

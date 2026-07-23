@@ -6,6 +6,7 @@ import { PrismaSubscriptionsRepository } from "@/repositories/prisma/prisma-subs
 import { SubscribeStoreToPlanUseCase } from "../subscriptions/subscribe-store-to-plan";
 import { prisma } from "@/lib/prisma";
 import { CreateInitialSubscriptionUseCase } from "../subscriptions/create-initial-subscription";
+import { randomUUID } from "node:crypto";
 
 interface RegisterUseCaseRequest {
   id?: string;
@@ -24,6 +25,14 @@ interface RegisterUseCaseRequest {
 
 interface RegisterUseCaseResponse {
   store: Store;
+}
+
+function normalizeImageSlug(value?: string | null) {
+  if (!value || value.trim() === "") {
+    return `no-image-${randomUUID()}`;
+  }
+
+  return value.trim();
 }
 
 export class RegisterUseCase {
@@ -53,7 +62,8 @@ export class RegisterUseCase {
       const store = await this.storesRepository.create({
         id,
         name,
-        slug,
+        // antigo slug usado como imagem extra
+        slug: normalizeImageSlug(slug),
         latitude,
         longitude,
         phone,

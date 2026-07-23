@@ -47,6 +47,56 @@ export class PrismaStoresRepository implements StoresRepository {
     }));
   }
 
+  async findPremiumByCity(cityId: string) {
+    const now = new Date();
+
+    const stores = await prisma.store.findMany({
+      where: {
+        cityId,
+        isActive: true,
+
+        subscriptions: {
+          some: {
+            status: "ACTIVE",
+
+            startDate: {
+              lte: now,
+            },
+
+            endDate: {
+              gte: now,
+            },
+
+            plan: {
+              name: "PREMIUM",
+              isActive: true,
+            },
+          },
+        },
+      },
+
+      include: {
+        storeCategories: {
+          include: {
+            category: true,
+          },
+        },
+      },
+
+      orderBy: {
+        name: "asc",
+      },
+    });
+
+    return stores.map((store) => ({
+      ...store,
+
+      categories: store.storeCategories.map(
+        (storeCategory) => storeCategory.category,
+      ),
+    }));
+  }
+
   async findManyByCityId(cityId: string): Promise<BusinessCategory[]> {
     console.log("🟡 [Repository] Filtrando categorias por cityId:", cityId);
 
@@ -155,15 +205,6 @@ export class PrismaStoresRepository implements StoresRepository {
     return store;
   }
 
-  //busca lojas próximas até 15 km
-  async findManyNearby({ latitude, longitude }: FindManyNearbyParams) {
-    //$queryRaw -> aceita escrever sql no código
-    const stores = await prisma.$queryRaw<Store[]>` 
-      SELECT * from stores
-      WHERE ( 6371 * acos( cos( radians(${latitude}) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(${longitude}) ) + sin( radians(${latitude}) ) * sin( radians( latitude ) ) ) ) <= 40 
-    `;
-    return stores;
-  }
   async searchMany(search: string, page: number) {
     const stores = await prisma.store.findMany({
       where: {
@@ -225,5 +266,14 @@ export class PrismaStoresRepository implements StoresRepository {
         isActive,
       },
     });
+  }
+
+  //busca lojas próximas até 15 km
+  async findManyNearby({ latitude, longitude }: FindManyNearbyParams) {
+    //$queryRaw -> aceita escrever sql no código
+    const stores = await prisma.$queryRaw<Store[]>` 
+      SELECT * from stores
+      WHERE ( 6371 * acos( cos( radians(${latitude}) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(${longitude}) ) + sin( radians(${latitude}) ) * sin( radians( latitude ) ) ) ) <= 40`;
+    return stores;
   }
 }

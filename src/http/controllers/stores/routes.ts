@@ -14,6 +14,7 @@ import { listStoresByCity } from "./list-stores-by-city";
 import { FetchStoreById } from "./fetch-store-by-id";
 import { getStoreCategoriesController } from "./get-store-categories";
 import { updateStore } from "./update";
+import { listPremiumStoresByCity } from "./list-premium-stores-by-city";
 
 export async function storesRoutes(app: FastifyInstance) {
   /**
@@ -40,6 +41,9 @@ export async function storesRoutes(app: FastifyInstance) {
 
   // Lojas por cidade
   app.get("/stores/city/:cityId", listStoresByCity);
+
+  //listar lojas plano: Premium
+  app.get("/stores/premium/city/:cityId", listPremiumStoresByCity);
 
   // Categorias internas da loja
   app.get("/stores/:storeId/categories", getStoreCategoriesController);

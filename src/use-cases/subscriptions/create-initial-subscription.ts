@@ -8,7 +8,7 @@ export class CreateInitialSubscriptionUseCase {
   ) {}
 
   async execute({ storeId }: { storeId: string }) {
-    const freePlan = await this.plansRepository.findByName("FREE");
+    const freePlan = await this.plansRepository.findByName("BASICO");
 
     if (!freePlan) {
       throw new Error("Plano FREE não encontrado.");

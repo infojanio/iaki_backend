@@ -38,7 +38,7 @@ export async function getBannersByStoreController(
     });
 
     return reply.status(200).send({
-      data: banners,
+      banners,
     });
   } catch (error) {
     console.error("[GET BANNERS BY STORE ERROR]", error);

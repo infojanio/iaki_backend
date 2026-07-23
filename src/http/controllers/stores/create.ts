@@ -2,8 +2,17 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { makeCreateStoreUseCase } from "@/use-cases/_factories/make-create-store-use-case";
 import { StoreAlreadyExistsError } from "@/utils/messages/errors/store-already-exists-error";
+import { randomUUID } from "node:crypto";
 
 export async function create(request: FastifyRequest, reply: FastifyReply) {
+  function normalizeImageSlug(value?: string | null) {
+    if (!value || value.trim() === "") {
+      return `no-image-${randomUUID()}`;
+    }
+
+    return value.trim();
+  }
+
   const createStoreBodySchema = z.object({
     //id: z.string().uuid(),
     name: z.string(),
@@ -41,7 +50,8 @@ export async function create(request: FastifyRequest, reply: FastifyReply) {
       //  id,
       name,
       phone,
-      slug,
+      // antigo slug agora usado como campo auxiliar de imagem
+      slug: normalizeImageSlug(slug),
       isActive,
       latitude,
       longitude,

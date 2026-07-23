@@ -1,6 +1,7 @@
 import { Banner, Prisma } from "@prisma/client";
 export interface BannersRepository {
   findById(id: string): Promise<Banner | null>;
+  findPremiumByCity(cityId: string, limit?: number): Promise<Banner[]>;
   findByIdBanner(id: string): Promise<Banner | null>;
   findManyByStoreId(storeId: string): Promise<Banner[]>;
   findManyByCityId(cityId: string): Promise<Banner[]>;
