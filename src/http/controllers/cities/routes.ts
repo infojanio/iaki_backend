@@ -17,7 +17,7 @@ export async function citiesRoutes(app: FastifyInstance) {
    * ROTAS AUTENTICADAS
    */
 
-  app.get("/cities", { onRequest: [verifyJWT] }, listCities);
+  app.get("/cities", listCities);
 
   app.get("/cities/active", { onRequest: [verifyJWT] }, listCitiesActive);
 
