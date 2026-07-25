@@ -10,7 +10,7 @@ export class ConsoleStoreOnboardingMailService
     to,
     responsibleName,
     storeName,
-    planName,
+
     storeStatus,
     adminPanelUrl,
   }: SendStoreOnboardingConfirmationInput): Promise<void> {
@@ -18,7 +18,7 @@ export class ConsoleStoreOnboardingMailService
       to,
       responsibleName,
       storeName,
-      planName,
+
       storeStatus,
       adminPanelUrl,
     });

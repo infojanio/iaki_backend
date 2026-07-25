@@ -26,7 +26,6 @@ export interface StoreOnboardingUserInput {
 }
 
 export interface CreateStoreOnboardingInput {
-  planName: string;
   store: StoreOnboardingStoreInput;
   user: StoreOnboardingUserInput;
   storeIsActive: boolean;
@@ -35,8 +34,6 @@ export interface CreateStoreOnboardingInput {
 export interface CreateStoreOnboardingResult {
   store: Store;
   user: User;
-  plan: Plan;
-  subscription: Subscription;
 }
 
 export interface StoreOnboardingRepository {
