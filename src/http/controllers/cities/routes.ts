@@ -13,42 +13,53 @@ import { deleteCity } from "./delete-city";
 import { listCitiesByStateController } from "./list-cities-by-state";
 
 export async function citiesRoutes(app: FastifyInstance) {
-  // LISTAR TODAS
+  /**
+   * ROTAS PÚBLICAS
+   */
+
   app.get("/cities", listCities);
 
-  // Toda rota exige JWT, como no padrão das categorias
-  app.addHook("onRequest", verifyJWT);
-
-  // LISTAR CIDADES ATIVAS
   app.get("/cities/active", listCitiesActive);
 
-  // BUSCAR POR NOME / ESTADO
-  app.get("/cities/search", searchCity);
+  /**
+   * ROTAS AUTENTICADAS
+   */
 
-  // Listar cidades por estado
-  app.get("/states/:stateId/cities", listCitiesByStateController);
+  app.get("/cities/search", { onRequest: [verifyJWT] }, searchCity);
 
-  // OBTER UMA CIDADE ESPECÍFICA
-  app.get("/cities/:cityId", getCity);
+  app.get(
+    "/states/:stateId/cities",
+    { onRequest: [verifyJWT] },
+    listCitiesByStateController,
+  );
 
-  // ATUALIZAR CIDADE (ADMIN)
+  app.get("/cities/:cityId", { onRequest: [verifyJWT] }, getCity);
+
+  /**
+   * ROTAS EXCLUSIVAS DO SUPER_ADMIN
+   */
+
   app.patch(
     "/cities/:cityId",
-    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
+    {
+      onRequest: [verifyJWT, verifyUserRole("SUPER_ADMIN")],
+    },
     updateCity,
   );
 
-  // CRIAR CIDADE (ADMIN)
   app.post(
     "/cities",
-    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
+    {
+      onRequest: [verifyJWT, verifyUserRole("SUPER_ADMIN")],
+    },
     createCity,
   );
 
-  // DELETAR CIDADE (ADMIN)
   app.delete(
     "/cities/:cityId",
-    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
+    {
+      onRequest: [verifyJWT, verifyUserRole("SUPER_ADMIN")],
+    },
     deleteCity,
   );
 }
