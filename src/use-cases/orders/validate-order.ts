@@ -1,13 +1,29 @@
 import { prisma } from "@/lib/prisma";
 import { OrdersRepository } from "@/repositories/prisma/Iprisma/orders-repository";
-import { OrderStatus } from "@prisma/client";
-import { differenceInHours } from "date-fns";
 import { ProductsRepository } from "@/repositories/prisma/Iprisma/products-repository";
+import { OrderStatus } from "@prisma/client";
+import { addDays } from "date-fns";
 
 interface ValidateOrderUseCaseRequest {
   orderId: string;
   storeId: string;
 }
+
+type ValidationResult =
+  | {
+      expired: true;
+      orderId: string;
+      expiresAt: Date;
+    }
+  | {
+      expired: false;
+      orderId: string;
+      status: OrderStatus;
+      pointsEarned: number;
+      expiresAt: Date;
+    };
+
+const ORDER_EXPIRATION_DAYS = 30;
 
 export class ValidateOrderUseCase {
   constructor(
@@ -16,34 +32,58 @@ export class ValidateOrderUseCase {
   ) {}
 
   async execute({ orderId, storeId }: ValidateOrderUseCaseRequest) {
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction<ValidationResult>(async (tx) => {
       const order = await this.ordersRepository.findByIdWithTx(tx, orderId);
 
-      if (!order) throw new Error("Pedido não encontrado.");
+      if (!order) {
+        throw new Error("Pedido não encontrado.");
+      }
 
-      if (order.storeId !== storeId)
+      if (order.storeId !== storeId) {
         throw new Error("Sem permissão para validar este pedido.");
+      }
 
-      if (order.status !== OrderStatus.PENDING)
+      if (order.status !== OrderStatus.PENDING) {
         throw new Error("Pedido já processado.");
+      }
 
-      // ⏳ Verifica expiração (96 horas)
-      const hoursDiff = differenceInHours(new Date(), order.createdAt);
-      if (hoursDiff > 360) {
+      /*
+       * O pedido expira exatamente
+       * 30 dias após a criação.
+       */
+      const expiresAt = addDays(order.createdAt, ORDER_EXPIRATION_DAYS);
+
+      const now = new Date();
+
+      /*
+       * Não lançamos erro aqui dentro,
+       * pois isso desfaria a atualização
+       * para EXPIRED.
+       */
+      if (now.getTime() >= expiresAt.getTime()) {
         await this.ordersRepository.updateStatusWithTx(
           tx,
           order.id,
           OrderStatus.EXPIRED,
         );
-        throw new Error("Pedido expirado.");
+
+        return {
+          expired: true,
+          orderId: order.id,
+          expiresAt,
+        };
       }
 
-      // ✅ Valida pedido
+      /*
+       * Atualização atômica para impedir
+       * duas validações simultâneas.
+       */
       const updated = await tx.order.updateMany({
         where: {
           id: order.id,
           status: OrderStatus.PENDING,
         },
+
         data: {
           status: OrderStatus.VALIDATED,
           validatedAt: new Date(),
@@ -54,8 +94,14 @@ export class ValidateOrderUseCase {
         throw new Error("Pedido já validado por outro operador.");
       }
 
-      // 📦 Atualiza estoque
+      /*
+       * Atualiza estoque.
+       */
       for (const item of order.items) {
+        if (!item.product?.id) {
+          throw new Error("Produto do pedido não encontrado.");
+        }
+
         await this.productsRepository.updateStockWithTx(
           tx,
           item.product.id,
@@ -63,66 +109,111 @@ export class ValidateOrderUseCase {
         );
       }
 
-      // 🪙 calcula pontos (1 ponto a cada 10 reais pagos)
-      const valorPago =
-        Number(order.totalAmount) - Number(order.discountApplied || 0);
+      /*
+       * Regra:
+       * 1 ponto a cada R$ 10 pagos.
+       */
+      const totalAmount = Number(order.totalAmount ?? 0);
+
+      const discountApplied = Number(order.discountApplied ?? 0);
+
+      const valorPago = Math.max(totalAmount - discountApplied, 0);
 
       const pointsEarned = Math.floor(valorPago / 10);
 
       if (pointsEarned > 0) {
-        // 🔎 busca carteira
         let wallet = await tx.storePointsWallet.findUnique({
           where: {
             userId_storeId: {
               userId: order.userId,
+
               storeId: order.storeId,
             },
           },
         });
 
-        // 🏦 cria carteira se não existir
         if (!wallet) {
           wallet = await tx.storePointsWallet.create({
             data: {
               userId: order.userId,
+
               storeId: order.storeId,
+
+              balance: 0,
+              earned: 0,
             },
           });
         }
 
-        // 📄 cria transação de pontos
+        /*
+         * Impede duplicação de pontos
+         * caso exista restrição única
+         * para orderId.
+         */
         await tx.storePointsTransaction.create({
           data: {
             userId: order.userId,
+
             storeId: order.storeId,
+
             orderId: order.id,
+
             type: "EARN",
+
             points: pointsEarned,
+
             note: "Pontos gerados por validação de pedido",
-            storePointsWalletId: wallet.id, // 🔥 ESSENCIAL
+
+            storePointsWalletId: wallet.id,
           },
         });
 
-        // ➕ atualiza saldo
         await tx.storePointsWallet.update({
           where: {
             userId_storeId: {
               userId: order.userId,
+
               storeId: order.storeId,
             },
           },
+
           data: {
-            balance: { increment: pointsEarned },
-            earned: { increment: pointsEarned },
+            balance: {
+              increment: pointsEarned,
+            },
+
+            earned: {
+              increment: pointsEarned,
+            },
           },
         });
       }
 
       return {
+        expired: false,
         orderId: order.id,
         status: OrderStatus.VALIDATED,
         pointsEarned,
+        expiresAt,
       };
     });
+
+    /*
+     * O erro é lançado depois que a
+     * transação foi concluída.
+     *
+     * Dessa forma, o status EXPIRED
+     * permanece salvo.
+     */
+    if (result.expired) {
+      throw new Error("O prazo de 30 dias para validar este pedido expirou.");
+    }
+
+    return {
+      orderId: result.orderId,
+      status: result.status,
+      pointsEarned: result.pointsEarned,
+      expiresAt: result.expiresAt,
+    };
   }
 }

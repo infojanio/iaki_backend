@@ -22,6 +22,8 @@ export async function storesRoutes(app: FastifyInstance) {
    * 🔓 ROTAS PÚBLICAS (APP)
    * ==============================
    */
+  // Criar loja → LIBERADO cadastro pelo site iaki.com.br sem logar no painel
+  app.post("/stores", create);
 
   app.get("/stores/search", search);
   app.get("/stores/nearby", nearby);
@@ -61,9 +63,6 @@ export async function storesRoutes(app: FastifyInstance) {
 
   // Todas abaixo exigem JWT
   app.addHook("onRequest", verifyJWT);
-
-  // Criar loja → SUPER_ADMIN
-  app.post("/stores", { onRequest: [verifyUserRole("SUPER_ADMIN")] }, create);
 
   app.patch(
     "/stores/:storeId",

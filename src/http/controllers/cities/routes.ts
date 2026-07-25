@@ -13,11 +13,11 @@ import { deleteCity } from "./delete-city";
 import { listCitiesByStateController } from "./list-cities-by-state";
 
 export async function citiesRoutes(app: FastifyInstance) {
-  // Toda rota exige JWT, como no padrão das categorias
-  app.addHook("onRequest", verifyJWT);
-
   // LISTAR TODAS
   app.get("/cities", listCities);
+
+  // Toda rota exige JWT, como no padrão das categorias
+  app.addHook("onRequest", verifyJWT);
 
   // LISTAR CIDADES ATIVAS
   app.get("/cities/active", listCitiesActive);
@@ -39,7 +39,11 @@ export async function citiesRoutes(app: FastifyInstance) {
   );
 
   // CRIAR CIDADE (ADMIN)
-  app.post("/cities", { onRequest: [verifyUserRole("SUPER_ADMIN")] }, createCity);
+  app.post(
+    "/cities",
+    { onRequest: [verifyUserRole("SUPER_ADMIN")] },
+    createCity,
+  );
 
   // DELETAR CIDADE (ADMIN)
   app.delete(
