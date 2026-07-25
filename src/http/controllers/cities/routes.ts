@@ -14,16 +14,12 @@ import { listCitiesByStateController } from "./list-cities-by-state";
 
 export async function citiesRoutes(app: FastifyInstance) {
   /**
-   * ROTAS PÚBLICAS
-   */
-
-  app.get("/cities", listCities);
-
-  app.get("/cities/active", listCitiesActive);
-
-  /**
    * ROTAS AUTENTICADAS
    */
+
+  app.get("/cities", { onRequest: [verifyJWT] }, listCities);
+
+  app.get("/cities/active", { onRequest: [verifyJWT] }, listCitiesActive);
 
   app.get("/cities/search", { onRequest: [verifyJWT] }, searchCity);
 

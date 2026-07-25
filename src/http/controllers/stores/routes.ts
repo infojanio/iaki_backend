@@ -20,44 +20,58 @@ import { listPremiumStoresByCity } from "./list-premium-stores-by-city";
 export async function storesRoutes(app: FastifyInstance) {
   /**
    * ==============================
-   * 🔓 ROTAS PÚBLICAS
+   * 🔓 ROTAS AUTENTICADAS
    * ==============================
    */
 
-  // Cadastro de loja pelo site, sem autenticação
-  app.post("/stores", create);
+  app.get("/stores/search", { onRequest: [verifyJWT] }, search);
 
-  app.get("/stores/search", search);
+  app.get("/stores/nearby", { onRequest: [verifyJWT] }, nearby);
 
-  app.get("/stores/nearby", nearby);
-
-  app.get("/stores", listStores);
+  app.get("/stores", { onRequest: [verifyJWT] }, listStores);
 
   app.get(
     "/stores/business/:categoryId",
+    { onRequest: [verifyJWT] },
     listStoreByBusinessCategoriesController,
   );
 
   app.get(
     "/stores/city/:cityId/category/:categoryId",
+    { onRequest: [verifyJWT] },
     listStoresByCityAndCategory,
   );
 
-  app.get("/stores/city/:cityId", listStoresByCity);
+  app.get("/stores/city/:cityId", { onRequest: [verifyJWT] }, listStoresByCity);
 
-  app.get("/stores/premium/city/:cityId", listPremiumStoresByCity);
+  app.get(
+    "/stores/premium/city/:cityId",
+    { onRequest: [verifyJWT] },
+    listPremiumStoresByCity,
+  );
 
-  app.get("/stores/:storeId/categories", getStoreCategoriesController);
+  app.get(
+    "/stores/:storeId/categories",
+    { onRequest: [verifyJWT] },
+    getStoreCategoriesController,
+  );
 
-  app.get("/stores/active", listStoresActive);
+  app.get("/stores/active", { onRequest: [verifyJWT] }, listStoresActive);
 
-  app.get("/stores/:storeId", FetchStoreById);
+  app.get("/stores/:storeId", { onRequest: [verifyJWT] }, FetchStoreById);
 
   /**
    * ==============================
    * 🔐 ROTAS ADMINISTRATIVAS
    * ==============================
    */
+  app.post(
+    "/stores",
+    {
+      onRequest: [verifyJWT, verifyUserRole("SUPER_ADMIN")],
+    },
+    create,
+  );
 
   app.patch(
     "/stores/:storeId",
