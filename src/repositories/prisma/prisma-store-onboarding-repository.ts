@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 import { CityNotFoundError } from "@/utils/messages/errors/city-not-found-error";
-import { CpdfAlreadyExistsError } from "@/utils/messages/errors/cpf-already-exists-error copy";
+import { CpdfAlreadyExistsError } from "@/utils/messages/errors/cpf-already-exists-error";
 import { InactivePlanError } from "@/utils/messages/errors/inactive-plan-error";
 import { PlanNotFoundError } from "@/utils/messages/errors/plan-not-found-error";
 import { StoreAlreadyExistsError } from "@/utils/messages/errors/store-already-exists-error";

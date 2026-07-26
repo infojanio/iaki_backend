@@ -10,13 +10,27 @@ const optionalUrl = z
   .optional()
   .or(z.literal(""));
 
+/*
+    name: z.string(),
+    phone: z.string(),
+    slug: z.string(),
+    isActive: z.boolean().default(true),
+    latitude: z.number(),
+    longitude: z.number(),
+    cnpj: z.string(),
+    avatar: z.string(),
+    street: z.string(),
+    postalCode: z.string(),
+    cityId: z.string().uuid(),
+*/
+
 const bodySchema = z.object({
   plan: z.string().trim().min(1, "Selecione um plano."),
   store: z.object({
     name: z.string().trim().min(1),
     slug: optionalUrl,
-    latitude: z.coerce.number().min(-90).max(90),
-    longitude: z.coerce.number().min(-180).max(180),
+    latitude: z.number(),
+    longitude: z.number(),
     phone: z.string().trim().min(8),
     cnpj: z.string().trim().min(14),
     avatar: optionalUrl,
