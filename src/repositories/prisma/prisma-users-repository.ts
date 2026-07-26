@@ -20,6 +20,7 @@ const userProfileSelect = Prisma.validator<Prisma.UserSelect>()({
   avatar: true,
   street: true,
   city: true,
+  store: true,
   state: true,
   postalCode: true,
   createdAt: true,
@@ -54,8 +55,18 @@ export class PrismaUsersRepository implements UsersRepository {
         role: true,
         passwordHash: true,
 
-        // 🔥 OBRIGATÓRIO
         storeId: true,
+
+        // 👇 Nome da loja
+        store: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            avatar: true,
+            isActive: true,
+          },
+        },
 
         cityId: true,
         street: true,
