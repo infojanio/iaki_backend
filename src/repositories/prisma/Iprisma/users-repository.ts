@@ -1,4 +1,4 @@
-import { Prisma, Role, User } from "@prisma/client";
+import { Prisma, Role, Store, User } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 
 /**
@@ -36,6 +36,13 @@ export type AuthUserDB = {
   passwordHash: string;
   role: Role;
   storeId: string | null;
+  store: {
+    id: string;
+    name: string;
+    slug: string | null;
+    avatar: string | null;
+    isActive: boolean;
+  } | null;
   avatar: string | null;
 };
 

@@ -2,7 +2,8 @@ import { UsersRepository } from "@/repositories/prisma/Iprisma/users-repository"
 import { AdminWithoutStoreError } from "@/utils/messages/errors/admin-without-store-error";
 import { InvalidCredentialsError } from "@/utils/messages/errors/invalid-credentials-error";
 import { compare } from "bcryptjs";
-import { Role } from "@prisma/client";
+import { Role, Store } from "@prisma/client";
+import { store } from "@/http/controllers/stores/store";
 
 interface AuthenticateUseCaseRequest {
   email: string;
@@ -16,6 +17,13 @@ interface AuthenticateUseCaseResponse {
     email: string;
     role: Role;
     storeId: string | null;
+    store: {
+      id: string;
+      name: string;
+      slug: string | null;
+      avatar: string | null;
+      isActive: boolean;
+    } | null;
     avatar: string | null;
   };
 }
@@ -58,6 +66,7 @@ export class AuthenticateUseCase {
         email: user.email,
         role: user.role,
         storeId: user.storeId,
+        store: user.store,
         avatar: user.avatar,
       },
     };

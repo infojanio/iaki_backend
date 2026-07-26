@@ -90,18 +90,27 @@ export class PrismaUsersRepository implements UsersRepository {
    */
   async findByEmail(email: string) {
     return prisma.user.findUnique({
-      where: { email },
+      where: {
+        email,
+      },
       select: {
         id: true,
         name: true,
         email: true,
         passwordHash: true,
         role: true,
-
-        // 🔥 ESSENCIAL
+        avatar: true,
         storeId: true,
 
-        avatar: true,
+        store: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            avatar: true,
+            isActive: true,
+          },
+        },
       },
     });
   }

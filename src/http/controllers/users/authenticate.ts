@@ -10,7 +10,7 @@ export async function authenticate(
   reply: FastifyReply,
 ) {
   const authenticateBodySchema = z.object({
-    email: z.string().email(),
+    email: z.string().trim().toLowerCase().email(),
     password: z.string().min(6),
   });
 
@@ -24,7 +24,6 @@ export async function authenticate(
       password,
     });
 
-    // 💰 saldo do usuário (opcional, mantido)
     const cashback = await prisma.cashback.aggregate({
       where: {
         userId: user.id,
@@ -37,7 +36,6 @@ export async function authenticate(
 
     const userBalance = cashback._sum.amount ?? 0;
 
-    // 🔐 ACCESS TOKEN (15 min)
     const accessToken = await reply.jwtSign(
       {
         role: user.role,
@@ -51,7 +49,6 @@ export async function authenticate(
       },
     );
 
-    // 🔁 REFRESH TOKEN (7 dias)
     const refreshToken = await reply.jwtSign(
       {
         role: user.role,
@@ -65,7 +62,6 @@ export async function authenticate(
       },
     );
 
-    // 💾 salva refresh token
     await prisma.refreshToken.create({
       data: {
         userId: user.id,
@@ -82,6 +78,18 @@ export async function authenticate(
         role: user.role,
         avatar: user.avatar,
         balance: userBalance,
+
+        storeId: user.storeId ?? null,
+
+        store: user.store
+          ? {
+              id: user.store.id,
+              name: user.store.name,
+              slug: user.store.slug,
+              avatar: user.store.avatar,
+              isActive: user.store.isActive,
+            }
+          : null,
       },
       accessToken,
       refreshToken,
