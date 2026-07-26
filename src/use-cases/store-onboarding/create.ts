@@ -4,6 +4,7 @@ import { StoreOnboardingMailService } from "@/services/mail/store-onboarding-mai
 import { StoreOnboardingRepository } from "@/repositories/prisma/Iprisma/store-onboarding";
 
 interface CreateStoreOnboardingUseCaseRequest {
+  plan: string;
   store: {
     name: string;
     slug?: string;
@@ -41,6 +42,7 @@ export class CreateStoreOnboardingUseCase {
     const passwordHash = await hash(request.user.password, 6);
 
     const result = await this.storeOnboardingRepository.createStoreOnboarding({
+      planName: request.plan.trim(),
       storeIsActive: false,
       store: {
         name: request.store.name.trim(),
@@ -73,7 +75,7 @@ export class CreateStoreOnboardingUseCase {
         to: result.user.email,
         responsibleName: result.user.name,
         storeName: result.store.name,
-
+        planName: result.plan.name,
         storeStatus: result.store.isActive ? "ATIVA" : "AGUARDANDO APROVAÇÃO",
         adminPanelUrl:
           process.env.ADMIN_PANEL_URL ?? "https://painel.iaki.com.br",

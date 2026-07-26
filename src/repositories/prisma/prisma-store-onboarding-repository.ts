@@ -2,9 +2,11 @@ import { prisma } from "@/lib/prisma";
 
 import { CityNotFoundError } from "@/utils/messages/errors/city-not-found-error";
 import { CpdfAlreadyExistsError } from "@/utils/messages/errors/cpf-already-exists-error copy";
+import { InactivePlanError } from "@/utils/messages/errors/inactive-plan-error";
+import { PlanNotFoundError } from "@/utils/messages/errors/plan-not-found-error";
 import { StoreAlreadyExistsError } from "@/utils/messages/errors/store-already-exists-error";
 import { UserAlreadyExistsError } from "@/utils/messages/errors/user-already-exists-error";
-
+import { addDays } from "date-fns";
 import {
   CreateStoreOnboardingInput,
   CreateStoreOnboardingResult,
@@ -49,6 +51,15 @@ export class PrismaStoreOnboardingRepository
       });
       if (existingCpf) throw new CpdfAlreadyExistsError();
 
+      const plans = await tx.plan.findMany();
+      const normalizedName = normalizeComparable(data.planName);
+      const matchingPlan = plans.find(
+        (item) => normalizeComparable(item.name) === normalizedName,
+      );
+
+      if (!matchingPlan) throw new PlanNotFoundError();
+      if (!matchingPlan.isActive) throw new InactivePlanError();
+
       const store = await tx.store.create({
         data: {
           name: data.store.name,
@@ -81,7 +92,18 @@ export class PrismaStoreOnboardingRepository
         },
       });
 
-      return { store, user };
+      const startDate = new Date();
+      const subscription = await tx.subscription.create({
+        data: {
+          storeId: store.id,
+          planId: matchingPlan.id,
+          status: "TRIALING",
+          startDate,
+          endDate: addDays(startDate, matchingPlan.durationDays),
+        },
+      });
+
+      return { store, user, plan: matchingPlan, subscription };
     });
   }
 }

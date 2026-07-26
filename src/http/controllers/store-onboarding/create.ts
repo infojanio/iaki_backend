@@ -10,6 +10,7 @@ const optionalUrl = z
   .or(z.literal(""));
 
 const bodySchema = z.object({
+  plan: z.string().trim().min(1, "Selecione um plano."),
   store: z.object({
     name: z.string().trim().min(1),
     slug: optionalUrl,
@@ -60,7 +61,12 @@ export async function createStoreOnboarding(
       role: result.user.role,
       storeId: result.user.storeId,
     },
-
+    subscription: {
+      id: result.subscription.id,
+      status: result.subscription.status,
+      startAt: result.subscription.startDate,
+      endAt: result.subscription.endDate,
+    },
     emailSent: result.emailSent,
   });
 }
