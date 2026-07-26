@@ -1,6 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { makeCreateStoreOnboardingUseCase } from "@/use-cases/_factories/make-create-store-onboarding-use-case";
+import isValidCPF from "@/utils/IsValidCPF";
 
 const optionalUrl = z
   .string()
@@ -27,7 +28,9 @@ const bodySchema = z.object({
     name: z.string().trim().min(1),
     email: z.string().trim().email(),
     phone: z.string().trim().min(8),
-    cpf: z.string().trim().min(11),
+    cpf: z.string().refine(isValidCPF, {
+      message: "CPF inválido",
+    }),
     password: z.string().min(6),
     avatar: optionalUrl,
     street: z.string().trim().min(1),
