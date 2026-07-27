@@ -12,6 +12,55 @@ export class PrismaReelsRepository implements ReelsRepository {
     return reel;
   }
 
+  async findPremiumByCity(cityId: string, limit: number = 4): Promise<Reel[]> {
+    const now = new Date();
+
+    return prisma.reel.findMany({
+      where: {
+        store: {
+          cityId,
+          isActive: true,
+
+          subscriptions: {
+            some: {
+              status: "ACTIVE",
+
+              startDate: {
+                lte: now,
+              },
+
+              endDate: {
+                gte: now,
+              },
+
+              plan: {
+                name: "PREMIUM",
+                isActive: true,
+              },
+            },
+          },
+        },
+      },
+
+      orderBy: [
+        {
+          createdAt: "desc",
+        },
+      ],
+
+      take: limit,
+
+      include: {
+        store: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
   async listMany(): Promise<Reel[]> {
     const reels = await prisma.reel.findMany();
     return reels;

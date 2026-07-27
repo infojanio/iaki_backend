@@ -9,12 +9,15 @@ import { deleteReel } from "./delete-reel";
 import { create } from "./create";
 import { checkStoreLimit } from "@/http/middlewares/check-store-limit";
 import { getReelsByStoreController } from "./get-reels-by-store";
+import { listPremiumReelsByCity } from "./list-premium-reels-by-city";
 
 export async function reelsRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
 
   app.get("/reels", listReels);
   app.get("/reels/:reelId", getReel);
+
+  app.get("/reels/premium/city/:cityId", listPremiumReelsByCity);
 
   app.get(
     "/reels/me",
