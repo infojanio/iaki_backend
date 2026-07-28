@@ -15,11 +15,16 @@ export class PrismaReelsRepository implements ReelsRepository {
   async findPremiumByCity(cityId: string, limit: number = 4): Promise<Reel[]> {
     const now = new Date();
 
-    return prisma.reel.findMany({
+    /*
+     * Primeiro buscamos todos os IDs elegíveis.
+     * Não aplicamos take nem ordenação por data aqui,
+     * pois isso limitaria o sorteio aos reels recentes.
+     */
+    const eligibleReels = await prisma.reel.findMany({
       where: {
         store: {
-          cityId,
           isActive: true,
+          cityId,
 
           subscriptions: {
             some: {
@@ -42,25 +47,65 @@ export class PrismaReelsRepository implements ReelsRepository {
         },
       },
 
-      orderBy: [
-        {
-          createdAt: "desc",
-        },
-      ],
+      select: {
+        id: true,
+      },
+    });
 
-      take: limit,
+    if (eligibleReels.length === 0) {
+      return [];
+    }
+
+    /*
+     * Fisher-Yates:
+     * embaralha todos os reels elegíveis de maneira
+     * mais adequada que sort(() => Math.random() - 0.5).
+     */
+    const shuffledReelIds = eligibleReels.map((reel) => reel.id);
+
+    for (let index = shuffledReelIds.length - 1; index > 0; index--) {
+      const randomIndex = Math.floor(Math.random() * (index + 1));
+
+      [shuffledReelIds[index], shuffledReelIds[randomIndex]] = [
+        shuffledReelIds[randomIndex],
+        shuffledReelIds[index],
+      ];
+    }
+
+    /*
+     * Somente depois do embaralhamento
+     * selecionamos quatro.
+     */
+    const selectedIds = shuffledReelIds.slice(0, 4);
+
+    const selectedReels = await prisma.reel.findMany({
+      where: {
+        id: {
+          in: selectedIds,
+        },
+      },
 
       include: {
         store: {
           select: {
             id: true,
             name: true,
+            avatar: true,
           },
         },
       },
     });
-  }
 
+    /*
+     * O findMany com "in" não garante a mesma
+     * ordem aleatória dos IDs selecionados.
+     */
+    const reelsById = new Map(selectedReels.map((reel) => [reel.id, reel]));
+
+    return selectedIds
+      .map((id) => reelsById.get(id))
+      .filter((reel): reel is NonNullable<typeof reel> => Boolean(reel));
+  }
   async listMany(): Promise<Reel[]> {
     const reels = await prisma.reel.findMany();
     return reels;

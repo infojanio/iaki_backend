@@ -28,7 +28,11 @@ export class PrismaBannersRepository implements BannersRepository {
   ): Promise<Banner[]> {
     const now = new Date();
 
-    return prisma.banner.findMany({
+    /*
+     * Busca todos os banners elegíveis.
+     * Não aplica take nem orderBy antes do sorteio.
+     */
+    const eligibleBanners = await prisma.banner.findMany({
       where: {
         isActive: true,
 
@@ -57,16 +61,49 @@ export class PrismaBannersRepository implements BannersRepository {
         },
       },
 
-      orderBy: [
-        {
-          position: "asc",
-        },
-        {
-          createdAt: "desc",
-        },
-      ],
+      select: {
+        id: true,
+      },
+    });
 
-      take: limit,
+    if (eligibleBanners.length === 0) {
+      return [];
+    }
+
+    /*
+     * Cria uma cópia dos IDs para não alterar
+     * diretamente o resultado retornado pelo Prisma.
+     */
+    const shuffledBannerIds = eligibleBanners.map((banner) => banner.id);
+
+    /*
+     * Embaralhamento Fisher-Yates.
+     */
+    for (let index = shuffledBannerIds.length - 1; index > 0; index--) {
+      const randomIndex = Math.floor(Math.random() * (index + 1));
+
+      [shuffledBannerIds[index], shuffledBannerIds[randomIndex]] = [
+        shuffledBannerIds[randomIndex],
+        shuffledBannerIds[index],
+      ];
+    }
+
+    /*
+     * Seleciona somente a quantidade desejada
+     * após embaralhar todos os banners.
+     */
+    const selectedIds = shuffledBannerIds.slice(0, Math.max(limit, 0));
+
+    if (selectedIds.length === 0) {
+      return [];
+    }
+
+    const selectedBanners = await prisma.banner.findMany({
+      where: {
+        id: {
+          in: selectedIds,
+        },
+      },
 
       include: {
         store: {
@@ -77,6 +114,20 @@ export class PrismaBannersRepository implements BannersRepository {
         },
       },
     });
+
+    /*
+     * O Prisma não garante que o resultado do "in"
+     * mantenha a ordem aleatória de selectedIds.
+     */
+    const bannersById = new Map(
+      selectedBanners.map((banner) => [banner.id, banner]),
+    );
+
+    return selectedIds
+      .map((id) => bannersById.get(id))
+      .filter((banner): banner is NonNullable<typeof banner> =>
+        Boolean(banner),
+      );
   }
 
   async create(data: Prisma.BannerUncheckedCreateInput) {
