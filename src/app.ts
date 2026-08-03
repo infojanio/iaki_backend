@@ -28,6 +28,7 @@ import { planRoutes } from "./http/controllers/plans/routes";
 import { subscriptionRoutes } from "./http/controllers/subscriptions/routes";
 import { storeRewardRedemptionsRoutes } from "./http/controllers/store-reward-redemptions/routes";
 import { storeOnboardingRoutes } from "./http/controllers/store-onboarding/routes";
+import { rewardsRoutes } from "./http/controllers/rewards/routes";
 
 export const app = fastify({
   // logger: true,
@@ -60,6 +61,7 @@ app.register(storeCategoryRoutes);
 app.register(categoriesRoutes);
 app.register(bannersRoutes);
 app.register(reelsRoutes);
+app.register(rewardsRoutes);
 app.register(cashbacksRoutes);
 app.register(subcategoriesRoutes);
 app.register(productsRoutes);
