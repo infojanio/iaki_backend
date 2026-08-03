@@ -6,6 +6,7 @@ import { verifyUserRole } from "@/http/middlewares/verify-user-role";
 import { approveStoreRewardRedemption } from "./approve-store-reward-redemption";
 import { listPendingStoreRewardRedemptions } from "./list-pending-store-reward-redemptions";
 import { listConfirmedStoreRewardRedemptions } from "./list-confirmed-store-reward-redemptions";
+import { getMyRewardRedemption } from "./get-my-reward-redemption";
 
 export async function storeRewardRedemptionsRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
@@ -17,6 +18,12 @@ export async function storeRewardRedemptionsRoutes(app: FastifyInstance) {
     },
     listPendingStoreRewardRedemptions,
   );
+
+  /*
+   * Cliente consulta um resgate específico.
+   * A consulta é limitada ao próprio userId.
+   */
+  app.get("/stores/rewards/redemptions/:redemptionId", getMyRewardRedemption);
 
   app.get(
     "/stores/rewards/redemptions/history",

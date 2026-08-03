@@ -1,50 +1,104 @@
-// src/repositories/prisma/prisma-store-reward-redemptions-repository.ts
-import { Prisma, RedemptionStatus } from "@prisma/client";
+import { Prisma, StoreRewardRedemption } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
-import { StoreRewardRedemptionsRepository } from "./Iprisma/store-reward-redemptions-repository";
+
+import {
+  StoreRewardRedemptionDetails,
+  StoreRewardRedemptionsRepository,
+} from "./Iprisma/store-reward-redemptions-repository";
 
 export class PrismaStoreRewardRedemptionsRepository
   implements StoreRewardRedemptionsRepository
 {
-  async create(
-    data: Prisma.StoreRewardRedemptionUncheckedCreateInput,
-    tx?: Prisma.TransactionClient,
-  ) {
-    const client = tx ?? prisma;
-    return client.storeRewardRedemption.create({ data });
+  async findRedemptionByIdAndUserId(
+    redemptionId: string,
+    userId: string,
+  ): Promise<StoreRewardRedemptionDetails | null> {
+    return prisma.storeRewardRedemption.findFirst({
+      where: {
+        id: redemptionId,
+        userId,
+      },
+
+      include: {
+        reward: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            image: true,
+            pointsCost: true,
+          },
+        },
+
+        store: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+
+        user: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+            phone: true,
+          },
+        },
+      },
+    });
   }
 
-  async findById(id: string, tx?: Prisma.TransactionClient) {
-    const client = tx ?? prisma;
-    return client.storeRewardRedemption.findUnique({ where: { id } });
-  }
-
-  async findPendingByUser(params: { userId: string; storeId: string }) {
-    const { userId, storeId } = params;
-
+  async findPendingByUser(
+    userId: string,
+    storeId: string,
+  ): Promise<StoreRewardRedemption[]> {
     return prisma.storeRewardRedemption.findMany({
       where: {
         userId,
         storeId,
         status: "PENDING",
       },
-      include: {
-        reward: {
-          select: {
-            id: true,
-            title: true,
-            pointsCost: true,
-            image: true,
-          },
-        },
-      },
+
       orderBy: {
         createdAt: "desc",
       },
     });
   }
 
-  async findPendingByStoreId(storeId: string) {
+  async confirmPendingById(
+    redemptionId: string,
+    storeId: string,
+  ): Promise<StoreRewardRedemption | null> {
+    const updated = await prisma.storeRewardRedemption.updateMany({
+      where: {
+        id: redemptionId,
+        storeId,
+        status: "PENDING",
+      },
+
+      data: {
+        status: "CONFIRMED",
+        usedAt: new Date(),
+      },
+    });
+
+    if (updated.count === 0) {
+      return null;
+    }
+
+    return prisma.storeRewardRedemption.findUnique({
+      where: {
+        id: redemptionId,
+      },
+    });
+  }
+
+  async findPendingByStoreId(
+    storeId: string,
+  ): Promise<StoreRewardRedemptionDetails[]> {
     return prisma.storeRewardRedemption.findMany({
       where: {
         storeId,
@@ -52,21 +106,30 @@ export class PrismaStoreRewardRedemptionsRepository
       },
 
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true,
-          },
-        },
-
         reward: {
           select: {
             id: true,
             title: true,
-            pointsCost: true,
+            description: true,
             image: true,
+            pointsCost: true,
+          },
+        },
+
+        store: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+
+        user: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+            phone: true,
           },
         },
       },
@@ -77,7 +140,9 @@ export class PrismaStoreRewardRedemptionsRepository
     });
   }
 
-  async findConfirmedByStoreId(storeId: string) {
+  async findConfirmedByStoreId(
+    storeId: string,
+  ): Promise<StoreRewardRedemptionDetails[]> {
     return prisma.storeRewardRedemption.findMany({
       where: {
         storeId,
@@ -85,21 +150,30 @@ export class PrismaStoreRewardRedemptionsRepository
       },
 
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true,
-          },
-        },
-
         reward: {
           select: {
             id: true,
             title: true,
-            pointsCost: true,
+            description: true,
             image: true,
+            pointsCost: true,
+          },
+        },
+
+        store: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+
+        user: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+            phone: true,
           },
         },
       },
@@ -110,26 +184,11 @@ export class PrismaStoreRewardRedemptionsRepository
     });
   }
 
-  async confirmPendingById(params: {
-    redemptionId: string;
-    storeId: string;
-    usedAt: Date;
-    tx?: Prisma.TransactionClient;
-  }) {
-    const client = params.tx ?? prisma;
-
-    const result = await client.storeRewardRedemption.updateMany({
-      where: {
-        id: params.redemptionId,
-        storeId: params.storeId,
-        status: RedemptionStatus.PENDING,
-      },
-      data: {
-        status: RedemptionStatus.CONFIRMED,
-        usedAt: params.usedAt,
-      },
+  async create(
+    data: Prisma.StoreRewardRedemptionUncheckedCreateInput,
+  ): Promise<StoreRewardRedemption> {
+    return prisma.storeRewardRedemption.create({
+      data,
     });
-
-    return { updatedCount: result.count };
   }
 }
