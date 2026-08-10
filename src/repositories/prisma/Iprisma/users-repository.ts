@@ -85,6 +85,9 @@ export interface UsersRepository {
    */
   update(userId: string, data: Prisma.UserUncheckedUpdateInput): Promise<User>;
 
+  //atualização de senha
+  updatePassword(userId: string, passwordHash: string): Promise<void>;
+
   /**
    * Atualiza cidade
    */

@@ -147,6 +147,19 @@ export class PrismaUsersRepository implements UsersRepository {
     }
   }
 
+  //atualizar a senha
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+
+      data: {
+        passwordHash,
+      },
+    });
+  }
+
   //transformar USUÁRIO em ADMIN
   async attachStore(userId: string, storeId: string): Promise<void> {
     await this.prisma.user.update({
