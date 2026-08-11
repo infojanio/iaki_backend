@@ -1,6 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
-interface ResetPayload {
+export interface PasswordResetPayload {
   userId: string;
   email: string;
 
@@ -9,42 +9,58 @@ interface ResetPayload {
 
   nonce: string;
 
-  exp: number;
+  expiresAt: number;
+}
+
+interface GeneratePasswordResetTokenParams {
+  userId: string;
+  email: string;
+  code: string;
+  passwordHash: string;
 }
 
 export class PasswordResetTokenProvider {
-  private get secret() {
+  private readonly secret: string;
+
+  constructor() {
     const secret = process.env.PASSWORD_RESET_SECRET;
 
     if (!secret) {
       throw new Error("PASSWORD_RESET_SECRET não configurado.");
     }
 
-    return secret;
+    this.secret = secret;
   }
 
-  private sign(value: string) {
+  private createSignature(value: string) {
     return createHmac("sha256", this.secret).update(value).digest("hex");
   }
 
-  private safeCompare(a: string, b: string) {
-    const bufferA = Buffer.from(a);
+  private safeCompareHex(first: string, second: string) {
+    try {
+      const firstBuffer = Buffer.from(first, "hex");
 
-    const bufferB = Buffer.from(b);
+      const secondBuffer = Buffer.from(second, "hex");
 
-    if (bufferA.length !== bufferB.length) {
+      if (
+        firstBuffer.length === 0 ||
+        firstBuffer.length !== secondBuffer.length
+      ) {
+        return false;
+      }
+
+      return timingSafeEqual(firstBuffer, secondBuffer);
+    } catch {
       return false;
     }
-
-    return timingSafeEqual(bufferA, bufferB);
   }
 
   generateCodeHash(code: string, nonce: string) {
-    return this.sign(`${nonce}:${code}`);
+    return this.createSignature(`code:${nonce}:${code}`);
   }
 
   generatePasswordFingerprint(passwordHash: string) {
-    return this.sign(`password:${passwordHash}`);
+    return this.createSignature(`password:${passwordHash}`);
   }
 
   generate({
@@ -52,18 +68,13 @@ export class PasswordResetTokenProvider {
     email,
     code,
     passwordHash,
-  }: {
-    userId: string;
-    email: string;
-    code: string;
-    passwordHash: string;
-  }) {
-    const nonce = randomBytes(16).toString("hex");
+  }: GeneratePasswordResetTokenParams) {
+    const nonce = randomBytes(32).toString("hex");
 
-    const payload: ResetPayload = {
+    const payload: PasswordResetPayload = {
       userId,
 
-      email,
+      email: email.trim().toLowerCase(),
 
       nonce,
 
@@ -71,51 +82,74 @@ export class PasswordResetTokenProvider {
 
       passwordFingerprint: this.generatePasswordFingerprint(passwordHash),
 
-      exp: Date.now() + 10 * 60 * 1000,
+      expiresAt: Date.now() + 10 * 60 * 1000,
     };
 
-    const encodedPayload = Buffer.from(JSON.stringify(payload)).toString(
-      "base64url",
-    );
+    const encodedPayload = Buffer.from(
+      JSON.stringify(payload),
+      "utf8",
+    ).toString("base64url");
 
-    const signature = this.sign(encodedPayload);
+    const signature = this.createSignature(encodedPayload);
 
     return `${encodedPayload}.${signature}`;
   }
 
-  verify(token: string): ResetPayload {
-    const [encodedPayload, receivedSignature] = token.split(".");
+  verify(token: string): PasswordResetPayload {
+    const parts = token.split(".");
 
-    if (!encodedPayload || !receivedSignature) {
-      throw new Error("Código inválido ou expirado.");
+    if (parts.length !== 2) {
+      throw new Error("Token inválido.");
     }
 
-    const expectedSignature = this.sign(encodedPayload);
+    const [encodedPayload, receivedSignature] = parts;
 
-    if (!this.safeCompare(expectedSignature, receivedSignature)) {
-      throw new Error("Código inválido ou expirado.");
+    const expectedSignature = this.createSignature(encodedPayload);
+
+    if (!this.safeCompareHex(receivedSignature, expectedSignature)) {
+      throw new Error("Token inválido.");
     }
 
-    let payload: ResetPayload;
+    let payload: PasswordResetPayload;
 
     try {
       payload = JSON.parse(
         Buffer.from(encodedPayload, "base64url").toString("utf8"),
       );
     } catch {
-      throw new Error("Código inválido ou expirado.");
+      throw new Error("Token inválido.");
     }
 
-    if (Date.now() > payload.exp) {
-      throw new Error("Código inválido ou expirado.");
+    if (
+      !payload.userId ||
+      !payload.email ||
+      !payload.codeHash ||
+      !payload.passwordFingerprint ||
+      !payload.nonce ||
+      !payload.expiresAt
+    ) {
+      throw new Error("Token inválido.");
+    }
+
+    if (Date.now() > payload.expiresAt) {
+      throw new Error("Token expirado.");
     }
 
     return payload;
   }
 
-  validateCode({ payload, code }: { payload: ResetPayload; code: string }) {
+  validateCode(payload: PasswordResetPayload, code: string) {
     const receivedHash = this.generateCodeHash(code, payload.nonce);
 
-    return this.safeCompare(payload.codeHash, receivedHash);
+    return this.safeCompareHex(payload.codeHash, receivedHash);
+  }
+
+  validatePasswordFingerprint(
+    payload: PasswordResetPayload,
+    passwordHash: string,
+  ) {
+    const currentFingerprint = this.generatePasswordFingerprint(passwordHash);
+
+    return this.safeCompareHex(payload.passwordFingerprint, currentFingerprint);
   }
 }

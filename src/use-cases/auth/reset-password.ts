@@ -3,13 +3,15 @@ import { hash } from "bcryptjs";
 import { PasswordResetTokenProvider } from "@/providers/password-reset/password-reset-token-provider";
 import { UsersRepository } from "@/repositories/prisma/Iprisma/users-repository";
 
-interface Request {
+interface ResetPasswordRequest {
   challenge: string;
+
   code: string;
-  password: string;
+
+  newPassword: string;
 }
 
-export class InvalidPasswordResetError extends Error {
+export class InvalidPasswordResetCodeError extends Error {
   constructor() {
     super("Código inválido ou expirado.");
   }
@@ -19,51 +21,54 @@ export class ResetPasswordUseCase {
   constructor(
     private usersRepository: UsersRepository,
 
-    private tokenProvider: PasswordResetTokenProvider,
+    private passwordResetTokenProvider: PasswordResetTokenProvider,
   ) {}
 
-  async execute({ challenge, code, password }: Request) {
+  async execute({ challenge, code, newPassword }: ResetPasswordRequest) {
     let payload;
 
     try {
-      payload = this.tokenProvider.verify(challenge);
+      payload = this.passwordResetTokenProvider.verify(challenge);
     } catch {
-      throw new InvalidPasswordResetError();
+      throw new InvalidPasswordResetCodeError();
     }
 
-    const codeIsValid = this.tokenProvider.validateCode({
+    const validCode = this.passwordResetTokenProvider.validateCode(
       payload,
       code,
-    });
+    );
 
-    if (!codeIsValid) {
-      throw new InvalidPasswordResetError();
+    if (!validCode) {
+      throw new InvalidPasswordResetCodeError();
     }
 
     const user = await this.usersRepository.findByEmail(payload.email);
 
     if (!user || user.id !== payload.userId) {
-      throw new InvalidPasswordResetError();
+      throw new InvalidPasswordResetCodeError();
     }
 
     /*
-     * Verifica se a senha ainda é
-     * aquela de quando o challenge
-     * foi criado.
-     *
-     * Depois que a senha for
-     * alterada, o token antigo
-     * deixa de funcionar.
+     * Confere se a senha atual continua
+     * sendo a mesma de quando o código
+     * foi solicitado.
      */
-    const currentFingerprint = this.tokenProvider.generatePasswordFingerprint(
-      user.passwordHash,
-    );
+    const passwordStillValid =
+      this.passwordResetTokenProvider.validatePasswordFingerprint(
+        payload,
+        user.passwordHash,
+      );
 
-    if (currentFingerprint !== payload.passwordFingerprint) {
-      throw new InvalidPasswordResetError();
+    if (!passwordStillValid) {
+      throw new InvalidPasswordResetCodeError();
     }
 
-    const passwordHash = await hash(password, 6);
+    /*
+     * IMPORTANTE:
+     * utilize aqui o mesmo número de
+     * rounds usado no cadastro.
+     */
+    const passwordHash = await hash(newPassword, 6);
 
     await this.usersRepository.updatePassword(user.id, passwordHash);
 

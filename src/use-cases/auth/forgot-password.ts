@@ -5,8 +5,12 @@ import { MailProvider } from "@/providers/mail/mail-provider";
 import { PasswordResetTokenProvider } from "@/providers/password-reset/password-reset-token-provider";
 import { UsersRepository } from "@/repositories/prisma/Iprisma/users-repository";
 
-interface Request {
+interface ForgotPasswordRequest {
   email: string;
+}
+
+interface ForgotPasswordResponse {
+  challenge: string;
 }
 
 export class ForgotPasswordUseCase {
@@ -15,31 +19,28 @@ export class ForgotPasswordUseCase {
 
     private mailProvider: MailProvider,
 
-    private tokenProvider: PasswordResetTokenProvider,
+    private passwordResetTokenProvider: PasswordResetTokenProvider,
   ) {}
 
-  async execute({ email }: Request) {
+  async execute({
+    email,
+  }: ForgotPasswordRequest): Promise<ForgotPasswordResponse> {
     const normalizedEmail = email.trim().toLowerCase();
 
     const user = await this.usersRepository.findByEmail(normalizedEmail);
 
-    /*
-     * Código sempre no formato
-     * 000000 até 999999.
-     */
     const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
 
     /*
-     * Não revelar para o frontend
-     * se o usuário existe.
+     * Caso não exista usuário,
+     * retornamos um challenge falso.
+     *
+     * Assim a API não confirma
+     * publicamente se o e-mail
+     * existe no IAki.
      */
     if (!user) {
-      /*
-       * Challenge falso para manter
-       * o mesmo formato de resposta.
-       */
-
-      const fakeChallenge = this.tokenProvider.generate({
+      const fakeChallenge = this.passwordResetTokenProvider.generate({
         userId: randomUUID(),
 
         email: normalizedEmail,
@@ -54,7 +55,7 @@ export class ForgotPasswordUseCase {
       };
     }
 
-    const challenge = this.tokenProvider.generate({
+    const challenge = this.passwordResetTokenProvider.generate({
       userId: user.id,
 
       email: user.email,
@@ -67,57 +68,135 @@ export class ForgotPasswordUseCase {
     await this.mailProvider.sendMail({
       to: user.email,
 
-      subject: "Código de recuperação - Clube IAki",
+      subject: "Recuperação de senha - Clube IAki",
+
+      text: `Seu código para redefinir a senha do Clube IAki é ${code}. O código é válido por 10 minutos.`,
 
       html: `
-        <div
-          style="
-            font-family:Arial,sans-serif;
-            max-width:520px;
-            margin:auto;
-          "
-        >
-          <h2
-            style="color:#6d28d9;"
-          >
-            Clube IAki
-          </h2>
+        <!DOCTYPE html>
 
-          <p>
-            Olá, ${user.name}.
-          </p>
-
-          <p>
-            Use o código abaixo para
-            redefinir sua senha:
-          </p>
-
-          <div
+        <html lang="pt-BR">
+          <body
             style="
-              background:#f5f3ff;
-              padding:18px;
-              border-radius:12px;
-              text-align:center;
-              font-size:32px;
-              font-weight:bold;
-              letter-spacing:8px;
-              color:#5b21b6;
+              margin: 0;
+              padding: 0;
+              background: #f5f3ff;
+              font-family: Arial, Helvetica, sans-serif;
             "
           >
-            ${code}
-          </div>
+            <div
+              style="
+                max-width: 520px;
+                margin: 0 auto;
+                padding: 32px 16px;
+              "
+            >
+              <div
+                style="
+                  background: #ffffff;
+                  border-radius: 16px;
+                  padding: 32px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #6d28d9;
+                    margin-bottom: 24px;
+                  "
+                >
+                  Clube IAki
+                </div>
 
-          <p>
-            O código é válido por
-            10 minutos.
-          </p>
+                <h2
+                  style="
+                    margin: 0 0 16px;
+                    color: #111827;
+                  "
+                >
+                  Recuperação de senha
+                </h2>
 
-          <p>
-            Caso não tenha solicitado
-            esta alteração, ignore
-            este e-mail.
-          </p>
-        </div>
+                <p
+                  style="
+                    color: #374151;
+                    line-height: 1.6;
+                  "
+                >
+                  Olá, ${user.name}.
+                </p>
+
+                <p
+                  style="
+                    color: #374151;
+                    line-height: 1.6;
+                  "
+                >
+                  Recebemos uma solicitação
+                  para redefinir sua senha.
+                </p>
+
+                <p
+                  style="
+                    color: #374151;
+                  "
+                >
+                  Informe este código no aplicativo:
+                </p>
+
+                <div
+                  style="
+                    margin: 24px 0;
+                    padding: 20px;
+                    text-align: center;
+                    border-radius: 12px;
+                    background: #f5f3ff;
+                    color: #5b21b6;
+                    font-size: 32px;
+                    font-weight: bold;
+                    letter-spacing: 8px;
+                  "
+                >
+                  ${code}
+                </div>
+
+                <p
+                  style="
+                    color: #374151;
+                    line-height: 1.6;
+                  "
+                >
+                  Este código é válido por
+                  <strong>10 minutos</strong>.
+                </p>
+
+                <p
+                  style="
+                    margin-top: 24px;
+                    color: #6b7280;
+                    font-size: 13px;
+                    line-height: 1.5;
+                  "
+                >
+                  Caso você não tenha solicitado
+                  uma nova senha, ignore este e-mail.
+                </p>
+              </div>
+
+              <p
+                style="
+                  text-align: center;
+                  color: #9ca3af;
+                  font-size: 12px;
+                  margin-top: 20px;
+                "
+              >
+                Clube IAki
+              </p>
+            </div>
+          </body>
+        </html>
       `,
     });
 
