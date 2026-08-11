@@ -30,6 +30,7 @@ import { storeRewardRedemptionsRoutes } from "./http/controllers/store-reward-re
 import { storeOnboardingRoutes } from "./http/controllers/store-onboarding/routes";
 import { rewardsRoutes } from "./http/controllers/rewards/routes";
 import { reportsRoutes } from "./http/controllers/reports/routes";
+import { authRoutes } from "./http/controllers/auth/routes";
 
 export const app = fastify({
   // logger: true,
@@ -75,6 +76,7 @@ app.register(planRoutes);
 app.register(subscriptionRoutes);
 app.register(storeOnboardingRoutes);
 app.register(reportsRoutes);
+app.register(authRoutes);
 
 app.addHook("preHandler", async (request, reply) => {
   // console.log('REQUEST BODY:', request.body)
