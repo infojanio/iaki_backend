@@ -12,7 +12,7 @@ async function main() {
   }
 
   await mailProvider.sendMail({
-    to: "grejannflorencio@gmail.com",
+    to: "contato@iaki.com.br",
 
     subject: "Teste de e-mail - Clube IAki",
 

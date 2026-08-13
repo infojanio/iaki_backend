@@ -1,3 +1,4 @@
+import "dotenv/config";
 import nodemailer, { Transporter } from "nodemailer";
 
 import { MailProvider, SendMailParams } from "./mail-provider";
