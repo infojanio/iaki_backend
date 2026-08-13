@@ -1,4 +1,3 @@
-import "dotenv/config";
 import nodemailer, { Transporter } from "nodemailer";
 
 import { MailProvider, SendMailParams } from "./mail-provider";
@@ -6,21 +5,21 @@ import { MailProvider, SendMailParams } from "./mail-provider";
 export class NodemailerMailProvider implements MailProvider {
   private transporter: Transporter;
 
+  private readonly fromAddress: string;
+
   constructor() {
     const host = process.env.SMTP_HOST;
-
     const port = Number(process.env.SMTP_PORT);
-
     const user = process.env.SMTP_USER;
-
     const password = process.env.SMTP_PASSWORD;
+    const fromAddress = process.env.SMTP_FROM;
 
     if (!host) {
       throw new Error("SMTP_HOST não configurado.");
     }
 
-    if (!port || Number.isNaN(port)) {
-      throw new Error("SMTP_PORT não configurado ou inválido.");
+    if (!port) {
+      throw new Error("SMTP_PORT não configurado.");
     }
 
     if (!user) {
@@ -31,22 +30,17 @@ export class NodemailerMailProvider implements MailProvider {
       throw new Error("SMTP_PASSWORD não configurado.");
     }
 
-    /*
-     * Porta 465 normalmente utiliza
-     * TLS desde o início da conexão.
-     *
-     * Porta 587 normalmente inicia
-     * sem TLS e utiliza STARTTLS.
-     */
-    const secure = process.env.SMTP_SECURE
-      ? process.env.SMTP_SECURE === "true"
-      : port === 465;
+    if (!fromAddress) {
+      throw new Error("SMTP_FROM não configurado.");
+    }
+
+    this.fromAddress = fromAddress;
+
+    const secure = process.env.SMTP_SECURE === "true";
 
     this.transporter = nodemailer.createTransport({
       host,
-
       port,
-
       secure,
 
       auth: {
@@ -54,65 +48,41 @@ export class NodemailerMailProvider implements MailProvider {
         pass: password,
       },
 
-      /*
-       * Evita que conteúdos de e-mail
-       * consigam acessar arquivos locais
-       * ou URLs externas automaticamente.
-       */
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 20000,
+
       disableFileAccess: true,
       disableUrlAccess: true,
-
-      /*
-       * Timeouts importantes para não
-       * deixar uma requisição presa caso
-       * o servidor SMTP esteja fora.
-       */
-      connectionTimeout: 15_000,
-
-      greetingTimeout: 15_000,
-
-      socketTimeout: 30_000,
     });
   }
 
   async sendMail({ to, subject, html, text }: SendMailParams): Promise<void> {
-    const from = process.env.SMTP_FROM;
-
-    if (!from) {
-      throw new Error("SMTP_FROM não configurado.");
-    }
-
     try {
       const info = await this.transporter.sendMail({
-        from,
+        from: {
+          name: "Clube IAki",
+          address: this.fromAddress,
+        },
 
         to,
-
         subject,
-
         html,
+        text,
 
-        /*
-         * Se não vier texto simples,
-         * deixamos undefined.
-         */
-        text: text || undefined,
+        // Garante que o envelope SMTP utilize
+        // exatamente a conta autenticada.
+        envelope: {
+          from: this.fromAddress,
+          to,
+        },
       });
 
-      /*
-       * Em desenvolvimento é útil.
-       * Não exponha conteúdo do e-mail
-       * nem dados sensíveis nos logs.
-       */
-      if (process.env.NODE_ENV !== "production") {
-        console.log("[MailProvider] E-mail enviado:", {
-          messageId: info.messageId,
-
-          accepted: info.accepted,
-
-          rejected: info.rejected,
-        });
-      }
+      console.log("[MailProvider] E-mail enviado:", {
+        messageId: info.messageId,
+        accepted: info.accepted,
+        rejected: info.rejected,
+      });
     } catch (error) {
       console.error("[MailProvider] Erro ao enviar e-mail:", error);
 
@@ -120,15 +90,7 @@ export class NodemailerMailProvider implements MailProvider {
     }
   }
 
-  async verifyConnection(): Promise<boolean> {
-    try {
-      await this.transporter.verify();
-
-      return true;
-    } catch (error) {
-      console.error("[MailProvider] Falha na conexão SMTP:", error);
-
-      return false;
-    }
+  async verifyConnection(): Promise<void> {
+    await this.transporter.verify();
   }
 }

@@ -1,28 +1,44 @@
 import { makeForgotPasswordUseCase } from "@/use-cases/_factories/make-forgot-password-use-case";
 import { FastifyReply, FastifyRequest } from "fastify";
-
 import { z } from "zod";
 
 export async function forgotPassword(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const bodySchema = z.object({
-    email: z.string().trim().email("Informe um e-mail válido."),
-  });
+  console.log("🟡 [ForgotPassword] Requisição recebida");
 
-  const { email } = bodySchema.parse(request.body);
+  try {
+    const bodySchema = z.object({
+      email: z.string().email(),
+    });
 
-  const useCase = makeForgotPasswordUseCase();
+    console.log("🟡 [ForgotPassword] Validando body");
 
-  const { challenge } = await useCase.execute({
-    email,
-  });
+    const { email } = bodySchema.parse(request.body);
 
-  return reply.status(200).send({
-    message:
-      "Caso o e-mail esteja cadastrado, um código de recuperação será enviado.",
+    console.log("🟡 [ForgotPassword] Email:", email);
 
-    challenge,
-  });
+    console.log("🟡 [ForgotPassword] Criando use case");
+
+    const forgotPasswordUseCase = makeForgotPasswordUseCase();
+
+    console.log("🟡 [ForgotPassword] Executando use case");
+
+    const result = await forgotPasswordUseCase.execute({
+      email,
+    });
+
+    console.log("🟢 [ForgotPassword] Use case concluído");
+
+    return reply.status(200).send({
+      message:
+        "Caso o e-mail esteja cadastrado, um código de recuperação será enviado.",
+      challenge: result.challenge,
+    });
+  } catch (error) {
+    console.error("🔴 [ForgotPassword] ERRO COMPLETO:", error);
+
+    throw error;
+  }
 }

@@ -1,55 +1,89 @@
+import "dotenv/config";
+
 import { NodemailerMailProvider } from "@/providers/mail/nodemailer-mail-provider";
 
 async function main() {
+  console.log("🔎 Testando conexão SMTP...");
+
   const mailProvider = new NodemailerMailProvider();
 
-  const connected = await mailProvider.verifyConnection();
+  try {
+    await mailProvider.verifyConnection();
 
-  console.log("SMTP conectado:", connected);
+    console.log("✅ SMTP conectado com sucesso.");
+  } catch (error) {
+    console.error("❌ Falha na conexão SMTP:");
+    console.error(error);
 
-  if (!connected) {
     return;
   }
 
-  await mailProvider.sendMail({
-    to: "contato@iaki.com.br",
+  try {
+    console.log("📧 Enviando e-mail de teste...");
 
-    subject: "Teste de e-mail - Clube IAki",
+    await mailProvider.sendMail({
+      to: "contato@iaki.com.br",
 
-    text: "O envio de e-mails do Clube IAki está funcionando.",
+      subject: "Teste de e-mail - Clube IAki",
 
-    html: `
-      <div
-        style="
-          font-family: Arial, sans-serif;
-          max-width: 520px;
-          margin: auto;
-        "
-      >
-        <h2
+      text: `
+O envio de e-mails do Clube IAki está funcionando.
+
+Configuração SMTP concluída com sucesso.
+      `.trim(),
+
+      html: `
+        <div
           style="
-            color: #6d28d9;
+            font-family: Arial, sans-serif;
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 24px;
           "
         >
-          Clube IAki
-        </h2>
+          <h2
+            style="
+              color: #6d28d9;
+              margin-bottom: 20px;
+            "
+          >
+            Clube IAki
+          </h2>
 
-        <p>
-          O envio de e-mails do
-          Clube IAki está funcionando.
-        </p>
+          <p
+            style="
+              color: #333333;
+              font-size: 16px;
+              line-height: 1.5;
+            "
+          >
+            O envio de e-mails do Clube IAki está funcionando.
+          </p>
 
-        <p>
-          ✅ Configuração SMTP concluída.
-        </p>
-      </div>
-    `,
-  });
+          <p
+            style="
+              color: #16a34a;
+              font-size: 16px;
+              font-weight: bold;
+            "
+          >
+            ✅ Configuração SMTP concluída com sucesso.
+          </p>
+        </div>
+      `,
+    });
 
-  console.log("E-mail de teste enviado.");
+    console.log("✅ E-mail de teste enviado com sucesso.");
+  } catch (error) {
+    console.error("❌ Erro ao enviar e-mail:");
+    console.error(error);
+
+    throw error;
+  }
 }
 
 main().catch((error) => {
+  console.error("❌ Erro inesperado no teste de SMTP:");
   console.error(error);
 
   process.exit(1);

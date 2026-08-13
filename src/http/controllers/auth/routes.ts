@@ -7,6 +7,7 @@ import { resetPassword } from "./reset-password";
 export async function authRoutes(app: FastifyInstance) {
   app.post(
     "/password/forgot",
+
     {
       config: {
         rateLimit: {
@@ -15,6 +16,7 @@ export async function authRoutes(app: FastifyInstance) {
         },
       },
     },
+
     forgotPassword,
   );
 
