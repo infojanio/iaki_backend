@@ -2,7 +2,8 @@ import { UsersRepository } from "@/repositories/prisma/Iprisma/users-repository"
 import { hash } from "bcryptjs";
 import { UserAlreadyExistsError } from "../../utils/messages/errors/user-already-exists-error";
 import { Role, User } from "@prisma/client";
-import { AddressesRepository } from "@/repositories/prisma/Iprisma/addresses-repository";
+import { makeUserRegistrationConfirmationEmail } from "@/providers/mail/templates/user-registration-confirmation";
+import { MailProvider } from "@/providers/mail/mail-provider";
 
 interface RegisterUseCaseRequest {
   id?: string;
@@ -26,7 +27,7 @@ interface RegisterUseCaseResponse {
 export class RegisterUseCase {
   constructor(
     private usersRepository: UsersRepository,
-    private addressesRepository: AddressesRepository,
+    private mailProvider: MailProvider,
   ) {}
 
   async execute({
@@ -67,6 +68,33 @@ export class RegisterUseCase {
         avatar,
         role,
       });
+
+      //envia o email de confirmação do cadastro
+      const registrationEmail = makeUserRegistrationConfirmationEmail({
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        createdAt: user.createdAt,
+      });
+
+      try {
+        await this.mailProvider.sendMail({
+          to: user.email,
+          subject: registrationEmail.subject,
+          text: registrationEmail.text,
+          html: registrationEmail.html,
+        });
+
+        console.log(
+          "[RegisterUseCase] E-mail de confirmação enviado:",
+          user.email,
+        );
+      } catch (error) {
+        console.error(
+          "[RegisterUseCase] Não foi possível enviar o e-mail de confirmação:",
+          error,
+        );
+      }
 
       return { user };
     } catch (error) {
