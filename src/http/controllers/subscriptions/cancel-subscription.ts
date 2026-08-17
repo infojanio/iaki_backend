@@ -1,21 +1,22 @@
-import { FastifyReply, FastifyRequest } from "fastify";
 import { makeCancelSubscriptionsUseCase } from "@/use-cases/_factories/make-cancel-subscriptions-use-case";
+import { FastifyReply, FastifyRequest } from "fastify";
+import { z } from "zod";
 
 export async function cancelSubscription(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const storeId = request.user.storeId;
+  const paramsSchema = z.object({
+    subscriptionId: z.string().uuid("Assinatura inválida."),
+  });
 
-  if (!storeId) {
-    return reply.status(403).send({
-      message: "Usuário não vinculado a uma loja.",
-    });
-  }
+  const { subscriptionId } = paramsSchema.parse(request.params);
 
-  const useCase = makeCancelSubscriptionsUseCase();
+  const cancelSubscriptionUseCase = makeCancelSubscriptionsUseCase();
 
-  await useCase.execute({ storeId });
+  await cancelSubscriptionUseCase.execute({
+    subscriptionId,
+  });
 
   return reply.status(200).send({
     message: "Assinatura cancelada com sucesso.",

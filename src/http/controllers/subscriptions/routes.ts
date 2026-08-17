@@ -9,13 +9,14 @@ import { validateStoreLimits } from "../subscriptions/validate-store-limits";
 
 import { listSubscriptions } from "./list-subscriptions";
 import { updateSubscriptionEndDate } from "./update-subscription";
-import { cancelSubscription } from "./cancel-subscription";
+
 import { reactiveSubscription } from "./reactive-subscription";
 import { renewSubscription } from "./renew-subscription";
 
 import { changeStorePlan } from "../plans/change-plan";
 import { validateDowngradePlanController } from "../plans/validate-downgrade-plan";
 import { createSubscription } from "./create-subscription";
+import { cancelSubscription } from "./cancel-subscription";
 
 export async function subscriptionRoutes(app: FastifyInstance) {
   app.addHook("onRequest", verifyJWT);
