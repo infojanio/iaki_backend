@@ -18,6 +18,7 @@ import { getUserStoresPoints } from "./get-user-stores-points";
 import { verifyUserRole } from "@/http/middlewares/verify-user-role";
 import { listUsers } from "./list-users";
 import { attachUserStore } from "./attach-user-store";
+import { Delete } from "./delete";
 
 export async function usersRoutes(app: FastifyInstance) {
   /* Rotas acessíveis para usuário não autenticado */
@@ -34,6 +35,13 @@ export async function usersRoutes(app: FastifyInstance) {
   //app.get("/users/:userId/city", getUserLocation);
 
   app.patch("/users/:userId", { onRequest: [verifyJWT] }, update);
+  app.patch(
+    "/users/:userId/anonymize",
+    {
+      onRequest: [verifyJWT, verifyUserRole("SUPER_ADMIN")],
+    },
+    Delete,
+  );
   app.get("/users/:userId/address", getUserAddress);
   app.get("/users/:userId/location", getUserLocation);
   app.post("/token/refresh", refresh); // pega o token e atualiza

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { UpdateUserCityUseCase } from "../users/update-user-city";
 
 export function makeUpdateUserCityUseCase() {
-  const usersRepository = new PrismaUsersRepository();
+  const usersRepository = new PrismaUsersRepository(prisma);
   const cartsRepository = new PrismaCartsRepository(prisma);
 
   return new UpdateUserCityUseCase(usersRepository, cartsRepository);
