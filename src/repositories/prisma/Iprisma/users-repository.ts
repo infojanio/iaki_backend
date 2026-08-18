@@ -93,6 +93,8 @@ export interface UsersRepository {
    */
   updateCity(userId: string, cityId: string): Promise<User>;
 
+  deleteRefreshTokensByUserId(userId: string): Promise<void>;
+
   /**
    * Saldo de cashback
    */

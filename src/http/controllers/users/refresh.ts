@@ -1,6 +1,5 @@
-// src/http/controllers/auth/refresh.ts
-
 import { FastifyReply, FastifyRequest } from "fastify";
+
 import { prisma } from "@/lib/prisma";
 
 export async function refresh(request: FastifyRequest, reply: FastifyReply) {
@@ -14,9 +13,11 @@ export async function refresh(request: FastifyRequest, reply: FastifyReply) {
     });
   }
 
-  // 🔎 1. Busca token no banco
+  // 1. Busca token no banco
   const storedToken = await prisma.refreshToken.findUnique({
-    where: { token: refreshToken },
+    where: {
+      token: refreshToken,
+    },
   });
 
   if (!storedToken) {
@@ -25,10 +26,12 @@ export async function refresh(request: FastifyRequest, reply: FastifyReply) {
     });
   }
 
-  // ⏰ 2. Verifica expiração no banco
+  // 2. Verifica expiração
   if (storedToken.expiresAt < new Date()) {
     await prisma.refreshToken.delete({
-      where: { token: refreshToken },
+      where: {
+        token: refreshToken,
+      },
     });
 
     return reply.status(401).send({
@@ -37,53 +40,110 @@ export async function refresh(request: FastifyRequest, reply: FastifyReply) {
   }
 
   try {
+    // 3. Valida JWT
     const decoded = request.server.jwt.verify<{
       sub: string;
-      role: string;
-      storeId?: string;
     }>(refreshToken);
 
-    const { sub: userId, role, storeId } = decoded;
+    const userId = decoded.sub;
 
+    // 4. Confirma que usuário ainda existe
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        storeId: true,
+      },
+    });
+
+    if (!user) {
+      await prisma.refreshToken.deleteMany({
+        where: {
+          userId,
+        },
+      });
+
+      return reply.status(401).send({
+        message: "Usuário não encontrado.",
+      });
+    }
+
+    // 5. Verifica se conta foi excluída
+    const accountDeleted =
+      user.email.startsWith("deleted+") &&
+      user.email.endsWith("@deleted.iaki.local");
+
+    if (accountDeleted) {
+      await prisma.refreshToken.deleteMany({
+        where: {
+          userId,
+        },
+      });
+
+      return reply.status(401).send({
+        message: "Esta conta não está mais disponível.",
+      });
+    }
+
+    // 6. Gera novo access token
     const newAccessToken = await reply.jwtSign(
-      { role, storeId },
+      {
+        role: user.role,
+        storeId: user.storeId ?? undefined,
+      },
       {
         sign: {
-          sub: userId,
+          sub: user.id,
           expiresIn: "15m",
         },
       },
     );
 
+    // 7. Gera novo refresh token
     const newRefreshToken = await reply.jwtSign(
-      { role, storeId },
+      {
+        role: user.role,
+        storeId: user.storeId ?? undefined,
+      },
       {
         sign: {
-          sub: userId,
+          sub: user.id,
           expiresIn: "7d",
         },
       },
     );
 
-    // remove token antigo
+    // 8. Remove token antigo
     await prisma.refreshToken.delete({
-      where: { token: refreshToken },
+      where: {
+        token: refreshToken,
+      },
     });
 
-    // salva novo refresh token
+    // 9. Salva novo refresh token
     await prisma.refreshToken.create({
       data: {
         token: newRefreshToken,
-        userId,
+
+        userId: user.id,
+
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
     });
 
     return reply.status(200).send({
       accessToken: newAccessToken,
+
       refreshToken: newRefreshToken,
     });
-  } catch {
+  } catch (error) {
+    console.error("[RefreshToken]", error);
+
     return reply.status(401).send({
       message: "Refresh token inválido.",
     });

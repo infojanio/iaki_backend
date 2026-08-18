@@ -19,11 +19,33 @@ import { verifyUserRole } from "@/http/middlewares/verify-user-role";
 import { listUsers } from "./list-users";
 import { attachUserStore } from "./attach-user-store";
 import { Delete } from "./delete";
+import { RequestAccountDeletion } from "./request-account-deletion";
+import { DeleteMe } from "./delete-me";
 
 export async function usersRoutes(app: FastifyInstance) {
   /* Rotas acessíveis para usuário não autenticado */
   app.post("/users", register);
   app.post("/sessions", authenticate);
+  app.post(
+    "/account-deletion-request",
+    {
+      config: {
+        rateLimit: {
+          max: 5,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    RequestAccountDeletion,
+  );
+
+  app.patch(
+    "/users/me/anonymize",
+    {
+      onRequest: [verifyJWT],
+    },
+    DeleteMe,
+  );
 
   app.get(
     "/users/me/stores-with-points",

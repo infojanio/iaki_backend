@@ -133,6 +133,14 @@ export class PrismaUsersRepository implements UsersRepository {
     });
   }
 
+  async deleteRefreshTokensByUserId(userId: string): Promise<void> {
+    await prisma.refreshToken.deleteMany({
+      where: {
+        userId,
+      },
+    });
+  }
+
   async update(
     userId: string,
     data: Prisma.UserUncheckedUpdateInput,
