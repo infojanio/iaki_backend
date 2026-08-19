@@ -43,7 +43,7 @@ app.register(fastifyCors, {
     "http://localhost:5173", // opcional para dev local
     "https://api.iaki.com.br",
     "https://iakipainel-production.up.railway.app",
-    "https://www.painel.iaki.com.br",
+    "https://painel.iaki.com.br",
     "https://www.iaki.com.br", // ✅ frontend hospedado
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
