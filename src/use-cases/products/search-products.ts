@@ -5,8 +5,9 @@ import {
 
 interface SearchProductsUseCaseRequest {
   query: string;
+  cityId: string;
   page: number;
-  pageSize: number;
+  pageSize?: number;
 }
 
 interface SearchProductsUseCaseResponse {
@@ -19,21 +20,29 @@ export class SearchProductsUseCase {
 
   async execute({
     query,
+    cityId,
     page,
-    pageSize = 5,
+    pageSize = 24,
   }: SearchProductsUseCaseRequest): Promise<SearchProductsUseCaseResponse> {
     const trimmedQuery = query.trim();
 
-    if (!trimmedQuery) {
-      return { products: [], total: 0 };
+    if (!trimmedQuery || !cityId) {
+      return {
+        products: [],
+        total: 0,
+      };
     }
 
     const [products, total] = await this.productsRepository.searchByName(
       trimmedQuery,
+      cityId,
       page,
       pageSize,
     );
 
-    return { products, total };
+    return {
+      products,
+      total,
+    };
   }
 }

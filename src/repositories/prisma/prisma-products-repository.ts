@@ -246,43 +246,62 @@ export class PrismaProductsRepository implements ProductsRepository {
 
   async searchByName(
     query: string,
+    cityId: string,
     page: number,
-    pageSize = 10,
+    pageSize = 24,
   ): Promise<[ProductWithCategory[], number]> {
     const skip = (page - 1) * pageSize;
 
-    const [products, total] = await this.prisma.$transaction([
-      this.prisma.product.findMany({
-        where: {
+    const where: Prisma.ProductWhereInput = {
+      status: true,
+
+      store: {
+        isActive: true,
+        cityId,
+      },
+
+      OR: [
+        {
           name: {
             contains: query,
             mode: "insensitive",
           },
-          status: true,
-          store: {
-            isActive: true,
-          },
         },
-        include: {
-          store: true, // 🔥 OBRIGATÓRIO
-          subcategory: {
-            include: {
-              category: true, // 🔥 OBRIGATÓRIO
+        {
+          store: {
+            name: {
+              contains: query,
+              mode: "insensitive",
             },
           },
         },
+      ],
+    };
+
+    const [products, total] = await this.prisma.$transaction([
+      this.prisma.product.findMany({
+        where,
+
+        include: {
+          store: true,
+
+          subcategory: {
+            include: {
+              category: true,
+            },
+          },
+        },
+
+        orderBy: {
+          name: "asc",
+        },
+
         skip,
         take: pageSize,
       }),
 
       this.prisma.product.count({
-        where: {
-          name: {
-            contains: query,
-            mode: "insensitive",
-          },
-          status: true,
-        },
+        where,
       }),
     ]);
 

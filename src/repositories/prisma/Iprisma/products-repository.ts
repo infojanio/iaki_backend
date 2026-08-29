@@ -68,6 +68,7 @@ export interface ProductsRepository {
 
   searchByName(
     query: string,
+    cityId: string,
     page: number,
     pageSize?: number,
   ): Promise<[ProductWithCategory[], number]>;
