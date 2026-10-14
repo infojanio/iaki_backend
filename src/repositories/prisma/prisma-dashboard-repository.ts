@@ -117,7 +117,7 @@ export class PrismaDashboardRepository implements DashboardRepository {
             quantity: "desc",
           },
         },
-        take: 5,
+        take: 10, // Retorna os 10 produtos mais vendidos
       }),
 
       prisma.storeRewardRedemption.groupBy({
