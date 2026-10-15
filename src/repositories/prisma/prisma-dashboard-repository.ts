@@ -214,11 +214,19 @@ export class PrismaDashboardRepository implements DashboardRepository {
       select: {
         id: true,
         name: true,
+        storeId: true,
+        store: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
     const topProducts = topProductsGrouped.map((item) => ({
       id: item.productId,
+
       name:
         products.find((product) => product.id === item.productId)?.name ??
         "Produto removido",
@@ -226,6 +234,30 @@ export class PrismaDashboardRepository implements DashboardRepository {
     }));
 
     const userIds = topUsersGrouped.map((item) => item.userId);
+
+    // Quantidade de pedidos validados por cliente
+    const ordersByUser = await prisma.order.groupBy({
+      by: ["userId"],
+
+      _count: {
+        id: true,
+      },
+
+      where: {
+        userId: {
+          in: userIds,
+        },
+
+        status: "VALIDATED",
+
+        ...(storeId ? { storeId } : {}),
+      },
+    });
+
+    // Criar mapa para consultar rapidamente
+    const ordersCountMap = new Map(
+      ordersByUser.map((item) => [item.userId, item._count.id]),
+    );
 
     const users = await prisma.user.findMany({
       where: {
@@ -245,9 +277,19 @@ export class PrismaDashboardRepository implements DashboardRepository {
 
       return {
         id: item.userId,
+
         name: user?.name ?? "Cliente removido",
+
         email: user?.email ?? "",
-        totalPoints: 0, // implementar depois
+
+        // Pedidos validados
+        totalOrders: ordersCountMap.get(item.userId) ?? 0,
+
+        // Saldo de pontos
+        // Substituir pela consulta real de saldo
+        totalPoints: 0,
+
+        // Brindes resgatados
         totalRedemptions: item._count.id,
       };
     });
