@@ -66,11 +66,17 @@ export class PrismaStoreRewardRedemptionsRepository
   async findPendingByUser(params: { userId: string; storeId: string }) {
     const { userId, storeId } = params;
 
+    if (!userId?.trim() || !storeId?.trim()) {
+      throw new Error(
+        "Usuário e loja são obrigatórios para consultar os resgates.",
+      );
+    }
+
     return prisma.storeRewardRedemption.findMany({
       where: {
         userId,
         storeId,
-        status: "PENDING",
+        status: RedemptionStatus.PENDING,
       },
       include: {
         reward: {
