@@ -17,7 +17,7 @@ export class PrismaOrdersRepository implements OrdersRepository {
     storeId: string;
     totalAmount: Decimal;
     discountApplied: Decimal;
-    cashbackAmount: Decimal;
+    //  cashbackAmount: Decimal;
     status: OrderStatus;
     items: {
       productId: string;

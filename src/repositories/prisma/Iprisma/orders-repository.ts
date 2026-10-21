@@ -19,7 +19,7 @@ export interface OrdersRepository {
     storeId: string;
     totalAmount: Decimal | number;
     discountApplied: Decimal;
-    cashbackAmount: Decimal; // 👈 IMPORTANTE
+    //cashbackAmount: Decimal; // 👈 IMPORTANTE
     status: OrderStatus;
     items: OrderItemInput[];
   }): Promise<any>;

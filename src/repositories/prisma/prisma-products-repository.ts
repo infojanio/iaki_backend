@@ -367,14 +367,29 @@ export class PrismaProductsRepository implements ProductsRepository {
     id: string,
     quantity: number,
   ) {
-    await tx.product.update({
-      where: { id },
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      throw new Error("Quantidade inválida para atualização de estoque.");
+    }
+
+    const result = await tx.product.updateMany({
+      where: {
+        id,
+        quantity: {
+          gte: quantity,
+        },
+      },
       data: {
         quantity: {
           decrement: quantity,
         },
       },
     });
+
+    if (result.count === 0) {
+      throw new Error(
+        "Produto não encontrado ou estoque insuficiente para concluir o pedido.",
+      );
+    }
   }
 
   async updateStock(

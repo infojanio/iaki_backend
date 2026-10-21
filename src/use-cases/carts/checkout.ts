@@ -51,6 +51,7 @@ export class CheckoutUseCase {
       userId: userId,
       storeId: storeId,
       totalAmount,
+      //  cashbackAmount: new Decimal(0),
       discountApplied: new Decimal(0),
       status: "PENDING",
       items: orderItems,
