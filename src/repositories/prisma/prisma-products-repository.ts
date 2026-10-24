@@ -156,15 +156,28 @@ export class PrismaProductsRepository implements ProductsRepository {
   }
 
   async listMany(): Promise<Product[]> {
-    const products = await prisma.product.findMany({
+    return prisma.product.findMany({
       where: {
         store: {
           isActive: true,
         },
       },
-      include: { subcategory: { include: { category: true } } },
+
+      include: {
+        store: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+
+        subcategory: {
+          include: {
+            category: true,
+          },
+        },
+      },
     });
-    return products;
   }
 
   /* ==============================
