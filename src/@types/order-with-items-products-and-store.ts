@@ -1,7 +1,7 @@
 // src/modules/orders/entities/OrderWithItemsProductsAndStore.ts
 
 import { Decimal } from "@prisma/client/runtime/library";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, Prisma } from "@prisma/client";
 
 export type OrderWithItemsProductsAndStore = {
   id: string;
@@ -17,16 +17,21 @@ export type OrderWithItemsProductsAndStore = {
   store: {
     id: string;
     name: string;
+
+    latitude: Prisma.Decimal;
+    longitude: Prisma.Decimal;
   };
 
   items: {
     id: string;
-    quantity: Decimal;
+    quantity: Prisma.Decimal;
+    subtotal: Prisma.Decimal;
+
     product: {
       id: string;
       name: string;
       image: string | null;
-      price: Decimal;
+      price: Prisma.Decimal;
       cashbackPercentage: number;
     };
   }[];

@@ -10,18 +10,24 @@ interface FetchUserOrdersHistoryUseCaseRequest {
 interface FetchUserOrdersHistoryUseCaseResponse {
   orders: Array<{
     id: string;
+
     store: {
       id: string;
       name: string;
+      latitude: number | null;
+      longitude: number | null;
     };
+
     totalAmount: number;
     discountApplied: number;
     qrCodeUrl?: string;
     status: OrderStatus;
     validatedAt: Date | null;
     createdAt: Date;
+
     items: Array<{
       quantity: number;
+
       product: {
         name: string;
         image: string | null;
@@ -49,18 +55,32 @@ export class FetchUserOrdersHistoryUseCase {
     return {
       orders: orders.map((order) => ({
         id: order.id,
+
         store: {
           id: order.store.id,
-          name: order.store.name, // 🔥 AQUI ESTÁ O PONTO-CHAVE
+          name: order.store.name,
+
+          latitude:
+            order.store.latitude == null ? null : Number(order.store.latitude),
+
+          longitude:
+            order.store.longitude == null
+              ? null
+              : Number(order.store.longitude),
         },
+
         totalAmount: Number(order.totalAmount),
+
         discountApplied: Number(order.discountApplied ?? 0),
+
         qrCodeUrl: order.qrCodeUrl ?? undefined,
         status: order.status,
         validatedAt: order.validatedAt,
         createdAt: order.createdAt,
+
         items: order.items.map((item) => ({
           quantity: Number(item.quantity),
+
           product: {
             name: item.product.name,
             image: item.product.image ?? null,

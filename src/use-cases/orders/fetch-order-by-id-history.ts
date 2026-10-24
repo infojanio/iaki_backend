@@ -17,10 +17,18 @@ export class FetchOrderByIdHistoryUseCase {
 
     return {
       id: order.id,
+
       store: {
         id: order.store.id,
         name: order.store.name,
+
+        latitude:
+          order.store.latitude == null ? null : Number(order.store.latitude),
+
+        longitude:
+          order.store.longitude == null ? null : Number(order.store.longitude),
       },
+
       totalAmount: Number(order.totalAmount),
       discountApplied: Number(order.discountApplied ?? 0),
       status: order.status,
@@ -29,14 +37,19 @@ export class FetchOrderByIdHistoryUseCase {
       qrCodeUrl: order.qrCodeUrl ?? undefined,
 
       items: order.items.map((item) => {
-        const price = Number(item.product.price);
         const quantity = Number(item.quantity);
-        const subtotal = price * quantity;
+
+        // Usa o subtotal salvo no pedido.
+        const subtotal = Number(item.subtotal);
+
+        const price =
+          quantity > 0 ? subtotal / quantity : Number(item.product.price);
 
         return {
           id: item.id,
           quantity,
-          subtotal, // ✅ calculado corretamente
+          subtotal,
+
           product: {
             id: item.product.id,
             name: item.product.name,
