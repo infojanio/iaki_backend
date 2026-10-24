@@ -148,6 +148,9 @@ export class PrismaOrdersRepository implements OrdersRepository {
           select: {
             id: true,
             name: true,
+            avatar: true,
+            latitude: true,
+            longitude: true,
           },
         },
         items: {
