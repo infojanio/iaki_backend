@@ -56,7 +56,7 @@ export async function storesRoutes(app: FastifyInstance) {
     getStoreCategoriesController,
   );
 
-  app.get("/stores/active", { onRequest: [verifyJWT] }, listStoresActive);
+  app.get("/stores/active", listStoresActive);
 
   app.get("/stores/:storeId", { onRequest: [verifyJWT] }, FetchStoreById);
 
